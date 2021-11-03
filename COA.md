@@ -1,13 +1,12 @@
 # Chart of Accounts
 
 ## The list of supported high level events include;
-* [Participant Joins the Scheme](#Participant Joins the Scheme)
-* [Participant Deposit funds into an account](#Participant deposit funds into an account)
-* [Payer Transfer funds to a Payee 1Phase Commit](#Payer Transfer funds to a Payee 1Phase Commit)
-* [Payer Transfer funds to a Payee 2Phase Commit](#Payer Transfer funds to a Payee 2Phase Commit)
-* [Settlement Reservation](#Settlement Reservation)
-* [Settlement Commit](#Settlement Commit)
-* [Participant Withdraw funds from an account](#Participant Withdraw funds from an account)
+* [Participant Joins the Scheme](#participant-joins-the-scheme)
+* [Payer Transfer funds to a Payee 1Phase Commit](#payer-transfer-funds-to-a-payee-1phase-commit)
+* [Payer Transfer funds to a Payee 2Phase Commit](#payer-transfer-funds-to-a-payee-2phase-commit)
+* [Settlement Reservation](#settlement-reservation)
+* [Settlement Commit](#settlement-commit)
+* [Participant Withdraw funds from an account](#participant-withdraw-funds-from-an-account)
 * 
 
 ## Participant Joins the Scheme
@@ -196,7 +195,7 @@ Payer, Payee and the Mojaloop Hub.
 * Payee - B (Participant on the Mojaloop switch)
 * Reconciliation - R (Mojaloop Hub Recon account)
 
-### Settlement Commit
+### Transfers
 #### Payee/Payer Settlement Commit
 ```
 Payee - B
