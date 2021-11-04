@@ -2,12 +2,16 @@
 
 ## The list of supported high level events include;
 * [Participant Joins the Scheme](#participant-joins-the-scheme)
+* [Participant Deposit funds into an account](#participant-deposit-funds-into-an-account)
 * [Payer Transfer funds to a Payee 1Phase Commit](#payer-transfer-funds-to-a-payee-1phase-commit)
 * [Payer Transfer funds to a Payee 2Phase Commit](#payer-transfer-funds-to-a-payee-2phase-commit)
 * [Settlement Reservation](#settlement-reservation)
 * [Settlement Commit](#settlement-commit)
 * [Participant Withdraw funds from an account](#participant-withdraw-funds-from-an-account)
+* [Participant Close Account](#participant-close-account)
 * 
+
+
 
 ## Participant Joins the Scheme
 A new participant joins the scheme and the necessary accounts and configurations are provisioned in the system.
@@ -26,7 +30,9 @@ At this time the participant has no liquidity _(a current position of zero and a
 ### Transfers
 > No transfers at this stage. Only account creation.
 
-## Participant deposit funds into an account
+
+
+## Participant Deposit funds into an account
 A new participant joins the scheme and the necessary accounts and configurations are provisioned in the system. 
 At this time the participant has no liquidity _(a current position of zero and a net debit cap of zero)_.
 
@@ -37,7 +43,7 @@ At this time the participant has no liquidity _(a current position of zero and a
 ### Players
 * Bank (External)
 * Scheme - S (Mojaloop operator)
-* Payer - A (Payer on the Mojaloop switch)
+* Participant - P (Payer on the Mojaloop switch)
 
 ### Transfers
 A cash deposit is made at a bank that supports loading of assets into the Mojaloop hub. 
@@ -45,7 +51,7 @@ The hub is notified of the payment (which the bank has already taken the risk fo
 ```
 Bank 
     DR:100       (-)
-Payer - A
+Participant - P
     CR:100       Settlement:Accepted
 Scheme - S
     DR:100       Reconciliation:Accepted    
@@ -211,4 +217,53 @@ Reconciliation - R
 
 
 
+## Participant Withdraw funds from an account
+--TODO
 
+### Accounts
+* Settlement
+* Reconciliation
+
+### Players
+* Bank (External)
+* Scheme - S (Mojaloop operator)
+* Participant - P (Participant on the Mojaloop switch)
+
+### Transfers
+A cash deposit is made at a bank that supports loading of assets into the Mojaloop hub.
+The hub is notified of the payment (which the bank has already taken the risk for).
+```
+Bank 
+    CR:100       (-)
+Payee - A
+    DR:100       Settlement:Accepted
+Scheme - S
+    DR:100       Reconciliation:Accepted    
+```
+
+
+
+## Participant Close Account
+An account may only be closed when the DR/CR for
+
+### Accounts
+* Settlement
+
+### Players
+* Participant - P (Mojaloop Hub participant)
+
+
+
+
+## NOTES
+
+* How do we deal with Fees, would we simply create another group of accounts;
+  * Participant Group of Accounts
+  * Fee Group of Accounts
+
+* How do we link the accounts in TB;
+  * Create accounts with the same `user_data` per Participant, then mark them as linked?
+  * For each account type, we use `code`, do we leave it up to Mojaloop to deal with the multiple currencies, or treat is as part of the `code` makeup.
+  
+* Do we care about account state in TB, or leave it up to Mojaloop;
+* 
