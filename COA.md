@@ -233,6 +233,7 @@ DR Corresponding Liquidity A1                   100
   * `100` unit settlement instruction received
 * SR has a CR balance of;  `100 - 100 = 0`
   * `100` units as credit to the recon
+  * `0` units indicate that all transfers have been settled
 * A1's Corresponding Liquidity has a net CR balance of; `100 - 100 = 0`
   * At time of transfer the units were `100`, which is now set to `0`
 * B1's Corresponding Liquidity has a net DR balance of; `100 - 100 = 0`
@@ -269,22 +270,10 @@ DR Scheme S Collateral                          100
 
 ###### Summary
 * A's Liquidity has a net CR balance of;  `100 - 100 = 0`
-  * `100` units debited to the bank where A will receive cash
+  * `100` units debited to the bank where A will receive 'cash'
 * S's Collateral has a net CR balance of;  `0 + 100 - 100 = 0`
   * `100` units from A, then `100` units to bank
-
-
-### Transfers
-A cash deposit is made at a bank that supports loading of assets into the Mojaloop hub.
-The hub is notified of the payment (which the bank has already taken the risk for).
-```
-Bank 
-    CR:100       (-)
-Payee - A
-    DR:100       Settlement:Accepted
-Scheme - S
-    DR:100       Reconciliation:Accepted    
-```
+* Bank settles with Scheme outside of Mojaloop hub
 
 
 #
