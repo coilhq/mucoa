@@ -44,41 +44,40 @@ The hub is notified of the payment.
 > The handing of assets occur outside the hub. A notification event is sent to the hub to 
 > inform the hub of the deposit.
 ```
-DR Bank                               120
-    CR Participant A Collateral                 120
+DR Bank                                         120
+    CR Participant A Collateral                           120
 ```
 
 #### Scheme decides to charge Fees on Deposit of Collateral:
 > (where fee is a function of collateral deposit amount = 120 * 8.333% = 10)
 ```
-DR Participant A Collateral           10
-    CR Participant A Fees                       10
-DR Participant A Fees                 10
-    CR Scheme Fees                              10
+DR Participant A Collateral                     10
+    CR Participant A Fees                                 10
+DR Participant A Fees                           10
+    CR Scheme Fees                                        10
 ```
 
 #### `(Repeatable)` Participant A decides to make 100 collateral available as liquidity:
 > (either all collateral they have, or at most N units, in this case at most 100 units)
 ```
-DR Participant A Collateral           100
-    CR Participant A Liquidity                100
+DR Participant A Collateral                     100
+    CR Participant A Liquidity                            100
 ```
 #### `(Repeatable)` Participant A decides to make 10 collateral available as liquidity:
 > (Secondary event debits the last 10 units of collateral from the Participant A). <br/>
 > At this point the collateral is `0`
 ```
-DR Participant A Collateral           10
-    CR Participant A Liquidity                  10
+DR Participant A Collateral                     10
+    CR Participant A Liquidity                            10
 ```
 
 #### Scheme extends Credit to A as a function of A's collateral deposit event amount:
 > (A has a net debit cap of 150 according to rules of scheme)
 
 ```
-DR Scheme Liquidity                   50
-    CR Participant A Liquidity                  50
+DR Scheme Liquidity                             50
+    CR Participant A Liquidity                            50
 ```
-
 
 ### Summary
 * A's Liquidity has a CR balance of; `100 + 10 + 50 = 160`
@@ -122,18 +121,18 @@ The Scheme Fee has a CR balance of `10` units (from a previous Participant depos
 #### Participant A Transfer units to Participant B (Payer to Payee direct):
 > Scheme allows for direct liquidity to Payee.
 ```
-DR Participant A Liquidity            100
-    CR Participant A Payable to B                  100
-DR Participant A Payable to B         100    
-    CR Participant B Liquidity                     100
+DR Participant A Liquidity                      100
+    CR Participant A Payable to B                         100
+DR Participant A Payable to B                   100
+    CR Participant B Liquidity                            100
 ```
 
 #### Participant A is charged with a `10%` Transfer fee (100 * 0.10 = 10):
 ```
-DR Participant A Liquidity            10
-    CR Participant A Fees                          10
-DR Participant A Fees                 10
-    CR Scheme Fees                                 10
+DR Participant A Liquidity                      10
+    CR Participant A Fees                                 10
+DR Participant A Fees                           10
+    CR Scheme Fees                                        10
 ```
 
 ### Summary
@@ -249,13 +248,13 @@ An existing participant A would like to withdraw `units` from the Scheme.
 #### 1. Transfer the Participant Liquidity to the Scheme Collateral:
 ```
 DR Participant Liquidity A                      100
-    CR Scheme Collateral                                100
+    CR Scheme Collateral                                  100
 ```
 
 #### 2. Transfer the Scheme Collateral to the Bank:
 > The Scheme to the Bank transfer occurs outside of Scheme Hub
 ```
-DR Scheme Collateral                          100
+DR Scheme Collateral                            100
     CR Bank                                               100
 ```
 
