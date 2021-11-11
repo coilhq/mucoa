@@ -109,10 +109,6 @@ The Scheme Fee has a CR balance of `10` units (from a previous Participant depos
 * Participant A Liquidity - Pay Participant - B (Payer)
 * Participant B Liquidity - Receive payment from Participant - A (Payee)
 * Participant A Payable to B - Existing or on demand account to record the transfer from A to B
-  * [Immediate Gross]  - 
-  * [Bilateral Net]    - 
-  * [Multilateral Net] - 
-
 
 ### Activity
 #### Transfer from Participant A to Participant B
