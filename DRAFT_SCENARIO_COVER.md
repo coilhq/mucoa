@@ -1,21 +1,27 @@
+# Settlement models:
+- immediate gross bilateral
+- deferred net bilateral (between two participants)
+- deferred net multilateral (between a participant and the scheme)
+- immediate net multilateral (between a participant and the scheme)
+
 immediate gross:
 
 # Transfer
 
 # Transfer 1 [A to B]
 ```
-DR Participant A Liquidity 100
-    CR Participant A Payable To B 100
-DR Participant A Payable To B 100
-    CR Participant B Liquidity 100
+DR Participant A Liquidity                  100
+    CR Participant A Payable To Scheme                  100
+DR Participant A Payable To Scheme          100
+    CR Participant B Liquidity                          100
 ```
 
 # Transfer 2 [B to A]
 ```
-DR Participant B Liquidity 10
-    CR Participant B Payable To A 10
-DR Participant B Payable To A 10
-    CR Participant A Liquidity 10
+DR Participant B Liquidity                  10
+    CR Participant B Payable To Scheme                  10
+DR Participant B Payable To Scheme          10
+    CR Participant A Liquidity                          10
 ```
 
 
@@ -30,63 +36,49 @@ settlement report (immediate gross bilateral):
 settlement report (deferred net bilateral):
 
     A owes B = 100 - 10 = 90
---
-
-settlement models:
-immediate gross bilateral
-deferred net bilateral (between two participants)
-deferred net multilateral (between a participant and the scheme)
-immediate net multilateral (between a participant and the scheme)
-
-# ==== Addition ====
 
 # Settlement
 
 # Reserve
-## Reserve 1
+The reservation may be immediate or deferred.
+
+## Reserve 1 - A to B
 ```
-DR Participant A Settlement                     100
-    CR Participant A Scheme Recon                           100
-DR Participant B Scheme Recon                   100
-    CR Participant B Settlement                             100
+DR Participant A Payable To Scheme              100
+    CR Participant B Receivable From Scheme                 100
 ```
-## Reserve 2
+## Reserve 2 - B to A
 ```
-DR Participant B Settlement                     10
-    CR Participant B Scheme Recon                           10
-DR Participant A Scheme Recon                   10
-    CR Participant A Settlement                             10
+DR Participant B Payable To Scheme              10
+    CR Participant A Receivable From Scheme                 10
 ```
 
 At this point we have deferred gross multilateral settlement for reservation is:
 
-    Settlement A paid to Scheme Recon A = 100
-    Settlement B paid to Scheme Recon B = 10
-    Participant A to the Scheme Reserved Settlement = 100
-    Participant B to the Scheme Reserved Settlement = 10
+    Participant A receivable from Scheme = 10
+    Participant B receivable from Scheme = 100
 
 deferred net multilateral:
-                      
-    A owes B = 90
+
+    A owes B = 100 (gross)
+    B owes A = 10 (gross)
+    A owes B = 90 (net)
     A owes Scheme = 100
     B owes Scheme = 10
 
 # Commit
+The commit may be immediate or deferred.
 
-## Commit 1
+## Commit 1.1
 ```
-DR Participant A Scheme Recon                   100
-    CR Participant A Settlement                             100
-DR Participant B Settlement                     100
-    CR Participant B Scheme Recon                           100
+DR Participant B Receivable From Scheme         100
+    CR Participant A Payable To Scheme                      100
 ```
 
-## Commit 2
+## Commit 1.2
 ```
-DR Participant B Scheme Recon                   10
-    CR Participant B Settlement                             10
-DR Participant A Settlement                     10
-    CR Participant A Scheme Recon                           10
+DR Participant A Receivable From Scheme         10
+    CR Participant B Payable To Scheme                      10
 ```
 
 At this point we have deferred gross multilateral settlement for reservation is:
@@ -98,11 +90,11 @@ At this point we have deferred gross multilateral settlement for reservation is:
 
 deferred net multilateral:
 
-    A settled B = 90
+    A settled B = 90 (100 - 10 = 90)
     A settled Scheme = 100
     B settled Scheme = 10
-> Both Scheme Recon A+B and Participant A+B Settlement Accounts are set to `0` after commit.
-
+> Both Scheme payable and receivable Accounts are set to `0` after settlement commit (happy path).
+> The Participant Liquidity remains unaffected since transfer. 
 
 # Other Notes;
 
