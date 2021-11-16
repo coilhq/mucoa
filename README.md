@@ -29,12 +29,11 @@ A participant decides to deposit 100 units collateral into the Scheme hub.
 * Bank (External)
 
 ### Accounts
-* Scheme Collateral - Scheme operator collateral
-* Scheme Liquidity - Scheme operator liquidity
-* Scheme Fees - Scheme operator entity used for Scheme Fee collateral
+* Scheme Credit Line - Scheme operator liquidity extension to a Participant
+* Participant A Payable to Scheme - Scheme operator entity used for Scheme Fee collateral
 * Participant Liquidity A - The participants liquidity on the Scheme
 * Participant Collateral A - Deposit collateral into the Scheme
-* Participant A Fees - The account tracking the transfer fees charged by the scheme
+* Participant A Fees - The account tracking the transfer fees charged by the scheme against A
 
 ### Activity
 A cash deposit is made at a bank that supports loading of assets into the Scheme hub.
@@ -54,7 +53,7 @@ DR Bank                                         120
 DR Participant A Collateral                     10
     CR Participant A Fees                                 10
 DR Participant A Fees                           10
-    CR Scheme Fees                                        10
+    CR Participant A Payable to Scheme                    10
 ```
 
 #### `(Repeatable)` Participant A decides to make 100 collateral available as liquidity:
@@ -75,7 +74,7 @@ DR Participant A Collateral                     10
 > (A has a net debit cap of 150 according to rules of scheme)
 
 ```
-DR Scheme Liquidity                             50
+DR Scheme Credit Line                           50
     CR Participant A Liquidity                            50
 ```
 
@@ -92,7 +91,7 @@ DR Scheme Liquidity                             50
     * Note that the scheme limit is set at 150 units liquidity cap, current usage is at 33%
 * Scheme's Collateral has a CR balance of; `0 + 120 - 120 = 0`
     * `120` units from Bank deposit, minus `120` units to A's collateral
-* Scheme Fees has a CR balance of; `0 + 10`
+* Participant A Payable to Scheme has a CR balance of; `0 + 10`
     * `10` units Fee charge for A's deposit
 
 ### Invariants
@@ -104,31 +103,36 @@ At this time the Payer participant A has liquidity of 160 units _(and a gross de
 Participant A would like to transfer `100` units to Participant B.
 The Scheme Fee has a CR balance of `10` units (from a previous Participant deposit).
 
+The liquidity from A to B is immediately available to B, however, the settlement reservation and commit
+is a separate action that is between A to Scheme and B from Scheme.
+
 ### Accounts
-* Scheme Fees - Fees being charged by the Scheme
 * Participant A Liquidity - Pay Participant - B (Payer)
 * Participant B Liquidity - Receive payment from Participant - A (Payee)
-* Participant A Payable to B - Existing or on demand account to record the transfer from A to B
+* Participant A Payable to Scheme - Existing or on demand account to record the transfer from A to B
+* Participant A Fees - Participant fee debit
 
 ### Activity
 #### Transfer from Participant A to Participant B
 >>>> TODO Write down examples of the above for each.
 
-#### Participant A Transfer units to Participant B (Payer to Payee direct):
-> Scheme allows for direct liquidity to Payee.
-```
-DR Participant A Liquidity                      100
-    CR Participant A Payable to B                         100
-DR Participant A Payable to B                   100
-    CR Participant B Liquidity                            100
-```
-
 #### Participant A is charged with a `10%` Transfer fee (100 * 0.10 = 10):
+We usually perform the fee charge first, to ensure Participant A has enough liquidity to cover the fee charge before
+the fee is charged.
 ```
 DR Participant A Liquidity                      10
     CR Participant A Fees                                 10
 DR Participant A Fees                           10
-    CR Scheme Fees                                        10
+    CR Participant A Payable to Scheme                    10
+```
+
+#### Participant A Transfer units to Participant B (Payer to Payee direct):
+> Scheme allows for direct liquidity to Payee.
+```
+DR Participant A Liquidity                      100
+    CR Participant A Payable to Scheme                    100
+DR Participant A Payable to Scheme              100
+    CR Participant B Liquidity                            100
 ```
 
 ### Summary
@@ -138,60 +142,74 @@ DR Participant A Fees                           10
   * `160` units minus `100` for transfer and `10` for the Scheme fee
 * A's Fees has a DR balance of; `0 + 10 - 10 = 0`
   * `10` units fee charge for transfer, followed by `10` fee units credited to Scheme Fees
-* Participant A Payable to B has a CR balance of; `0 + 100`
-  * `100` units transferred to B
-  * The `100` units will be debited once units are settled
+* Participant A Payable to Scheme has a CR balance of; `10 + 10 + 100 - 100 = 20`
+  * `10` units deposit fee charge (existing)
+  * `100` units transferred to B (in/out)
+  * `10` units transfer fee charge
+  * `20` units related to fee's need to be settled
 * B's Liquidity has a CR balance of; `0 + 100 = 100`
   * `100` units received from A
-* Scheme Fees Liquidity has a net CR balance of;  `10 + 10 = 20`
-  * `10` existing, followed by another `10` for transfer fee
 
 ### Invariants
 * A transfer will typically be performed as a 2phase commit
-    * The liquidity will be reserved until a commit on the transfer is performed
-    * If no commit is received within the provided timeout, the units will be reversed
+  * The liquidity will be reserved until a commit on the transfer is performed
+  * If no commit is received within the provided timeout, the units will be reversed (B back to scheme and scheme back to A)
 * In the event of a rollback (timeout/force), the transfer will be rolled back
 
+
+## Fee Settlement
+Fee's charged to Participant from Scheme needs to be settled. The settling of fees may be performed as an 
+immediate or deferred activity.
+The Fee is debited from the Participant's liquidity to ensure out-of-pocket spending is not possible. 
+
+### Accounts
+* Participant A Fees - The account tracking the transfer fees charged by the scheme against A
+* Participant A Payable to Scheme - Scheme operator entity used for Scheme Fee collateral
+
+### Activity
+A batch job is ran at the end of day to settle all outstanding fees.
+
+#### Fees for Participant A is Settled
+```
+DR Participant A Payable to Scheme        10
+    CR Participant A Fees                           10
+DR Participant A Payable to Scheme        10
+    CR Participant A Fees                           10
+```
+
+### Summary
+* Participant A Payable to Scheme has a balance of; `20 - (10 + 10) = 0`
+  * `10` units Fee charge for A's deposit (existing)
+  * `10` units Fee charge for A's transfer to B (existing)
+  * `20` units settled against A Fee account
+    * `Do we want to settle against another Participant A Fees account? @jorangreef`
 
 ## Settlement Reservation
 An existing transfer between Payer and Payee has been completed successfully. The purpose of the Settlement
 reservation is the instruction to reserve the transfer settlement for the Payer and Payee as collateral (_On the previously successful transfer_).
 The reservation restricts the Payer from any Funds-Out (_Withdraw of funds from Payer account_) operations.
 
-The settlement reservation may be performed on a per-transaction basis, or as a batch operation.
-
-> //TODO Determine for what duration a settlement reservation may be kept for.
-
-> //TODO When would the reservation of payer take place??
->
->       Immediately for Gross Net Settlement?
->       At the time of a callback from the Payer to indicate settlement may take place (minutes or hours after the transfer)? 
+The settlement reservation may be performed on a per-transaction basis, or as a batch operation (immediate or deferred).
 
 ### Accounts
-* Participant A Settlement - Payer settlement reserve
-* Scheme Recon - Scheme Reconciliation (Scheme operator)
+* Participant A Payable To Scheme - Payer settlement reserve
+* Participant B Receivable From Scheme - Scheme Reconciliation for Payee (Scheme operator)
       
 ### Activity
 #### Transfer Settlement Reservation (On Payer):
 > An external event or Scheme trigger will instruct the Settlement Reservation event.
 ```
-DR Participant A Settlement                     100
-    CR Scheme Recon                                       100
-DR Participant B Collatoral                     100
-    CR Participant A Payable to B                         100
+DR Participant A Payable To Scheme              100
+    CR Participant B Receivable From Scheme                 100
 ```
 
 ### Summary
-* A's Settlement has a net DR balance of;  `0 + 100 = 100`
+* A's Payable to Scheme DR balance of;  `0 + 100 = 100`
   * `100` units debited for settlement
-* Scheme Recon has a CR balance of;  `0 + 100 = 100`
+  * A negative balance indicates outstanding settlements from A (payable)
+* B's Receivable from Scheme CR balance of;  `0 + 100 = 100`
   * `100` units as credit to the recon
-  * A positive balance indicates outstanding settlements
-* B's Collateral DR has a balance of; `0 + 100 = 100`
-  * `100` units collateral is reserved as part of the reservation
-  * The reservation will be released after the funds are committed
-* A Payable to B has a CR balance of; `0 + 100 = 100`
-  * `100` units payable credit as part of reservation 
+  * A positive balance indicates outstanding settlements from B (receivable)
 
 ### Invariants
 > Do we want to have a timeout set with 2phase commit for the DR on Payer? <br/> How long will we wait for settlement?
@@ -204,34 +222,27 @@ The settlement commit would likely be process as part of a batch.
 > The settlement commit completes the lifecycle of ownership for the digital/physical asset.
 
 ### Accounts
-* Participant A Settlement  - Payee settlement reserve
-* Scheme Recon - Scheme Reconciliation (Scheme operator)
-* Participant A Payable to B - Transfer of A(DR) to B(CR)
+* Participant A Payable To Scheme - Payer settlement reserve
+* Participant B Receivable From Scheme - Scheme Reconciliation for Payee (Scheme operator)
                    
 ### Activity
 #### 1. Committing Transfer for Payee and Scheme Recon:
 ```
-DR Scheme Recon                                 100
-    CR Participant A Settlement                           100
-DR Participant A Payable to B                   100
-    CR Participant B Collatoral                           100
+DR Participant B Receivable From Scheme         100
+    CR Participant A Payable To Scheme                      100
 ```
 
 ### Summary
-* Scheme Recon has a balance of; `100 - 100 = 0`
-  * `100` units credited as part of settlement reservation, which is now debited as part of settlement commit
-* A's Settlement has a balance of; `100 - 100 = 0`
-  * `100` units received from scheme as confirmed settlement
-* A Payable to B has a balance of; `100 - 100 = 0`
-  * `100` units are now settled
-* B's Collateral has a balance of; `100 - 100 = 0`
-  * `100` units collateral is restored due to settlement
+* A's Payable to Scheme DR balance of;  `100 - 100 = 0`
+  * `100` units credited for settlement commit
+  * A balance of `0` indicates no outstanding settlements from A (payable)
+* B's Receivable from Scheme CR balance of;  `100 - 100 = 0`
+  * `100` units as debit to the recon
+  * A balance of `0` indicates no outstanding settlements from Scheme (receivable)
 
 ### Invariants
-- No commit would result in a corrupted state for the transaction.
-  - This is not the case anymore. We are only keeping the Settlement on the Payer.
-- 
->>>> TODO
+- No commit would result in a positive debit balance for A to Scheme
+- No commit would result in a positive credit balance for Scheme to B
 
 ## Participant Withdraw Collateral from Scheme
 An existing participant A would like to withdraw `units` from the Scheme.
