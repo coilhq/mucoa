@@ -35,7 +35,7 @@ Transfers for TB are immutable.
 | debit_account_id  | `u128`            | The unit transfer from (Payer) account id. |
 | credit_account_id | `u128`            | The unit transfer to (Payee) account id |
 | user_data         | `u128`            | Implementation specific data on transfer. Opaque third-party identifier to link this transfer (many-to-one) to an external entity |
-| reserved          | `[32]u8 - array`  | Accounting policy primitives. Not available. |
+| reserved          | `[32]u8 - array`  | Accounting policy primitives. Example; ILP packet. |
 | timeout           | `u64`             | Used for a 2-phase transfer. The maximum wait timeout in milliseconds for a commit. |
 | code              | `u32`             | A chart of accounts code describing the reason for the transfer (e.g. deposit, settlement) |
 | flags             | `TransferFlags`   | See transfer flags. |
@@ -48,7 +48,7 @@ Transfers for TB are immutable.
 |----------------------------------|-------------------|-------------|
 | linked                           | `bool`            | Is the account linked to another account. |
 | two_phase_commit                 | `bool`            | Is the transfer a 2phase commit transfer. |
-| condition                        | `bool`            | Does the transfer support transfer conditions |
+| condition                        | `bool`            | Does the transfer support transfer conditions. |
 | padding                          | `u29`             | Data to be used for padding. |
 
 ## Commit
@@ -58,7 +58,7 @@ Commits for TB are immutable. A commit can only be performed on a transfer.
 |-------------------|-------------------|-------------|
 | id                | `u128`            | Global unique id for a transfer. |
 | reserved          | `[32]u8 - array`  | Accounting policy primitives. Not available. |
-| code              | `u32`             | ??? |
+| code              | `u32`             | A chart of accounts code describing the reason for the commit (e.g. deposit, settlement) |
 | flags             | `CommitFlags`     | See commit flags. |
 | timestamp         | `u64`             | The current state machine timestamp of the commit for state tracking. |
 
@@ -68,5 +68,5 @@ Commits for TB are immutable. A commit can only be performed on a transfer.
 |----------------------------------|-------------------|-------------|
 | linked                           | `bool`            | Is the account linked to another account. |
 | reject                           | `bool`            | Has the commit been rejected. |
-| preimage                         | `bool`            | ??? |
+| preimage                         | `bool`            | Flag to indicate whether the commit relies on the associated transfer being flagged as a condition transfer.  |
 | padding                          | `u29`             | Data to be used for padding. |

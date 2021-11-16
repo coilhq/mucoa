@@ -114,7 +114,6 @@ is a separate action that is between A to Scheme and B from Scheme.
 
 ### Activity
 #### Transfer from Participant A to Participant B
->>>> TODO Write down examples of the above for each.
 
 #### Participant A is charged with a `10%` Transfer fee (100 * 0.10 = 10):
 We usually perform the fee charge first, to ensure Participant A has enough liquidity to cover the fee charge before
@@ -184,7 +183,7 @@ DR Participant A Payable to Scheme        10
   * `20` units settled against A Fee account
     * `Do we want to settle against another Participant A Fees account? @jorangreef`
 
-## Settlement Reservation
+## Settlement - Reservation
 An existing transfer between Payer and Payee has been completed successfully. The purpose of the Settlement
 reservation is the instruction to reserve the transfer settlement for the Payer and Payee as collateral (_On the previously successful transfer_).
 The reservation restricts the Payer from any Funds-Out (_Withdraw of funds from Payer account_) operations.
@@ -215,7 +214,7 @@ DR Participant A Payable To Scheme              100
 > Do we want to have a timeout set with 2phase commit for the DR on Payer? <br/> How long will we wait for settlement?
 
 
-## Settlement Commit
+## Settlement - Commit
 An existing settlement reservation for a Payer has been completed successfully (a current reserved settlement of `100` units).
 The purpose of the Settlement commit is the instruction to finalise the transfer settlement between Payer and the Scheme Recon.
 The settlement commit would likely be process as part of a batch.
