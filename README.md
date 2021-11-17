@@ -131,6 +131,8 @@ DR Participant A Fees                           10
 DR Participant A Liquidity                      100
     CR Participant A Payable to Scheme                    100
 DR Participant A Payable to Scheme              100
+    CR Participant A Payable to B                         100
+DR Participant A Payable to B                   100
     CR Participant B Liquidity                            100
 ```
 
@@ -148,6 +150,7 @@ DR Participant A Payable to Scheme              100
   * `20` units related to fee's need to be settled
 * B's Liquidity has a CR balance of; `0 + 100 = 100`
   * `100` units received from A
+* A's Liquidity Payable to B has a balance of; `0 + 100 - 100 = 0`
 
 ### Invariants
 * A transfer will typically be performed as a 2phase commit
