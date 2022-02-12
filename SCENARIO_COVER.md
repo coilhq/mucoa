@@ -2,6 +2,26 @@
 The motivation behind this document stems from [MJL - Ledgers in the Hub](https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Settlement/ledgers-in-the-hub.html)
 The purpose is to illustrate the chart of accounts (COA) for covering each of the required Mojaloop Settlement Models.
 
+--TODO @jason, furthermore explain that the purpose of the document is to cover the journey of funds moving in MJL, and 
+the tracking of those funds.
+
+
+## Deposit
+```
+DR Bank                                     120
+    CR Participant A Collateral                         120
+```
+
+```
+DR Participant A Collateral                 120
+    CR Participant A Liquidity                          120
+```
+
+
+
+
+
+
 ## Definitions
 | Definition  | Description                                                                          |
 |-------------|--------------------------------------------------------------------------------------|
@@ -10,7 +30,7 @@ The purpose is to illustrate the chart of accounts (COA) for covering each of th
 | Transfer    | A debit/credit from one account to another account                                   |
 
 
-## Immediate Gross Bilateral Settlement (IGS)
+## Bilateral Immediate Gross Settlement (B-IGS)
 Settlements are gross if each transfer is settled separately. 
 *Gross* settlements may be immediate or deferred. 
 They are deferred if approval for settlement from outside the Hub is required, and immediate if the Hub can proceed to settlement of a transfer without requiring any external approval. 
@@ -56,20 +76,21 @@ DR Settlement B Payable to C                20
 | **Settlement A Payable to B** | `0`     | `0`     | `0`     |------> Opening Balance <-------
 | **Settlement B Payable to A** | `0`     | `0`     | `0`     |------> Opening Balance <-------
 | **Settlement B Payable to C** | `0`     | `0`     | `0`     |------> Opening Balance <-------
-| `Transfer-01`                 |         |         |         |
+| `Transfer 1`                  |         |         |         |
 | Participant A Liquidity       | `100`   |         | `0`     |------> Transfer 1 <-------
 | Settlement A Payable to B     | `100`   | `100`   | `0`     |--> Bilateral (Recording)
 | Participant B Liquidity       |         | `100`   | `100`   |--> A Credit B
-| `Transfer-02`                 |         |         |         |
+| `Transfer 2`                  |         |         |         |
 | Participant B Liquidity       | `10`    |         | `90`    |------> Transfer 2 <-------
 | Settlement B Payable to A     | `10`    | `10`    | `0`     |--> Bilateral (Recording)
 | Participant A Liquidity       |         | `10`    | `10`    |--> B Credit A
-| `Transfer-03`                 |         |         |         |
+| `Transfer 3`                  |         |         |         |
 | Participant B Liquidity       | `20`    |         | `70`    |------> Transfer 3 <-------
 | Settlement B Payable to C     | `20`    | `20`    | `0`     |--> Bilateral (Recording)
 | Participant C Liquidity       |         | `20`    | `20`    |--> B Credit C
-> `Liquidity` = accounts for participants balance. 
-> `Settlement [X] Payable to [Y]` = accounts to cover bilateral gross. 
+> `Liquidity` - Accounts for participants balance. 
+> 
+> `Settlement [X] Payable to [Y]` - Accounts to cover bilateral gross. 
 
 #### Settlement Report - Immediate Gross Bilateral:
 * A paid to B = 100
@@ -81,7 +102,7 @@ DR Settlement B Payable to C                20
 ## Bilateral Deferred Net Settlement (B-DNS)
 Settlements are deferred net if a number of transfers are settled together. 
 Net Settlements (in which a number of transfers are settled together) are by definition deferred 
-(since it takes time to construct a batch.)
+(since it takes time to construct a batch).
 
 ### Activity
 To follow are the transfer and journal activities for Bilateral DNS.
@@ -137,9 +158,24 @@ DR Settlement B Payable to C                20
 > `Settlement [X] Payable to [Y]` = accounts to cover bilateral gross.
 
 
+--TOOD @jason, refine, add more descriptions. Indicate it is a 2-step process.
 #### Settlement Reservation - [A to B], [B to A] and [B to C] 
 > The settlement reservation occurs later during the day as a batch process.
 > Since the settlement is deferred, the settlement will occur as a batch process.
+
+
+```
+DR Participant A Collateral                 100
+    CR Settlement A Paid B                              100
+```
+
+```
+DR Settlement A Paid B                      100
+    CR Participant A Collateral                         100
+```
+
+
+
 ```
 DR Settlement A Payable to B                100
     CR Settlement B Receivable from A                   100
@@ -148,6 +184,8 @@ DR Settlement B Payable to A                10
 DR Settlement B Payable to C                20
     CR Settlement C Receivable from B                   20
 ```
+  
+--TODO @jason, introduce the collateral account and replace receivable.
 
 #### Account Balances Settlement Reservation
 > The Payable/Receivable accounts are utilized to track settlement reservation.  
@@ -161,16 +199,17 @@ DR Settlement B Payable to C                20
 | **Settlement B Receivable from A**   | `0`     | `0`     | `0`     |------> Opening Balance <-------
 | **Settlement A Receivable from B**   | `0`     | `0`     | `0`     |------> Opening Balance <-------
 | **Settlement C Receivable from B**   | `0`     | `0`     | `0`     |------> Opening Balance <-------
-| `Settlement-Reserve-01`              |         |         |         |------> Reserve 1 <-------
+| `Settlement-Reserve 1`               |         |         |         |------> Reserve 1 <-------
 | Settlement A Payable to B            | `100`   |         | `-100`  |--> Payer
 | Settlement B Receivable from A       |         | `100`   | `100`   |--> Payee
-| `Settlement-Reserve-02`              |         |         |         |------> Reserve 2 <-------
+| `Settlement-Reserve 2`               |         |         |         |------> Reserve 2 <-------
 | Settlement B Payable to A            | `10`    |         | `-10`   |--> Payer
 | Settlement A Receivable from B       |         | `10`    | `10`    |--> Payee
-| `Settlement-Reserve-03`              |         |         |         |------> Reserve 3 <-------
+| `Settlement-Reserve 3`               |         |         |         |------> Reserve 3 <-------
 | Settlement B Payable to C            | `20`    |         | `-20`   |--> Payer
 | Settlement C Receivable from B       |         | `20`    | `20`    |--> Payee
 > `Settlement [X] Payable to [Y]`    = accounts to cover bilateral gross for payer.
+> 
 > `Settlement [X] Receivable to [Y]` = accounts to cover bilateral gross for payee.
 
 #### Settlement Commit - [A to B], [B to A] and [B to C]
@@ -206,8 +245,9 @@ DR CR Settlement C Receivable from B        20
 | Settlement B Payable to C          |         | `20`    | `0`     |--> Payer
 | Settlement C Receivable from B     | `20`    |         | `0`     |--> Payee
 
-> `Settlement [X] Payable to [Y]`    = accounts to cover bilateral gross for payer.
-> `Settlement [X] Receivable to [Y]` = accounts to cover bilateral gross for payee.
+> `Settlement [X] Payable to [Y]` - Accounts to cover bilateral gross for payer.
+> 
+> `Settlement [X] Receivable to [Y]` - Accounts to cover bilateral gross for payee.
 
 #### Settlement Report - Immediate Gross Bilateral:
 * A paid to B = 100
