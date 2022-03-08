@@ -9,8 +9,6 @@
 * [Participant Withdraw Collateral from Hub](#participant-withdraw-collateral-from-scheme)
 * [Participant Close Account](#participant-close-account)
 
-
-
 ## Participant Joins the Hub
 A new participant joins the scheme and the necessary accounts and configurations are provisioned in the system.
 At this time the participant has no liquidity _(a current position of zero and a net debit cap of zero)_.
@@ -52,8 +50,6 @@ DR Bank                                         120
 ```
 DR Participant A Collateral                     10
     CR Participant A Fees                                 10
-DR Participant A Fees                           10
-    CR Participant A Payable to Hub                       10
 ```
 
 #### `(Repeatable)` Participant A decides to make 100 collateral available as liquidity:
@@ -94,14 +90,12 @@ DR Hub Credit Line                              50
 * Participant A Payable to Hub has a CR balance of; `0 + 10`
     * `10` units Fee charge for A's deposit
 
-### Invariants
-> //TODO
 
 ## Transfer
 Participant A (Payer) would like to transfer funds to participant B (Payee).
-At this time the Payer participant A has liquidity of 160 units _(and a gross debit cap of 200)_.
+At this time the Payer participant A has liquidity of `160` units _(and a gross debit cap of `200` units)_.
 Participant A would like to transfer `100` units to Participant B.
-The Hub Fee has a CR balance of `10` units (from a previous Participant deposit).
+The Hub Fee has a CR balance of `10` units _(from a previous Participant deposit)_.
 
 The liquidity from A to B is immediately available to B, however, the settlement reservation and commit
 is a separate action that is between A to Hub and B from Hub.
