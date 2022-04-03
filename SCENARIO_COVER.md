@@ -34,32 +34,30 @@ To follow are the transfer and journal activities for IGS.
 
 #### Transfer 1 [A to B]
 > DR on Participant A Liquidity account, followed by a CR on Participant B account of 100 units.
+
+# TODO @jason Remove the jump from Collateral to Liquidity (not necessary)
+# TODO @jason account name `Payable`, should be `Cleared`
+
 ```
 DR Participant A Liquidity                  100
-    CR A Payable to B                                   100
-DR A Payable to B                           100
-    CR Participant B Collateral                         100
-DR Participant B Collateral                 100
+    CR A Clearing B                                     100
+DR A Clearing B                             100
     CR Participant B Liquidity                          100
 ```
 #### Transfer 2 [B to A]
 > DR on Participant B Liquidity account, followed by a CR on Participant A account of 10 units.
 ```
 DR Participant B Liquidity                  10
-    CR B Payable to A                                   10
-DR B Payable to A                           10
-    CR Participant A Collateral                         10
-DR Participant A Collateral                 10
+    CR B Clearing A                                     10
+DR B Clearing A                             10
     CR Participant A Liquidity                          10
 ```
 #### Transfer 3 [B to C]
 > DR on Participant B Liquidity account, followed by a CR on Participant C account of 20 units.
 ```
 DR Participant B Liquidity                  20
-    CR B Payable to C                                   20
-DR B Payable to C                           20
-    CR Participant C Collateral                         20
-DR Participant C Collateral                 20
+    CR B Clearing C                                     20
+DR B Clearing C                             20
     CR Participant C Liquidity                          20
 ```
 
@@ -178,6 +176,9 @@ DR Participant C Collateral                 20
 > B-DNS will usually occur as a batch process.
 > The clearing reservation and commit will form part of a 2-phase Transfer process.
 
+# TODO @jason A Payable to B should be an [Settlement/Bank] Account
+# [A Clearing B] and [A Settlement B]
+
 ```
 DR Participant A Collateral                 100
     CR A Payable to B                                   100
@@ -220,6 +221,8 @@ DR Participant B Collateral                 20
 #### Settlement Reservation - [A to B], [B to A] and [B to C]
 > The order of the clearing/settlement is not important.
 > Once settlement occurs, the Payable units are debited and collateral is credited.
+                
+# TODO @jason A Payable to B should be an [Settlement/Bank/Clearing] Account
 
 ```
 DR A Payable to B                           100
@@ -281,36 +284,30 @@ To follow are the transfer and journal activities for Multilateral DNS.
 > DR on Participant A Liquidity account, followed by a CR on Participant B account of 100 units.
 ```
 DR Participant A Liquidity                  100
-    CR A Payable to Hub                                 100
-DR A Payable to Hub                         100
-    CR A Payable to B                                   100
-DR A Payable to B                           100
-    CR Participant B Collateral                         100
-DR Participant B Collateral                 100
+    CR A Clearing Hub                                   100
+DR A Clearing Hub                           100
+    CR A Clearing B                                     100
+DR A Clearing B                             100
     CR Participant B Liquidity                          100
 ```
 #### Transfer 2 [B to A]
 > DR on Participant B Liquidity account, followed by a CR on Participant A account of 10 units.
 ```
 DR Participant B Liquidity                  10
-    CR B Payable to Hub                                 10
-DR B Payable to Hub                         10
-    CR B Payable to A                                   10
-DR B Payable to A                           10
-    CR Participant A Collateral                         10
-DR Participant A Collateral                 10
+    CR B Clearing Hub                                   10
+DR B Clearing Hub                           10
+    CR B Clearing A                                     10
+DR B Clearing A                             10
     CR Participant A Liquidity                          10
 ```
 #### Transfer 3 [B to C]
 > DR on Participant B Liquidity account, followed by a CR on Participant C account of 20 units.
 ```
 DR Participant B Liquidity                  20
-    CR B Payable to Hub                                 20
-DR B Payable to Hub                         20
-    CR B Payable to C                                   20
-DR B Payable to C                           20
-    CR Participant C Collateral                         20
-DR Participant C Collateral                 20
+    CR B Clearing Hub                                   20
+DR B Clearing Hub                           20
+    CR B Clearing C                                     20
+DR B Clearing C                             20
     CR Participant C Liquidity                          20
 ```
 
@@ -358,17 +355,17 @@ DR Participant C Collateral                 20
 
 ```
 DR Participant A Collateral                 100
-    CR A Payable to B                                   100
-DR Hub Recon                                100
-    CR A Payable to Hub                                 100
+    CR A Clearing B                                     100
+DR Hub Settlement                           100
+    CR A Clearing Hub                                   100
 DR Participant B Collateral                 10
-    CR B Payable to A                                   10
-DR Hub Recon                                10
-    CR B Payable to Hub                                 10
+    CR B Clearing A                                     10
+DR Hub Settlement                           10
+    CR B Clearing Hub                                   10
 DR Participant B Collateral                 20
-    CR B Payable to C                                   20
-DR Hub Recon                                20
-    CR B Payable to Hub                                 20
+    CR B Clearing C                                     20
+DR Hub Settlement                           20
+    CR B Clearing Hub                                   20
 ```
 
 #### Account Balances - Clearing Reservation
@@ -411,19 +408,21 @@ DR Hub Recon                                20
 #### Settlement Reservation - [A to B], [B to A] and [B to C]
 > The order of the clearing/settlement is not important.
 > Once settlement occurs, the Payable units are debited and collateral is credited.
+        
+# TODO @jason - [Hub Recon] should be [Clearing Scheme]
 
 ```
-DR A Payable to B                           100
+DR A Clearing B                             100
     CR Participant A Collateral                         100
-DR A Payable to Hub                         100
+DR A Clearing Hub                           100
     CR Hub Recon                                        100
-DR B Payable to A                           10
+DR B Clearing A                             10
     CR Participant B Collateral                         10
-DR B Payable to Hub                         10
+DR B Clearing Hub                           10
     CR Hub Recon                                        10
-DR B Payable to C                           20
+DR B Clearing C                             20
     CR Participant B Collateral                         20
-DR B Payable to Hub                         20
+DR B Clearing Hub                           20
     CR Hub Recon                                        20
 ```
 

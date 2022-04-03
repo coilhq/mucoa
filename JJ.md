@@ -1,50 +1,97 @@
+The basic journal entries:
 
-A deposits 100
+-----------------------------------------------------------
+DEPOSIT
+-----------------------------------------------------------
 
-DR Bank           100
-CR A Collateral      100
+```
+DR A Deposit                                100
+    CR A Collateral                                     100
+DR A Collateral                             100
+    CR A Liquidity                                      100
+```
 
---
+-----------------------------------------------------------
+CLEARING (A pays B = 70, these are linked transfers)
+-----------------------------------------------------------
 
-DR A Collateral   100
-CR A Liquidity       100
+The intermediary account here is only a tracing account
+to simplify queries (queries then need only one DB index).
 
-A is owed = collateral (0) + liquidity (100) = 100
+> Participant A's clearing account with respect to participant B
 
---
+```
+DR A Liquidity                               70
+    CR A Clearing (B)                                    70
+DR A Clearing (B)                            70
+    CR B Liquidity                                       70
+```
 
-CLEARING (creating obligations between participants)
+-----------------------------------------------------------
+SETTLEMENT (scheme is notified that A settled with B)
+-----------------------------------------------------------
 
-DR A Liquidity     100
-CR B Collateral      100
---
-DR B Collateral    100
-CR B Liquidity       100
---
+```
+DR A Settlement (B)                          70
+    CR A Liquidity                                       70
+```
 
-A can spend no further!!! Liquidity = 0
+-----------------------------------------------------------
 
-100 of A's collateral is now backing A's obligation to B of 100
-100 from A's OTHER credit card goes to B
-when A's obligation to B of 100 is discharged, A's collateral must become free again
+Now let's add C into the mix.
+In addition to A's transfer to B above, B pays C 170.
 
-SETTLEMENT (discharging obligations between participants)
+From beginning to end:
 
-you pay another 100 (to B)
+A liquidity = 100
+B liquidity = 100
+C liquidity = 100
 
-2x EFTS (100 each = 200) - obligation of 100 = collateral of 100
+A pays B = 70
+B pays C = 170
+C pays A = 50
 
-200 - 100 = 100
+A liquidity = 100 - 70 + 50 = 80
+B liquidity = 100 + 70 - 170 = 0
+C liquidity = 100 + 170 - 50 = 220
 
--- two-phase commit transfer:
-DR A Settlement B  100
-CR A Collateral      100
---
+Note 1: Total liquidity backed by collateral remains constant = 300
+Note 2: B can no longer clear payments because B's liquidity is exhausted.
+Note 3: The goal of settlement is to get liquidity back to what it was before clearing.
 
-A's collateral balance is now 100
-A's liquidity balance is 0
+BILATERAL NET SETTLEMENT:
 
---
+A owes B less what B owes A = 70
+B owes C less what C owes B = 170
+C owes A less what A owes C = 50
 
-DR A Collateral   100
-CR A Liquidity       100
+A liquidity plus settlement = 80 + 70 - 50 = 80 + 20 = 100
+B liquidity plus settlement = 0 + 170 - 70 = 0 + 100 = 100
+C liquidity plus settlement = 220 + 50 - 170 = 220 - 120 = 100
+
+MULTILATERAL NET SETTLEMENT:
+
+A owes someone who owes someone else, so A should go direct to C:
+(there are multiple ways to arrange who pays what, all are valid)
+
+A owes C (up to what A owes B) less what C owes A = 70 - 50 = 20
+B owes C less what A owes C on B's behalf = 170 - 70 = 100
+
+```
+DR A Settlement (C)        20
+    CR A Liquidity              20
+
+DR B Settlement (C)       100
+    CR B Liquidity             100
+```
+
+A and B's liquidity is now both back up to 100.
+
+This is the most efficient way of doing multilateral net because it
+doesn't require a "pot" at all and minimizes the number of
+settlement transactions.
+
+Another simpler way to do this is for anyone who owes something to
+pay into a "pot" and then for anyone who is owed something to be
+paid out of the "pot". This requires a pot and a few more
+transactions.
