@@ -14,6 +14,7 @@ This guide describes how settlements are managed by the Mojaloop Hub using vario
 * [Participant Deposit Collateral to Hub](#participant-deposits-collateral-to-hub)
 * [Payer Transfer units to a Payee](#transfer-clearing)
 * [Settlement](#settlement)
+* [Fees](#hub-charges-fees-on-deposit-of-collateral)
 * [Participant Withdraw Collateral from Hub](#participant-withdraw-collateral-from-hub)
 * [Participant Close Account](#participant-close-account)
 
@@ -66,6 +67,7 @@ Scheme Fee's are not mandatory for a deposit and may also be applicable to;
   * Transfer - Fee charged per transaction
   * Account - Monthly account service charges
 > (where fee is a function of collateral deposit amount = 110 * 9.1% = 10)
+> Fee's will be applied to the participant `Liquidity` accounts.
 ```
 DR A Liquidity                                  10
     CR A Fees                                             10
