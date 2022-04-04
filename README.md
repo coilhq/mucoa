@@ -12,9 +12,9 @@ This guide describes how settlements are managed by the Mojaloop Hub using vario
 * [Definitions](#definitions)
 * [Participant Joins the Hub](#participant-joins-the-hub)
 * [Participant Deposit Collateral to Hub](#participant-deposits-collateral-to-hub)
+* [Fees](#hub-charges-fees-on-deposit-of-collateral)
 * [Payer Transfer units to a Payee](#transfer-clearing)
 * [Settlement](#settlement)
-* [Fees](#hub-charges-fees-on-deposit-of-collateral)
 * [Participant Withdraw Collateral from Hub](#participant-withdraw-collateral-from-hub)
 * [Participant Close Account](#participant-close-account)
 
