@@ -219,22 +219,22 @@ DR B Settlement (C)                             100
 ```
 
 ### Account Balances - Settlement 1, 2 & 3 (single settlement transfer)
-| Account            | Debits | Credits | Balance |
-|--------------------|--------|---------|---------|
-| `Opening Balances` |        |         |         |
-| **A Settlement C** | `0`    | `0`     | `0`     |------> Opening Balance <-------
-| **B Settlement C** | `0`    | `0`     | `0`     |------> Opening Balance <-------
-| **A Liquidity**    | `0`    | `0`     | `80`    |------> Opening Balance <-------
-| **B Liquidity**    | `0`    | `0`     | `0`     |------> Opening Balance <-------
-| **C Liquidity**    | `0`    | `0`     | `220`   |------> Opening Balance <-------
-| `Settlement 2 & 3` |        |         |         |------> Settlement 2 & 3 <-------
-| A Settlement C     | `20`   |         | `-20`   |--> A Settlement to B
-| A Liquidity        |        | `20`    | `100`   |--> A Liquidity is restored
-| B Settlement C     | `100`  |         | `-100`  |--> B Settlement to C
-| B Liquidity        |        | `100`   | `100`   |--> B Liquidity is restored
+| Account               | Debits | Credits | Balance |
+|-----------------------|--------|---------|---------|
+| `Opening Balances`    |        |         |         |
+| **A Settlement C**    | `0`    | `0`     | `0`     |------> Opening Balance <-------
+| **B Settlement C**    | `0`    | `0`     | `0`     |------> Opening Balance <-------
+| **A Liquidity**       | `0`    | `0`     | `80`    |------> Opening Balance <-------
+| **B Liquidity**       | `0`    | `0`     | `0`     |------> Opening Balance <-------
+| **C Liquidity**       | `0`    | `0`     | `220`   |------> Opening Balance <-------
+| `Settlement 1, 2 & 3` |        |         |         |------> Settlement 2 & 3 <-------
+| A Settlement C        | `20`   |         | `-20`   |--> A Settlement to B
+| A Liquidity           |        | `20`    | `100`   |--> A Liquidity is restored
+| B Settlement C        | `100`  |         | `-100`  |--> B Settlement to C
+| B Liquidity           |        | `100`   | `100`   |--> B Liquidity is restored
 
 
-### BILATERAL Net Settlement:
+### BILATERAL Net Settlement Model:
 ```
 A owes B less what B owes A = 70
 B owes C less what C owes B = 170
@@ -245,7 +245,7 @@ B liquidity plus settlement = 0 + 170 - 70 = 0 + 100 = 100
 C liquidity plus settlement = 220 + 50 - 170 = 220 - 120 = 100
 ```
 
-### MULTILATERAL Net Settlement: 
+### MULTILATERAL Net Settlement Model: 
 ```
 A owes someone who owes someone else, so A should go direct to C:
 (there are multiple ways to arrange who pays what, all are valid)
