@@ -38,7 +38,7 @@ At this time the participant has no liquidity _(a current position of zero and a
 Participant with relevant information is captured, but no accounts have been created for the participant.
 
 ## PARTICIPANT DEPOSITS COLLATERAL TO HUB
-A participant decides to deposit 100 units collateral into the Hub.
+A participant decides to deposit 110 units collateral into the Hub.
 
 ### Accounts
 * **Deposit** - Account recording the deposit of units
@@ -62,7 +62,7 @@ DR A Collateral                                 110
 ```
 
 #### Hub charges Fees on Deposit of Collateral:
-> (where fee is a function of collateral deposit amount = 120 * 9.1% = 10)
+> (where fee is a function of collateral deposit amount = 110 * 9.1% = 10)
 ```
 DR A Liquidity                                  10
     CR A Fees                                             10
@@ -93,6 +93,9 @@ DR A Liquidity                                  10
     * `100` units for initial release, minus `10` as a Deposit Fee charge
 * A's Fees has a CR balance of; `0 + 10 = 10`
   * `10` units fee charge for deposit on liquidity
+* Scheme Fee's are not mandatory for a deposit and may also be applicable to;
+  * Transfer - Fee charged per transaction
+  * Account - Monthly account service charges
 
 ## TRANSFER (CLEARING)
 Participant A (Payer) would like to transfer funds to participant B (Payee, these are linked transfers).
