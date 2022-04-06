@@ -1,0 +1,53 @@
+@startuml
+title "__**Central Ledger with Tigerbeetle Enabled**__\n"
+
+actor "DFSP" as dfsp
+note over dfsp
+    * Participant Bank A
+    * Participant Bank B
+end note
+
+box Central Ledger #FFFFF9
+    participant "**API**" as cl_api
+    participant "__api__ / Handler" as cl_handler
+    participant "__domain__ / Service" as cl_domain
+    participant "__models__ / Facade" as cl_facade
+
+    note over cl_api
+        REST API deployed in NodeJS
+    end note
+
+    note over cl_handler
+        JSON request decoded and
+        sent for processing via a handler
+    end note
+
+    note over cl_domain
+        Domain folder where the service
+        functions are exposed.
+    end note
+
+    note over cl_facade
+        Facade for storing/retrieving data from
+        MySQL and TigerBeetle
+    end note
+end box
+
+box Storage #F9FFF9
+	control "Tigerbeetle Client" as tb_client
+	collections "Tigerbeetle Nodes" as tb_nodes
+	database "central-ledger" as cl_db
+	database "Redis" as redis_cache
+end box
+
+autonumber
+group Create Transfer //(Happy Path)//
+    dfsp -> cl_api : Form data Captured\n**(multipart/form-data)**
+end
+
+autonumber
+group Lookup Transfer //(Happy Path)//
+    dfsp -> cl_api : Form data Captured\n**(multipart/form-data)**
+end
+
+@enduml
