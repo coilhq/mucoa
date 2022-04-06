@@ -25,11 +25,14 @@ This guide describes how settlements are managed by the Mojaloop Hub using vario
 | Hub         | The Mojaloop operator.                                                              |
 | Transfer    | A debit/credit from one account to another account.                                 |
 | DFSP        | Digital Financial Service Provider.                                                 |
-
+> TODO @jason, rest of definitions still to be added.
 
 ## PARTICIPANT JOINS THE HUB
-A new participant joins the scheme and the necessary accounts and configurations are provisioned in the system.
+A new participant joins the scheme and the necessary participant and configuration data is provisioned in the system.
 At this time the participant has no liquidity _(a current position of zero and a net debit cap of zero)_.
+> TODO @jason, remember FICA.
+> TODO @jason, ensure we only use Scheme and not Hub/Scheme
+> TODO @jason, make all the headings Title Case (h1...h4).
 
 ### Entities
 * Hub - (Hub operator)
@@ -39,7 +42,7 @@ At this time the participant has no liquidity _(a current position of zero and a
 Participant with relevant information is captured, but no accounts have been created for the participant.
 
 ## PARTICIPANT DEPOSITS COLLATERAL TO HUB
-A participant decides to deposit 110 units collateral into the Hub.
+A participant decides to deposit `110` units collateral into the Hub.
 
 ### Accounts
 * **Deposit** - Account recording the deposit of units
@@ -47,46 +50,60 @@ A participant decides to deposit 110 units collateral into the Hub.
 * **Liquidity** - Account recording the liquidity available for the participant
 * **Fee** - Account recording fees charged by the hub
 
+> TODO @jason, add Fee's as part of the mix for Transfer also.
+> TODO @jason, add the credit extension for the liquidity when participant joins the scheme.
+> TODO @jason Rename Activity to Events
+> TODO @jason Write out full journal entries as participant accounts `DR Participant A Deposit`
+> TODO @jason Right align the journal entry amounts
+
 ### Activity
 A cash deposit is made at a bank that supports loading of assets into the Hub. The hub is notified of the payment.
 The necessary accounts are created  
 
 #### Participant A Deposits Collateral (Bank to Hub, then Hub to Participant):
-> The handing of assets occur outside the hub. A notification event is sent to the hub to inform the hub of the deposit.
-> (either all collateral they have, or at most N units, in this case at most 100 units)
+The handing of assets occur outside the hub. A notification event is sent to the hub to inform the hub of the deposit.
+(either all collateral they have, or at most N units, in this case at most 100 units)
 
+> TODO @jason use the below as an example for styling the journal entries.
 ```
 DR A Deposit                                    110
-    CR A Collateral                                       110
+    CR A Collateral                                    110
 DR A Collateral                                 110
-    CR A Liquidity                                        110
+    CR A Liquidity                                     110
 ```
 
-#### Hub charges Fees on Deposit of Collateral:
+#### Hub Charges Fees On Deposit of Collateral:
 Scheme Fee's are not mandatory for a deposit and may also be applicable to;
   * Transfer - Fee charged per transaction
   * Account - Monthly account service charges
-> (where fee is a function of collateral deposit amount = 110 * 9.1% = 10)
-> Fee's will be applied to the participant `Liquidity` accounts.
+(where fee is a function of collateral deposit amount = 110 * 9.1% = 10)
+Fee's will be applied to the participant `Liquidity` accounts.
+
 ```
-DR A Liquidity                                  10
-    CR A Fees                                             10
+DR A Liquidity                                   10
+    CR A Fees                                              10
 ```
 
+> TODO @jason Negative values will have DR and  `DR 110 / CR 110`
+> TODO @jason ^^^^ Amount needs to be aligned
+> TODO @jason Remove the bolding on the Account column for opening balances.
+> TODO @jason Drop row `Opening Balances`
+> TODO @jason Bold headers instead of backticks `Opening Balances` to **Opening Balances**
+
 ### Account Balances
-| Account            | Debits | Credits | Balance |
-|--------------------|--------|---------|---------|
-| `Opening Balances` |        |         |         |
-| **A Deposit**      | `0`    | `0`     | `0`     |------> Opening Balance <-------
-| **A Collateral**   | `0`    | `0`     | `0`     |------> Opening Balance <-------
-| **A Liquidity**    | `0`    | `0`     | `0`     |------> Opening Balance <-------
-| **A Fees**         | `0`    | `0`     | `0`     |------> Opening Balance <-------
-| `Deposit 1`        |        |         |         |------> Deposit 1 <-------
-| A Deposit          | `110`  |         | `-110`  |--> Debit for Hub
-| A Collateral       | `110`  | `110`   | `0`     |--> Collateral (Recording)
-| A Liquidity        |        | `110`   | `110`   |--> Liquidity Available
-| A Liquidity        | `10`   |         | `100`   |--> Fee Charge on A
-| A Fees             |        | `10`    | `10`    |--> Fee Recorded for Hub 
+| Account            | Debits | Credits | Balance   |
+|--------------------|--------|---------|-----------|
+| `Opening Balances` |        |         |           |
+| A Deposit          | `0`    | `0`     | `0`       |------> Opening Balance <-------
+| A Collateral       | `0`    | `0`     | `0`       |------> Opening Balance <-------
+| A Liquidity        | `0`    | `0`     | `0`       |------> Opening Balance <-------
+| A Fees             | `0`    | `0`     | `0`       |------> Opening Balance <-------
+| **Deposit 1**      |        |         |           |------> Deposit 1 <-------
+| A Deposit          | `110`  |         | `DR 110`  |--> Debit for Hub
+| A Collateral       | `110`  | `110`   | `0`       |--> Collateral (Recording)
+| A Liquidity        |        | `110`   | `110`     |--> Liquidity Available
+| A Liquidity        | `10`   |         | `100`     |--> Fee Charge on A
+| A Fees             |        | `10`    | `CR 10`   |--> Fee Recorded for Hub 
 
 
 ### Summary
@@ -100,12 +117,13 @@ DR A Liquidity                                  10
   * `10` units fee charge for deposit on liquidity
 
 ## TRANSFER (CLEARING)
-Participant A (Payer) would like to transfer funds to participant B (Payee, these are linked transfers).
+Participant A (Payer) would like to transfer funds to participant B (Payee, these are linked transfers i.e. they succeed or fail together as a transaction). 
 At this time the Payer participant A has liquidity of `100` units liquidity.
 Participant A would like to transfer `100` units to Participant B.
-
 The liquidity from A to B is immediately available to B, however, 
 the settlement reservation and commit is a separate action that is between A to Hub and B from Hub.
+
+> TODO @jason explain what a linked transfer is here...
 
 ### Accounts
 * **Liquidity A** - Pay Participant - B (Payer)
@@ -113,10 +131,12 @@ the settlement reservation and commit is a separate action that is between A to 
 * **Participant A Clearing B** - Existing or on demand account to record the clearing from A to B
 
 ### Activity
-A pays B = 70, these are linked transfers
+A pays B = 70, these are linked transfers, then 
+> TODO @jason complete the activity.
 
 #### Participant A Transfer units to Participant B (Payer to Payee direct):
-> Hub allows for direct liquidity to Payee.
+Hub allows for direct liquidity to Payee.
+
 ```
 DR A Liquidity                                  70
     CR A Clearing (B)                                     70
@@ -136,7 +156,7 @@ DR A Clearing (B)                               70
 | A Clearing B        | `70`   | `70`    | `0`     |--> Cleaaring (Recording)
 | B Liquidity         |        | `70`    | `170`   |--> Increase at B
 
-> Now let's add Participant C into the mix.
+Now let's add Participant C into the mix (B pays C).
 ```
 DR B Liquidity                                  170
     CR B Clearing (C)                                     170
@@ -144,7 +164,7 @@ DR B Clearing (C)                               170
     CR C Liquidity                                        170
 ```
 
-> A decides to pay C.
+C decides to pay A.
 ```
 DR C Liquidity                                  50
     CR C Clearing (A)                                     50
@@ -185,10 +205,11 @@ DR C Clearing (A)                               50
   * Opening balance of `100` units
   * `70` units received from A
   * `170` units sent to C
-* Total liquidity backed by collateral remains constant = `300` units 
+* Total liquidity backed by collateral remains constant = `300` units. 
 * Participant B can no longer clear payments because B's liquidity is exhausted.
 * The goal of settlement is to get liquidity back to what it was before clearing.
 
+> TODO @jason Drop this section...
 ### Invariants
 * A transfer will typically be performed as a 2phase commit
   * The liquidity will be reserved until a commit on the transfer is performed
@@ -218,7 +239,11 @@ DR B Settlement (C)                             100
     CR B Liquidity                                        100
 ```
 
-### Account Balances - Settlement 1, 2 & 3 (single settlement transfer)
+### Account Balances - 
+> TODO @jason Do not describe the headers, rather explain below each header.
+
+Settlement 1, 2 & 3 (single settlement transfer) @jason Complete...Reword.
+
 | Account               | Debits | Credits | Balance |
 |-----------------------|--------|---------|---------|
 | `Opening Balances`    |        |         |         |
@@ -235,6 +260,8 @@ DR B Settlement (C)                             100
 
 
 ### BILATERAL Net Settlement Model:
+> TODO @jason Explain the model, then have the result from the example above.
+
 ```
 A owes B less what B owes A = 70
 B owes C less what C owes B = 170
@@ -246,6 +273,8 @@ C liquidity plus settlement = 220 + 50 - 170 = 220 - 120 = 100
 ```
 
 ### MULTILATERAL Net Settlement Model: 
+> TODO @jason Explain the model, then have the result from the example above.
+
 ```
 A owes someone who owes someone else, so A should go direct to C:
 (there are multiple ways to arrange who pays what, all are valid)
@@ -297,7 +326,7 @@ DR A Collateral                                 100
 * Bank settles with Hub outside of the Hub
 * The Deposit has a negative CR balance due to the `10` unit fee charge
 
-## Participant Close Account
+## Participant Closes Account
 An account may only be closed when the DR/CR Liquidity balance for a participant is `0` units.
 
 ### Entities
@@ -307,5 +336,5 @@ An account may only be closed when the DR/CR Liquidity balance for a participant
 
 * How do we link the accounts in TB;
     * Create accounts with the same `user_data` per Participant, then mark them as linked?
-    * For each account type, we use `ledger`
-    * For each currency, we use `code`
+    * For each account type, we use `code`
+    * For each currency, we use `ledger`
