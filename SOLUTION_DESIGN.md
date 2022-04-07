@@ -17,22 +17,29 @@
 | DFSP        | Digital Financial Service Provider.                                                 |
 
 ## 1. Purpose
-This document describes the solution architecture and system design for integrating a TigerBeetle database into the Mojaloop payments system.
+This document describes the solution architecture and system design for using a TigerBeetle database as part of a Mojaloop payments system.
 
-Different sections of this document can be referenced by an audience that is focussed on the
-(a) business focussed audience that interested in the overall design and the requirements that the solution addresses and (b)
-
+Different sections of this document can be used by an audience that is focussed on:
+* the requirements and business drivers of the the solution and
+* the technical aspects and components of the design.
 
 ## 2. Background
-The initial microservice solution architecture and design included making use of Redis for caching and SQL databases in the back-end to record transaction, system processing and participant data.
-This solution is a departure from the initial architecture and design of the Mojaloop payments system because using TigerBeetle entails implementing a relational database that is purpose-built and optimised for financial accounting processing natively, within the database.
+The original design of the Mojaloop payments system used Redis for caching and SQL databases to record the participant, transaction, settlement and operational data. In the original design, the application layer implemented the financial accounting logic, only interacting with the database to store and retrieve the data.
+A solution that uses TigerBeetle differs from the original design. The key reason is that TigerBeetle is a purpose-built relational database that natively supports the financial accounting processing. This means deferring to the database to natively handle the financial accounting logic, thus taking away much of the financial accounting processing from the application.
 
 
 ## 3. Solution Design
 
-### 3.1. Overview
+### 3.1. Overview of Mojaloop Architecture
 
-### 3.2. System Context Diagram
+//TODO @jason We need a diagram with a full view of all
+![System Context Diagram](solution_design/arch-mojaloop.svg)
+
+### 3.2. System Context Diagram Central Ledger As Is
+//TODO @jason Add the central-settlement as part of the design diagrams...
+![System Context Diagram As](solution_design/central-ledger-system-context.svg)
+
+### 3.2. System Context Diagram Central Ledger with TigerBeetle
 ![System Context Diagram](solution_design/central-ledger-system-context.svg)
 
 ### 3.3. Functional Requirements
@@ -98,13 +105,13 @@ Test coverage will include:
 
 ### 4.1. Participants
 
-![System Context Diagram](solution_design/sequence-participant-tb-enabled.png)
+![Participant Sequence](solution_design/sequence-participant-tb-enabled.png)
 
-### 4.2. Central Ledger
+### 4.2. Transfers
 
-#### 4.2.1 Central Ledger 
 
 ### 4.3. Settlement
+
 
 ## 5. Canonical Model
 

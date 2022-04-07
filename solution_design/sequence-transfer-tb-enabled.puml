@@ -41,13 +41,26 @@ box Storage #F9FFF9
 end box
 
 autonumber
-group Create Transfer //(Happy Path)//
+group Create Transfer
     dfsp -> cl_api : Form data Captured\n**(multipart/form-data)**
 end
 
 autonumber
-group Lookup Transfer //(Happy Path)//
-    dfsp -> cl_api : Form data Captured\n**(multipart/form-data)**
+group Lookup Transfer by ID
+    dfsp -> cl_api : //JSON// \n**(name)**
+    cl_api -> cl_handler : Handler invoked
+    cl_handler -> cl_domain : Service layer invoked
+    cl_domain -> cl_facade : WS API ////jmeter/participants/**{name}**/transfers/**{id}**//
+    cl_facade -> cl_db : //participant//, \n//participantCurrency//, \n//participantPosition// \n DB records created.
+    cl_db --> cl_facade : transaction committed.
+    cl_facade -> tb_client : //account// account create requested
+    tb_client -> tb_nodes : //account// Distributed to nodes\n via the state machine
+    tb_nodes -> tb_nodes : Replication via VSR
+    tb_client --> cl_facade : //account// create error **(none)**
+    cl_facade --> cl_domain : Return result
+    cl_domain --> cl_handler : Return result
+    cl_handler --> cl_api : Return result
+    cl_api --> dfsp : Return result
 end
 
 @enduml
