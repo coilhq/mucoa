@@ -174,11 +174,16 @@ The Mojaloop stack relies on the following software components:
 > TODO @jason
 
 ## 4. Detailed Design
+> @tseli, help to improve please.
+
+The detail design process primarily involves the conversion of the loft from the preliminary design into something that can be built and ultimately flown.
 
 ### 4.1. Participants
-![Participant Sequence](solution_design/sequence-participant-tb-enabled.png)
+Sequence related to participants with relation to CentralLedger and TigerBeetle.
 
 #### 4.1.1 Create Participant
+![Participant Sequence](solution_design/sequence-participant-tb-enabled-create.png)
+
 1. Participant JSON Payload.
 ```json
 {
@@ -194,6 +199,8 @@ The Mojaloop stack relies on the following software components:
 5. 
 
 #### 4.1.2 Lookup Participant by Name
+![Participant Sequence](solution_design/sequence-participant-tb-enabled-lookup.png)
+
 1. HTTP request
 2. Handler invoked from `/jmeter/participants/{name}` `GET` endpoint.
 3. Service layer
@@ -201,9 +208,11 @@ The Mojaloop stack relies on the following software components:
 
 
 ### 4.2. Transfers
-![Transfer Sequence](solution_design/sequence-transfer-tb-enabled.png)
+Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
 
 #### 4.2.1 Create Transfer (2-Phase)
+![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-create.png)
+
 1. Transfer JSON Payload
 ```json
 {
@@ -253,14 +262,19 @@ The Mojaloop stack relies on the following software components:
 16. sd
 
 #### 4.2.2 Lookup Transfer by ID
+![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-lookup.png)
+
 > TODO @jason
 
 ### 4.3. Settlement
-
+> TODO @jason
 
 ## 5. Canonical Model
+The following CentralLedger and TigerBeetle Canonical Data Model presents data entities and relationships in the simplest possible form.
 
 ### 5.1 TigerBeetle
+TigerBeetle supports only `Account` and `Transfer` data types.
+
 #### 5.5.1 Account
 Mutable data set for account related data.
 
@@ -313,8 +327,10 @@ Transfers for TB are immutable.
 | padding                          | `u29`             | Data to be used for padding.                   |
 
 ### 5.2 CentralLedger
+CentralLedger hosts a wide range of tables in which to store Participant, Account and Transfer related data.
 
-#### 5.2.1 Relationships
+#### 5.2.1 Data Relationships
+The following diagrams are used to illustration the relationships between data in CentralLedger.
 
 ##### Participants and Accounts
 ![SQL Relationships - Participants](solution_design/central-ledger-data-participant.png)

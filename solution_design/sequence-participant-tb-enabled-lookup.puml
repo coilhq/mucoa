@@ -1,0 +1,55 @@
+@startuml
+
+actor "Mojaloop Adapter" as dfsp
+note over dfsp
+    * Participant Bank A
+    * Participant Bank B
+end note
+
+box CentralLedger #FFFFF9
+    participant "**API**" as cl_api
+    participant "__api__ / Handler" as cl_handler
+    participant "__domain__ / Service" as cl_domain
+    participant "__models__ / Facade" as cl_facade
+
+    note over cl_api
+        REST API deployed in NodeJS
+    end note
+
+    note over cl_handler
+        JSON request decoded and
+        sent for processing via a handler
+    end note
+
+    note over cl_domain
+        Domain folder where the service
+        functions are exposed.
+    end note
+
+    note over cl_facade
+        Facade for storing/retrieving data from
+        MySQL and TigerBeetle
+    end note
+end box
+
+box Storage #F9FFF9
+	control "TigerBeetle Client" as tb_client
+	collections "TigerBeetle Nodes" as tb_nodes
+end box
+
+autonumber
+group Lookup Participant by Name
+    dfsp -> cl_api : //JSON// \n**(name)**
+    cl_api -> cl_handler : ///jmeter/participants/**{name}**// \nHandler invoked
+    cl_handler -> cl_domain : Service invoked
+    cl_domain -> cl_facade : Facade invoked
+    cl_facade -> tb_client : Account lookup via id.
+    tb_client <-> tb_nodes : //account//\n TB account fetched.
+    tb_client --> cl_facade : //account// data returned.
+    cl_facade --> cl_domain : Return result
+    cl_domain --> cl_handler : Return result
+    cl_handler --> cl_api : Return result
+    cl_api --> dfsp : Return result
+end
+
+@enduml

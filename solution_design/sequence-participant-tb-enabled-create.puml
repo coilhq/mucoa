@@ -57,21 +57,4 @@ group Create Participant
     cl_api --> dfsp : Return result
 end
 
-||70||
-
-autonumber
-group Lookup Participant by Name
-    dfsp -> cl_api : //JSON// \n**(name)**
-    cl_api -> cl_handler : ///jmeter/participants/**{name}**// \nHandler invoked
-    cl_handler -> cl_domain : Service invoked
-    cl_domain -> cl_facade : Facade invoked
-    cl_facade -> tb_client : Account lookup via id.
-    tb_client <-> tb_nodes : //account//\n TB account fetched.
-    tb_client --> cl_facade : //account// data returned.
-    cl_facade --> cl_domain : Return result
-    cl_domain --> cl_handler : Return result
-    cl_handler --> cl_api : Return result
-    cl_api --> dfsp : Return result
-end
-
 @enduml

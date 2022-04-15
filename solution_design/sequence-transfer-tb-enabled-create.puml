@@ -65,6 +65,8 @@ group Create Transfer (2-Phase)
     cl_db <--> cl_facade : **[ASYNC 1.3]**\n Database transaction committed.
     == Asynchronous Database Activities STOP ==
 
+||70||
+
     == Transfer Fulfilment ==
     dfsp -> cl_api : //JSON// \n(fulfil transfer data with //**transferId**//)
     cl_api -> cl_handler : ///jmeter/transfers/fulfil// \nHandler invoked
@@ -78,22 +80,6 @@ group Create Transfer (2-Phase)
     tb_client --> cl_facade : //transfer// posting create error **(none)**
     cl_facade -> cl_db : Create \n*//transferFulfilment// \n*//transferStateChange// \nDatabase records
     cl_facade -> cl_db : Database transaction committed
-    cl_facade --> cl_domain : Return result
-    cl_domain --> cl_handler : Return result
-    cl_handler --> cl_api : Return result
-    cl_api --> dfsp : Return result
-end
-
-||70||
-
-autonumber
-group Lookup Transfer by ID
-    dfsp -> cl_api : //JSON// \n**(id)** and **(participantName)**
-    cl_api -> cl_handler : ///jmeter/participants/**{name}**/transfers/**{id}**// \nHandler invoked
-    cl_handler -> cl_domain : Service layer invoked
-    cl_facade -> tb_client : //account// lookup requested
-    tb_client <-> tb_nodes : //account// fetched\nvia the state machine
-    tb_client --> cl_facade : //account// data
     cl_facade --> cl_domain : Return result
     cl_domain --> cl_handler : Return result
     cl_handler --> cl_api : Return result
