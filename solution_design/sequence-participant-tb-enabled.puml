@@ -1,5 +1,4 @@
 @startuml
-title "__**Central Ledger with Tigerbeetle Enabled - Participant and Accounts**__\n"
 
 actor "Mojaloop Adapter" as dfsp
 note over dfsp
@@ -7,7 +6,7 @@ note over dfsp
     * Participant Bank B
 end note
 
-box Central Ledger #FFFFF9
+box CentralLedger #FFFFF9
     participant "**API**" as cl_api
     participant "__api__ / Handler" as cl_handler
     participant "__domain__ / Service" as cl_domain
@@ -34,8 +33,8 @@ box Central Ledger #FFFFF9
 end box
 
 box Storage #F9FFF9
-	control "Tigerbeetle Client" as tb_client
-	collections "Tigerbeetle Nodes" as tb_nodes
+	control "TigerBeetle Client" as tb_client
+	collections "TigerBeetle Nodes" as tb_nodes
 	database "central-ledger" as cl_db
 	database "Redis" as redis_cache
 end box
@@ -63,13 +62,12 @@ end
 autonumber
 group Lookup Participant by Name
     dfsp -> cl_api : //JSON// \n**(name)**
-    cl_api -> cl_handler : Handler invoked
-    cl_handler -> cl_domain : Service layer invoked
-    cl_domain -> cl_facade : WS API ///jmeter/participants/**{name}**//
-    cl_facade -> tb_client : //account//\n TB account fetched.
-    tb_client -> tb_nodes : //account// Distributed to nodes\n via the state machine
-    tb_nodes -> tb_nodes : Replication via VSR
-    tb_client --> cl_facade : //account// create error **(none)**
+    cl_api -> cl_handler : ///jmeter/participants/**{name}**// \nHandler invoked
+    cl_handler -> cl_domain : Service invoked
+    cl_domain -> cl_facade : Facade invoked
+    cl_facade -> tb_client : Account lookup via id.
+    tb_client <-> tb_nodes : //account//\n TB account fetched.
+    tb_client --> cl_facade : //account// data returned.
     cl_facade --> cl_domain : Return result
     cl_domain --> cl_handler : Return result
     cl_handler --> cl_api : Return result

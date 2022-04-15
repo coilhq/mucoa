@@ -1,0 +1,12 @@
+@startuml
+
+object transferDuplicateCheck
+    transferDuplicateCheck : **//(PK)// participantId** = //unsigned int//
+    transferDuplicateCheck : hash = //varchar(256)//
+currency <|-- participantCurrency : //currencyId//
+ledgerAccountType <|-- participantCurrency : //ledgerAccountTypeId//
+participant <|-- participantCurrency : //participantId//
+participant <|-- participantContact : //participantId//
+contactType <|-- participantContact : //contactTypeId//
+
+@enduml

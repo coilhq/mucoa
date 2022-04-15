@@ -1,5 +1,4 @@
 @startuml
-title "__**Central Ledger with Tigerbeetle Enabled - Transfers**__\n"
 
 actor "DFSP" as dfsp
 note over dfsp
@@ -7,7 +6,7 @@ note over dfsp
     * Participant Bank B
 end note
 
-box Central Ledger #FFFFF9
+box CentralLedger #FFFFF9
     participant "**API**" as cl_api
     participant "__api__ / Handler" as cl_handler
     participant "__domain__ / Service" as cl_domain
@@ -34,8 +33,8 @@ box Central Ledger #FFFFF9
 end box
 
 box Storage #F9FFF9
-	control "Tigerbeetle Client" as tb_client
-	collections "Tigerbeetle Nodes" as tb_nodes
+	control "TigerBeetle Client" as tb_client
+	collections "TigerBeetle Nodes" as tb_nodes
 	database "central-ledger" as cl_db
 	database "Redis" as redis_cache
 end box
@@ -46,6 +45,7 @@ group Create Transfer (2-Phase)
     cl_api -> cl_handler : ///jmeter/transfers/prepare// \nHandler invoked
     cl_handler -> cl_domain : Service layer invoked
     cl_domain -> cl_facade : Domain to facade
+    cl_facade -> cl_db : Perform the following validations against the database:\n*//validateFspiopSourceMatchesPayer//\n*//validateParticipantByName//\n*//validatePositionAccountByNameAndCurrency//\n*//validateParticipantByName//\n*//validateAmount//\n*//validateConditionAndExpiration//\n*//validateDifferentDfsp//
     cl_facade -> redis_cache : Lookup participant data by \n//name//, //account type// (POSITION) and //currency//.
     autonumber stop
     cl_facade --> cl_db : If the participant data is not available in Redis, a database lookup is performed
@@ -88,16 +88,12 @@ end
 
 autonumber
 group Lookup Transfer by ID
-    dfsp -> cl_api : //JSON// \n**(name)**
+    dfsp -> cl_api : //JSON// \n**(id)** and **(participantName)**
     cl_api -> cl_handler : ///jmeter/participants/**{name}**/transfers/**{id}**// \nHandler invoked
     cl_handler -> cl_domain : Service layer invoked
-    cl_domain -> cl_facade : Domain to facade
-    cl_facade -> cl_db : //participant//, \n//participantCurrency//, \n//participantPosition// \n DB records created.
-    cl_db --> cl_facade : transaction committed.
-    cl_facade -> tb_client : //account// account create requested
-    tb_client -> tb_nodes : //account// Distributed to nodes\n via the state machine
-    tb_nodes -> tb_nodes : Replication via VSR
-    tb_client --> cl_facade : //account// create error **(none)**
+    cl_facade -> tb_client : //account// lookup requested
+    tb_client <-> tb_nodes : //account// fetched\nvia the state machine
+    tb_client --> cl_facade : //account// data
     cl_facade --> cl_domain : Return result
     cl_domain --> cl_handler : Return result
     cl_handler --> cl_api : Return result

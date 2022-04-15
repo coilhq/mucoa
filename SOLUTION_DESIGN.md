@@ -31,13 +31,17 @@
 | Endpoint    | An API is a set of protocols and tools to facilitate interaction between two applications. An endpoint is a place on the API where the exchange happens. Endpoints are URIs (Uniform Resource Indices) on an API that an application can access. All APIs have endpoints. |
 | JSON        | JSON (JavaScript Object Notation) is a lightweight data-interchange format.                                                                                                                                                                                               |
 | REST        | Representational state transfer (REST) is a software architectural style that was created to guide the design and development of the architecture for the World Wide Web.                                                                                                 |
+| VPN Tunnel  | A VPN tunnel is an encrypted link between your computer or mobile device and an outside network. A VPN tunnel — short for virtual private network tunnel — can provide a way to cloak some of your online activity.                                                       |
+| TLS/SSL     | Transport Layer Security (TLS) certificates—most commonly known as SSL, or digital certificates—are the foundation of a safe and secure internet. TLS/SSL certificates secure internet connections by encrypting data sent between systems.                               |
+| HTTPS       | Stands for "HyperText Transport Protocol Secure." HTTPS is the same thing as HTTP, but uses a secure socket layer (SSL) for security purposes.                                                                                                                            |
+| WAF         | A WAF or web application firewall helps protect web applications by filtering and monitoring HTTP traffic between a web application and the Internet (_or internal network_).                                                                                             |
 
 
 ## 1. Purpose
 This document describes the solution architecture and system design for using a TigerBeetle database as part of a Mojaloop payments system.
 
 Different sections of this document can be used by an audience that is focussed on:
-* the requirements and business drivers of the the solution and
+* the requirements and business drivers of the solution and
 * the technical aspects and components of the design.
 
 ## 2. Background
@@ -46,82 +50,101 @@ A solution that uses TigerBeetle differs from the original design. The key reaso
 
 ## 3. Solution Design
 ### 3.1. Overview of Mojaloop Architecture
-//TODO @jason We need a diagram with a full view of all
+> TODO @jason We need a diagram with a full view of all
+
 ![System Context Diagram](solution_design/arch-mojaloop.svg)
 
 ### 3.2. System Context Diagram Central Ledger As Is
-//TODO @jason Add the central-settlement as part of the design diagrams...
+> @jason Add the central-settlement as part of the design diagrams...
+
 ![System Context Diagram As](solution_design/central-ledger-system-context.svg)
 
 ### 3.3. System Context Diagram Central Ledger with TigerBeetle
 ![System Context Diagram](solution_design/central-ledger-system-context.svg)
 
 ### 3.4. Functional Requirements
-#### New functionality
-
+#### New Functionality
 * TigerBeetle NodeJS integrated into Central-Ledger
   * Make use of existing configuration `default.json` configuration file for client
   * TigerBeetle NodeJS client to be integrated into central-ledger
   * TigerBeetle enablement through on/off switch
   * TigerBeetle and central-ledger facade (Translate from CL Acc+Transfer to TB Acc+Transfer)
-  * 
 * jMeter endpoints added for full 
 * Timeout function to be reliant on TB instead of timer
 * Transfer duplicate check performed as part of TB built in functionality
-* jMeter testing suite to test:
+* jMeter testing suite to test the following functionality:
   * Transfer
-  * 2-phase Transfer
-  * Account creation (includes Participant)
+  * 2-Phase Transfer
+  * Account & Participant Creation
   * Account Lookups
   * Transfer Lookups
-* 
 
-#### Impact on user experience
-#### System behaviour in different scenarios
+#### Impact On User Experience
+#### System Behaviour In different scenarios
 #### Impact on customer support or operations
 
 ### 3.5. Non-functional Requirements
-#### Performance
-* High increased performance
-* Increased deterministic behaviour
-* Environment stack testing
-* Update docker-compose and Docker files to include freestanding TB environment
+#### Performance In TigerBeetle
+Making use of TigerBeetle in CentralLedger would mean a significant increase in performance and throughput.
+TigerBeetle provides more performance than a general-purpose relational database such as MySQL or an in-memory database such as Redis:
 
-#### Availability
+* TigerBeetle **uses small, simple fixed-size data structures** (accounts and transfers) and a tightly scoped domain.
+* TigerBeetle **performs all balance tracking logic in the database**. This is a paradigm shift where we move the code once to the data, not the data back and forth to the code in the critical path. This eliminates the need for complex caching logic outside the database. The “Accounting” business logic is built in to TigerBeetle so that you can **keep your application layer simple, and completely stateless**.
+* TigerBeetle **supports batching by design**. You can batch all the transfer prepares or commits that you receive in a fixed 10ms window (or in a dynamic 1ms through 10ms window according to load) and then send them all in a single network request to the database. This enables low-overhead networking, large sequential disk write patterns and amortized fsync and consensus across hundreds and thousands of transfers.
+> Everything is a batch. It's your choice whether a batch contains 100 transfers or 10,000 transfers but our measurements show that **latency is _less_ where batch sizes are larger, thanks to Little's Law** (e.g. 50ms for a batch of a hundred transfers vs 20ms for a batch of ten thousand transfers). TigerBeetle is able to amortize the cost of I/O to achieve lower latency, even for fairly large batch sizes, by eliminating the cost of queueing delay incurred by small batches.
 
-#### Security
-The following security points need to be noted:
+* If your system is not under load, TigerBeetle also **optimizes the latency of small batches**. After copying from the kernel's TCP receive buffer (TigerBeetle does not do user-space TCP), TigerBeetle **does zero-copy Direct I/O** from network protocol to disk, and then to state machine and back, to reduce memory pressure and L1-L3 cache pollution.
+* TigerBeetle **uses io_uring for zero-syscall networking and storage I/O**. The cost of a syscall in terms of context switches adds up quickly for a few thousand transfers.
+* TigerBeetle **does zero-deserialization** by using fixed-size data structures, that are optimized for cache line alignment to **minimize L1-L3 cache misses**.
+* TigerBeetle **takes advantage of Heidi Howard's Flexible Quorums** to reduce the cost of **synchronous replication to one (or two) remote replicas at most** (in addition to the leader) with **asynchronous replication** between the remaining followers. This improves write availability, without sacrificing strict serializability or durability. This also reduces server deployment cost by as much as 20% because a 4-node cluster with Flexible Quorums can now provide the same `f=2` guarantee for the replication quorum as a 5-node cluster.
+> ["The major availability breakdowns and performance anomalies we see in cloud environments tend to be caused by subtle underlying faults, i.e. gray failure (slowly failing hardware) rather than fail-stop failure."](https://www.microsoft.com/en-us/research/wp-content/uploads/2017/06/paper-1.pdf)
+* TigerBeetle **routes around transient gray failure latency spikes**. 
+  * For example, if a disk write that typically takes 4ms starts taking 4 seconds because the disk is slowly failing, TigerBeetle will use cluster redundancy to mask the gray failure automatically without the user seeing any 4 second latency spike. This is a relatively new performance technique in the literature known as "tail tolerance".
 
-##### Transport
-* HTTPS on central-ledger endpoints
+#### Safety in TigerBeetle
+TigerBeetle is designed to a higher safety standard than a general-purpose relational database such as MySQL or an in-memory database such as Redis:
+Strict consistency, CRCs and crash safety are not enough.
 
-##### Storage
-* TigerBeetle stores all cold data encrypted under XXXX (TODO @jason complete.)
+* TigerBeetle **detects and repairs disk corruption** ([3.45% per 32 months, per disk](https://research.cs.wisc.edu/wind/Publications/latent-sigmetrics07.pdf)), **detects and repairs misdirected writes** where the disk firmware writes to the wrong sector ([0.042% per 17 months, per disk](https://research.cs.wisc.edu/wind/Publications/latent-sigmetrics07.pdf)), and **prevents data tampering** with hash-chained cryptographic checksums.
+* TigerBeetle **uses Direct I/O by design** to side step cache coherency bugs in the kernel page cache after an EIO fsync error.
+* TigerBeetle **exceeds the fsync durability of a single disk** and the hardware of a single server because disk firmware can contain bugs and because single server systems fail.
+* TigerBeetle **provides strict serializability**, the gold standard of consistency, as a replicated state machine, and as a cluster of TigerBeetle servers (called replicas), for optimal high availability and distributed fault-tolerance.
+* TigerBeetle **performs synchronous replication** to a quorum of TigerBeetle servers using the pioneering [Viewstamped Replication](http://pmg.csail.mit.edu/papers/vr-revisited.pdf) and consensus protocol, for low-latency automated leader election and to eliminate the risk of split brain associated with manual failover.
+* TigerBeetle is “fault-aware” and **recovers from local storage failures in the context of the global consensus protocol**, providing [more safety than replicated state machines such as ZooKeeper and LogCabin](https://www.youtube.com/watch?v=fDY6Wi0GcPs). For example, TigerBeetle can disentangle corruption in the middle of the committed journal (caused by bitrot) from torn writes at the end of the journal (caused by power failure) to uphold durability guarantees given for committed data and maximize availability.
+* TigerBeetle does not depend on synchronized system clocks, does not use leader leases, and **performs leader-based timestamping** so that your application can deal only with safe relative quantities of time with respect to transfer timeouts. To ensure that the leader's clock is within safe bounds of "true time", TigerBeetle combines all the clocks in the cluster to create a fault-tolerant clock that we call ["cluster time"](https://www.tigerbeetle.com/post/three-clocks-are-better-than-one).
+
+##### Secure Transport
+* HTTPS on central-ledger endpoints may be configured in NodeJS or WAF/Load-Balancer
+* Communication between CentralLedger and TigerBeetle will make use of a secure VPN tunnel
+* Non PCI-DSS sensitive information stored in TigerBeetle
+
+##### Secure Storage at Rest
+* TigerBeetle stores all data at rest encrypted under XXXX (TODO @jason complete.)
+* MySQL database for CentralLedger to be configured for:
+  * TLS/SSL communication between CentralLedger and MySQL
+  * MysQL Keyring plugin may be used to encrypt data at rest (https://aimlessengineer.com/2021/04/26/data-at-rest-encryption-in-mysql/)
 * Security of sensitive data in the database
 
 ##### Other
-* Connection security between CL and TB
 * Authentication of the CL API
-
-#### Safety (or maybe resiliency, durability)
-
+* Update CentralLedger documentation during the course of the project
 
 #### Testing
-Test coverage will include:
-* Unit testing for Tigerbeetle NodeJS client
-* Integration testing for Tigerbeetle NodeJS client
-* Integration testing for CL and TB
-  * TB on
-  * TB off
-  * CL off (traditional)
-* Performance/Throughput testing via jMeter
-* 
+Existing unit tests for CentralLedger will be updated to test TigerBeetle and CentralLedger integration. 
+jUnit will be used to test performance and safety.
 
-@jason TODO
+Coverage will include:
+* Unit testing for TigerBeetle NodeJS client
+* Integration testing for TigerBeetle NodeJS client
+* Integration testing for CentralLedger and TigerBeetle
+  * TB enabled
+  * TB disabled (_traditional_)
+* Performance, throughput and safety (_via jMeter_)
 
 ### 3.6. Assumptions, Dependencies & Considerations
 
 #### 3.6.1 Assumptions
+> TODO @jason
 
 #### 3.6.2 Hardware Dependencies
 The following hardware dependencies are know.
@@ -131,11 +154,24 @@ The following hardware dependencies are know.
 #### 3.6.3 Software Dependencies
 The following software dependencies are know.
 ##### TigerBeetle
-##### CentralLedger
+TigerBeetle release in a single executable file which is supported in the following operating systems:
+* Linux
+* MacOS
+* Windows
+
+##### Mojaloop
+The Mojaloop stack relies on the following software components:
+* MySQL
+* MongoDB
+* Redis
+* Kafka
+* NodeJS
 
 #### 3.6.4 Considerations
+> TODO @jason
 
 ### 3.7. Scope Exclusions
+> TODO @jason
 
 ## 4. Detailed Design
 
@@ -154,12 +190,20 @@ The following software dependencies are know.
 ```
 2. Handler invoked from `/jmeter/participants/create` `POST` endpoint.
 3. Service layer
+4. Domain to facade
+5. 
 
 #### 4.1.2 Lookup Participant by Name
+1. HTTP request
+2. Handler invoked from `/jmeter/participants/{name}` `GET` endpoint.
+3. Service layer
+4. Domain to facade
 
 
 ### 4.2. Transfers
 ![Transfer Sequence](solution_design/sequence-transfer-tb-enabled.png)
+
+#### 4.2.1 Create Transfer (2-Phase)
 1. Transfer JSON Payload
 ```json
 {
@@ -178,6 +222,38 @@ The following software dependencies are know.
 ```
 2. Handler invoked from `/jmeter/transfers/prepare` `POST` endpoint.
 3. Service layer
+4. Facade
+5. The following validations are performed prior to the transfer:
+   1. `validateFspiopSourceMatchesPayer` -> Asserts headers['fspiop-source'] matches payload.payerFsp
+   2. `validateParticipantByName` -> Asserts payer participant exists by doing a lookup by name (discards result of lookup work)
+   3. `validatePositionAccountByNameAndCurrency` -> Asserts account exists for name-currency tuple (discards result of lookup work)
+   4. `validateParticipantByName` -> Asserts payee participant exists by doing a lookup by name (discards result of lookup work)
+   5. `validatePositionAccountByNameAndCurrency` -> Asserts account exists for name-currency tuple (discards result of lookup work)
+   6. `validateAmount` -> Validates allowed scale of decimal places and allowed precision
+   7. `validateConditionAndExpiration` -> Validates condition and expiration
+   8. `validateDifferentDfsp` -> Asserts lowercase string comparison of `payload.payerFsp` and `payload.payeeFsp` is different
+6. Lookup Payer and Payee Participants via name, account type (_POSITION_) and currency
+7. TB pending
+8. Transfer distributed via the TigerBeetle state machine
+9. The transfer is distributed to 7 TigerBeetle nodes in the cluster
+10. The TigerBeetle API responds with errors during the transfer, which is empty (_no errors_)
+11. Return result to service layer
+12. Return result to the handler layer
+13. Prepare the result in JSON format
+14. Result is returned to the DSFP via the REST API
+15. Insert into the following database tables:
+    1. `transferDuplicateCheck`
+    2. `transfer`
+    3. `transferParticipant` (Payer)
+    4. `transferParticipant` (Payee)
+    5. `ilpPacket`
+    6. `transferStateChange`
+    7. `participantPosition`
+    8. `participantPositionChange`
+16. sd
+
+#### 4.2.2 Lookup Transfer by ID
+> TODO @jason
 
 ### 4.3. Settlement
 
@@ -196,10 +272,10 @@ Mutable data set for account related data.
 | unit             | `u16`             | A transfer unit describing the currency associated with the account.                                                             |
 | code             | `u16`             | A chart of accounts code describing the type of account (e.g. clearing, settlement)                                              |
 | flags            | `AccountFlags`    | See account flags.                                                                                                               |
-| debits_reserved  | `u64`             | Balance for reserved debits.                                                                                                     |
-| debits_accepted  | `u64`             | Balance for accepted debits.                                                                                                     |
-| credits_reserved | `u64`             | Balance for reserved credits.                                                                                                    |
-| credits_accepted | `u64`             | Balance for accepted credits.                                                                                                    |
+| debits_pending   | `u64`             | Balance for reserved debits.                                                                                                     |
+| debits_posted    | `u64`             | Balance for accepted debits.                                                                                                     |
+| credits_pending  | `u64`             | Balance for reserved credits.                                                                                                    |
+| credits_posted   | `u64`             | Balance for accepted credits.                                                                                                    |
 | timestamp        | `u64`             | The current state machine timestamp of the account for state tracking.                                                           |
 
 #### 5.5.2 AccountFlags - `[packed struct]`
@@ -236,32 +312,16 @@ Transfers for TB are immutable.
 | condition                        | `bool`            | Does the transfer support transfer conditions. |
 | padding                          | `u29`             | Data to be used for padding.                   |
 
-#### 5.5.5 Commit
-> TODO @jason needs to be updated due to Transfer/Commit PR. 
-
-Commits for TB are immutable. A commit can only be performed on a transfer.
-
-| Field             | Type              | Description                                                                              |
-|-------------------|-------------------|------------------------------------------------------------------------------------------|
-| id                | `u128`            | Global unique id for a transfer.                                                         |
-| reserved          | `[32]u8 - array`  | Accounting policy primitives. Not available.                                             |
-| code              | `u32`             | A chart of accounts code describing the reason for the commit (e.g. deposit, settlement) |
-| flags             | `CommitFlags`     | See commit flags.                                                                        |
-| timestamp         | `u64`             | The current state machine timestamp of the commit for state tracking.                    |
-
-#### 5.5.6 CommitFlags - `[packed struct]`
-| Field                            | Type              | Description                                                                                                  |
-|----------------------------------|-------------------|--------------------------------------------------------------------------------------------------------------|
-| linked                           | `bool`            | Is the account linked to another account.                                                                    |
-| reject                           | `bool`            | Has the commit been rejected.                                                                                |
-| preimage                         | `bool`            | Flag to indicate whether the commit relies on the associated transfer being flagged as a condition transfer. |
-| padding                          | `u29`             | Data to be used for padding.                                                                                 |
-
-
 ### 5.2 CentralLedger
 
 #### 5.2.1 Relationships
-![SQL Relationships](solution_design/central-ledger-data-relationships.png)
+
+##### Participants and Accounts
+![SQL Relationships - Participants](solution_design/central-ledger-data-participant.png)
+
+##### Transfer
+![SQL Relationships - Transfers](solution_design/central-ledger-data-transfer.png)
+
 
 #### 5.2.2 Participant (`participant`)
 | Field         | Type           | Description                    |
@@ -285,9 +345,68 @@ Commits for TB are immutable. A commit can only be performed on a transfer.
 
 #### 5.2.4 Account
 
-#### 5.2.5 Transfer
+#### 5.2.5 Transfer (`transfer`)
+| Field          | Type   | Description                    |
+|----------------|--------|--------------------------------|
+| transferId     | `TODO` | Unique participant identifier. |
+| amount         | `TODO` | TODO.                          |
+| currencyId     | `TODO` | TODO.                          |
+| expirationDate | `TODO` | TODO.                          |
+| ilpCondition   | `TODO` | TODO.                          |
 
-#### 5.2.6 Transfer Fulfil
+#### 5.2.6 Transfer Participant (`transferParticipant`)
+| Field                         | Type   | Description                    |
+|-------------------------------|--------|--------------------------------|
+| transferParticipantId         | `TODO` | Unique participant identifier. |
+| transferId                    | `TODO` | Unique participant identifier. |
+| amount                        | `TODO` | TODO.                          |
+| ledgerEntryTypeId             | `TODO` | TODO.                          |
+| participantCurrencyId         | `TODO` | TODO.                          |
+| transferParticipantRoleTypeId | `TODO` | TODO.                          |
+
+#### 5.2.7 ILP Packet (`ilpPacket`)
+| Field      | Type   | Description                    |
+|------------|--------|--------------------------------|
+| transferId | `TODO` | Unique participant identifier. |
+| value      | `TODO` | Unique participant identifier. |
+
+#### 5.2.8 Transfer State Change (`transferStateChange`)
+| Field           | Type   | Description                    |
+|-----------------|--------|--------------------------------|
+| transferStateId | `TODO` | Unique participant identifier. |
+| transferId      | `TODO` | Unique participant identifier. |
+| createdDate     | `TODO` | Unique participant identifier. |
+| reason          | `TODO` | Unique participant identifier. |
+
+#### 5.2.9 Participant Position (`participantPosition`)
+| Field                  | Type   | Description                    |
+|------------------------|--------|--------------------------------|
+| participantPositionId  | `TODO` | Unique participant identifier. |
+| value                  | `TODO` | Unique participant identifier. |
+| changedDate            | `TODO` | Unique participant identifier. |
+
+#### 5.2.10 Participant Position Change (`participantPositionChange`)
+| Field                 | Type   | Description                    |
+|-----------------------|--------|--------------------------------|
+| participantPositionId | `TODO` | Unique participant identifier. |
+| transferStateChangeId | `TODO` | Unique participant identifier. |
+| value                 | `TODO` | Unique participant identifier. |
+| reservedValue         | `TODO` | Unique participant identifier. |
+| createdDate           | `TODO` | Unique participant identifier. |
+
+#### 5.2.11 Participant Limit (`participantLimit`)
+| Field              | Type   | Description                    |
+|--------------------|--------|--------------------------------|
+| participantLimitId | `TODO` | Unique participant identifier. |
+| value              | `TODO` | Unique participant identifier. |
+
+#### 5.2.12 Transfer Duplicate Check (`transferDuplicateCheck`)
+| Field      | Type   | Description                    |
+|------------|--------|--------------------------------|
+| transferId | `TODO` | Unique participant identifier. |
+| hash       | `TODO` | Unique participant identifier. |
+
+#### 5.2.X Transfer Fulfil
 
 
 
