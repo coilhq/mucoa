@@ -2,22 +2,24 @@
 
 * [Glossary](#glossary)
 * [1. Purpose](#1-purpose)
-* [2. Background](#2-background)
-* [3. Solution Design](#3-solution-design)
-  * [3.1. Overview](#31-overview-of-mojaloop-architecture)
-  * [3.2. System Context Diagram As Is](#32-system-context-diagram-central-ledger-as-is)
-  * [3.3. System Context Diagram with TigerBeetle](#33-system-context-diagram-central-ledger-with-tigerbeetle)
-  * [3.4. Functional Requirements](#34-functional-requirements)
-  * [3.5. Non-Functional Requirements](#35-non-functional-requirements)
-  * [3.6. Assumptions, Dependencies & Considerations](#36-assumptions-dependencies--considerations)
-  * [3.7. Scope Exclusions](#37-scope-exclusions)
-* [4. Detailed Design](#4-detailed-design)
-  * [4.1. Participants](#41-participants)
-  * [4.2. Transfers](#42-transfers)
-  * [4.3. Settlement](#43-settlement)
-* [5. Canonical Model](#5-canonical-model)
-  * [5.1. TigerBeetle](#51-tigerbeetle)
-  * [5.2. CentralLedger](#52-centralledger)
+* [2. Introduction](#2-introduction)
+* [3. Architecture & Design](#3-architecture-&-design)
+  * [3.1. Architecture and Design Principles](#31-architecture-and-design-principles)
+  * [3.2. Current Mojaloop Architecture](#32-current-mojaloop-architecture)
+  * [3.3. Central Ledger Architecture](#33-central-ledger-architecture)
+  * [3.4. Central Settlement Architecture](#33-central-settlement-architecture)
+* [4. Requirements](#4-requirements)
+  * [4.1. Functional Requirements](#41-functional-requirements)
+  * [4.2. Non-Functional Requirements](#42-non-functional-requirements)
+* [5. Assumptions, Dependencies & Considerations](#5-assumptions-dependencies--considerations)
+* [6. Scope Exclusions](#6-scope-exclusions)
+* [7. Detailed Design](#7-detailed-design)
+  * [7.1. Participants](#71-participants)
+  * [7.2. Transfers](#72-transfers)
+  * [7.3. Settlement](#73-settlement)
+* [8. Canonical Model](#8-canonical-model)
+  * [8.1. TigerBeetle](#81-tigerbeetle)
+  * [8.2. CentralLedger](#72-centralledger)
 
 
 # Glossary
@@ -51,20 +53,29 @@ The original design of the Mojaloop payments system uses Redis for caching and S
 TigerBeetle is a distributed database built for native financial accounting support. It leverages the original Mojaloop Central Ledger logic in order to implement the financial accounting logic natively, within the database. In this proposed solution, the Mojaloop application layer optimizes its database interactions and defers the financial accounting logic to TigerBeetle.
 
 ## 3. Architecture & Design
-### 3.1. Current Mojaloop Architecture
-This diagram shows the current architecture of a Mojaloop payments hub and illustrates interactions between the hub and external entities such as a settlement bank, a global account lookup service and other financial service providers.
-
+### 3.1 Architecture and Design Principles
+> TODO
+### 3.2. Current Mojaloop Architecture
+The diagram below shows the current architecture of a Mojaloop payments hub and it illustrates interactions between the hub and external entities such as a settlement bank, a global account lookup service and the systems of other financial service providers.
+<br><br>
 ![System Context Diagram](solution_design/arch-mojaloop.svg)
 
-### 3.2. As Is - Central Ledger
-> @jason Add the central-settlement as part of the design diagrams...
-
+### 3.3. Central Ledger Architecture
+#### 3.3.1. As Is - Central Ledger
 ![System Context Diagram As](solution_design/central-ledger-system-context.svg)
 
-### 3.3. To Be - Central Ledger
+#### 3.3.2. To Be - Central Ledger
 ![System Context Diagram](solution_design/central-ledger-system-context.svg)
 
-### 3.4. Functional Requirements
+### 3.4. Central Settlement Architecture
+> @jason Add the central-settlement as part of the design diagrams...
+#### 3.4.1. As Is - Central Settlement
+> TODO
+#### 3.4.2. As Is - Central Settlement
+> TODO
+
+## 4. Requirements
+### 4.1. Functional Requirements
 #### New Functionality
 * TigerBeetle NodeJS integrated into Central-Ledger
   * Make use of existing configuration `default.json` configuration file for client
@@ -85,7 +96,7 @@ This diagram shows the current architecture of a Mojaloop payments hub and illus
 #### System Behaviour In different scenarios
 #### Impact on customer support or operations
 
-### 3.5. Non-functional Requirements
+### 4.2. Non-functional Requirements
 #### Performance In TigerBeetle
 Making use of TigerBeetle in CentralLedger would mean a significant increase in performance and throughput.
 TigerBeetle provides more performance than a general-purpose relational database such as MySQL or an in-memory database such as Redis:
@@ -135,7 +146,7 @@ Strict consistency, CRCs and crash safety are not enough.
 Existing unit tests for CentralLedger will be updated to test TigerBeetle and CentralLedger integration. 
 jUnit will be used to test performance and safety.
 
-Coverage will include:
+Testing coverage includes:
 * Unit testing for TigerBeetle NodeJS client
 * Integration testing for TigerBeetle NodeJS client
 * Integration testing for CentralLedger and TigerBeetle
@@ -143,25 +154,25 @@ Coverage will include:
   * TB disabled (_traditional_)
 * Performance, throughput and safety (_via jMeter_)
 
-### 3.6. Assumptions, Dependencies & Considerations
+## 5. Assumptions, Dependencies & Considerations
 
-#### 3.6.1 Assumptions
+### 5.1 Assumptions
 > TODO @jason
 
-#### 3.6.2 Hardware Dependencies
-The following hardware dependencies are know.
-##### TigerBeetle
-##### CentralLedger
+### 5.2 Hardware Dependencies
+The following hardware dependencies are known.
+#### TigerBeetle
+#### CentralLedger
 
-#### 3.6.3 Software Dependencies
-The following software dependencies are know.
-##### TigerBeetle
+### 5.3 Software Dependencies
+The following software dependencies are known.
+#### TigerBeetle
 TigerBeetle release in a single executable file which is supported in the following operating systems:
 * Linux
 * MacOS
 * Windows
 
-##### Mojaloop
+#### Mojaloop
 The Mojaloop stack relies on the following software components:
 * MySQL
 * MongoDB
@@ -169,21 +180,21 @@ The Mojaloop stack relies on the following software components:
 * Kafka
 * NodeJS
 
-#### 3.6.4 Considerations
+### 5.4 Considerations
 > TODO @jason
 
-### 3.7. Scope Exclusions
+## 6. Scope Exclusions
 > TODO @jason
 
-## 4. Detailed Design
+## 7. Detailed Design
 > @tseli, help to improve please.
 
 The detail design process primarily involves the conversion of the loft from the preliminary design into something that can be built and ultimately flown.
 
-### 4.1. Participants
+### 7.1. Participants
 Sequence related to participants with relation to CentralLedger and TigerBeetle.
 
-#### 4.1.1 Create Participant
+#### 7.1.1 Create Participant
 ![Participant Sequence](solution_design/sequence-participant-tb-enabled-create.png)
 
 1. Participant JSON Payload.
@@ -200,7 +211,7 @@ Sequence related to participants with relation to CentralLedger and TigerBeetle.
 4. Domain to facade
 5. 
 
-#### 4.1.2 Lookup Participant by Name
+#### 7.1.2 Lookup Participant by Name
 ![Participant Sequence](solution_design/sequence-participant-tb-enabled-lookup.png)
 
 1. HTTP request
@@ -209,10 +220,10 @@ Sequence related to participants with relation to CentralLedger and TigerBeetle.
 4. Domain to facade
 
 
-### 4.2. Transfers
+### 7.2. Transfers
 Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
 
-#### 4.2.1 Create Transfer (2-Phase)
+#### 7.2.1 Create Transfer (2-Phase)
 ![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-create.png)
 
 1. Transfer JSON Payload
@@ -263,21 +274,21 @@ Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
     8. `participantPositionChange`
 16. sd
 
-#### 4.2.2 Lookup Transfer by ID
+#### 7.2.2 Lookup Transfer by ID
 ![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-lookup.png)
 
 > TODO @jason
 
-### 4.3. Settlement
+### 7.3. Settlement
 > TODO @jason
 
-## 5. Canonical Model
+## 8. Canonical Model
 The following CentralLedger and TigerBeetle Canonical Data Model presents data entities and relationships in the simplest possible form.
 
-### 5.1 TigerBeetle
+### 8.1 TigerBeetle
 TigerBeetle supports only `Account` and `Transfer` data types.
 
-#### 5.5.1 Account
+#### 8.1.1 Account
 Mutable data set for account related data.
 
 | Field            | Type              | Description                                                                                                                      |
@@ -294,7 +305,7 @@ Mutable data set for account related data.
 | credits_posted   | `u64`             | Balance for accepted credits.                                                                                                    |
 | timestamp        | `u64`             | The current state machine timestamp of the account for state tracking.                                                           |
 
-#### 5.5.2 AccountFlags - `[packed struct]`
+#### 8.1.2 AccountFlags - `[packed struct]`
 
 | Field                            | Type              | Description                                  |
 |----------------------------------|-------------------|----------------------------------------------|
@@ -303,7 +314,7 @@ Mutable data set for account related data.
 | credits_must_not_exceed_debits   | `bool`            | Total credit transfer may not exceed debits. |
 | padding                          | `u29`             | Data to be used for padding.                 |
 
-#### 5.5.3 Transfer
+#### 8.1.3 Transfer
 Transfers for TB are immutable.
 
 | Field             | Type              | Description                                                                                                                       |
@@ -319,7 +330,7 @@ Transfers for TB are immutable.
 | amount            | `u64`             | Transfer amount in units.                                                                                                         |
 | timestamp         | `u64`             | The current state machine timestamp of the transfer for state tracking.                                                           |
 
-#### 5.5.4 TransferFlags - `[packed struct]`
+#### 8.1.4 TransferFlags - `[packed struct]`
 
 | Field                            | Type              | Description                                    |
 |----------------------------------|-------------------|------------------------------------------------|
@@ -328,10 +339,10 @@ Transfers for TB are immutable.
 | condition                        | `bool`            | Does the transfer support transfer conditions. |
 | padding                          | `u29`             | Data to be used for padding.                   |
 
-### 5.2 CentralLedger
+### 8.2 CentralLedger
 CentralLedger hosts a wide range of tables in which to store Participant, Account and Transfer related data.
 
-#### 5.2.1 Data Relationships
+#### 8.2.1 Data Relationships
 The following diagrams are used to illustration the relationships between data in CentralLedger.
 
 ##### Participants and Accounts
@@ -341,7 +352,7 @@ The following diagrams are used to illustration the relationships between data i
 ![SQL Relationships - Transfers](solution_design/central-ledger-data-transfer.png)
 
 
-#### 5.2.2 Participant (`participant`)
+#### 8.2.2 Participant (`participant`)
 | Field         | Type           | Description                    |
 |---------------|----------------|--------------------------------|
 | participantId | `int unsigned` | Unique participant identifier. |
@@ -351,7 +362,7 @@ The following diagrams are used to illustration the relationships between data i
 | createdDate   | `datetime`     | Unique participant name.       |
 | createdBy     | `datetime`     | Unique participant name.       |
 
-#### 5.2.3 Participant Currency (`participantCurrency`)
+#### 8.2.3 Participant Currency (`participantCurrency`)
 | Field         | Type           | Description                    |
 |---------------|----------------|--------------------------------|
 | participantId | `int unsigned` | Unique participant identifier. |
@@ -361,9 +372,9 @@ The following diagrams are used to illustration the relationships between data i
 | createdDate   | `datetime`     | Unique participant name.       |
 | createdBy     | `datetime`     | Unique participant name.       |
 
-#### 5.2.4 Account
+#### 8.2.4 Account
 
-#### 5.2.5 Transfer (`transfer`)
+#### 8.2.5 Transfer (`transfer`)
 | Field          | Type   | Description                    |
 |----------------|--------|--------------------------------|
 | transferId     | `TODO` | Unique participant identifier. |
@@ -372,7 +383,7 @@ The following diagrams are used to illustration the relationships between data i
 | expirationDate | `TODO` | TODO.                          |
 | ilpCondition   | `TODO` | TODO.                          |
 
-#### 5.2.6 Transfer Participant (`transferParticipant`)
+#### 8.2.6 Transfer Participant (`transferParticipant`)
 | Field                         | Type   | Description                    |
 |-------------------------------|--------|--------------------------------|
 | transferParticipantId         | `TODO` | Unique participant identifier. |
@@ -382,13 +393,13 @@ The following diagrams are used to illustration the relationships between data i
 | participantCurrencyId         | `TODO` | TODO.                          |
 | transferParticipantRoleTypeId | `TODO` | TODO.                          |
 
-#### 5.2.7 ILP Packet (`ilpPacket`)
+#### 8.2.7 ILP Packet (`ilpPacket`)
 | Field      | Type   | Description                    |
 |------------|--------|--------------------------------|
 | transferId | `TODO` | Unique participant identifier. |
 | value      | `TODO` | Unique participant identifier. |
 
-#### 5.2.8 Transfer State Change (`transferStateChange`)
+#### 8.2.8 Transfer State Change (`transferStateChange`)
 | Field           | Type   | Description                    |
 |-----------------|--------|--------------------------------|
 | transferStateId | `TODO` | Unique participant identifier. |
@@ -396,14 +407,14 @@ The following diagrams are used to illustration the relationships between data i
 | createdDate     | `TODO` | Unique participant identifier. |
 | reason          | `TODO` | Unique participant identifier. |
 
-#### 5.2.9 Participant Position (`participantPosition`)
+#### 8.2.9 Participant Position (`participantPosition`)
 | Field                  | Type   | Description                    |
 |------------------------|--------|--------------------------------|
 | participantPositionId  | `TODO` | Unique participant identifier. |
 | value                  | `TODO` | Unique participant identifier. |
 | changedDate            | `TODO` | Unique participant identifier. |
 
-#### 5.2.10 Participant Position Change (`participantPositionChange`)
+#### 8.2.10 Participant Position Change (`participantPositionChange`)
 | Field                 | Type   | Description                    |
 |-----------------------|--------|--------------------------------|
 | participantPositionId | `TODO` | Unique participant identifier. |
@@ -412,19 +423,19 @@ The following diagrams are used to illustration the relationships between data i
 | reservedValue         | `TODO` | Unique participant identifier. |
 | createdDate           | `TODO` | Unique participant identifier. |
 
-#### 5.2.11 Participant Limit (`participantLimit`)
+#### 8.2.11 Participant Limit (`participantLimit`)
 | Field              | Type   | Description                    |
 |--------------------|--------|--------------------------------|
 | participantLimitId | `TODO` | Unique participant identifier. |
 | value              | `TODO` | Unique participant identifier. |
 
-#### 5.2.12 Transfer Duplicate Check (`transferDuplicateCheck`)
+#### 8.2.12 Transfer Duplicate Check (`transferDuplicateCheck`)
 | Field      | Type   | Description                    |
 |------------|--------|--------------------------------|
 | transferId | `TODO` | Unique participant identifier. |
 | hash       | `TODO` | Unique participant identifier. |
 
-#### 5.2.X Transfer Fulfil
+#### 8.2.13 Transfer Fulfil
 
 
 
