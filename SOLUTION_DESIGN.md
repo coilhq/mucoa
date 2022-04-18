@@ -38,28 +38,30 @@
 
 
 ## 1. Purpose
-This document describes the solution architecture and system design for using a TigerBeetle database as part of a Mojaloop payments system.
+This document proposes the solution architecture and system design for integrating a TigerBeetle database as part of a Mojaloop payments system.
 
 Different sections of this document can be used by an audience that is focussed on:
-* the requirements and business drivers of the solution and
-* the technical aspects and components of the design.
+* the business drivers and user stories for the solution;
+* the architecture and solution design aspects for integrating TigerBeetle into Mojaloop; and
+* the components and endpoints that constitute the proposed solution.
 
-## 2. Background
-The original design of the Mojaloop payments system used Redis for caching and SQL databases to record the participant, transaction, settlement and operational data. In the original design, the application layer implemented the financial accounting logic, only interacting with the database to store and retrieve the data.
-A solution that uses TigerBeetle differs from the original design. The key reason is that TigerBeetle is a purpose-built relational database that natively supports the financial accounting processing. This means deferring to the database to natively handle the financial accounting logic, thus taking away much of the financial accounting processing from the application.
+## 2. Introduction
+The original design of the Mojaloop payments system uses Redis for caching and SQL databases to record participant, transaction, settlement and operational data. In the original design, the application layer implements the business processing and financial accounting logic, interacting with the database to persist and retrieve the data. 
 
-## 3. Solution Design
-### 3.1. Overview of Mojaloop Architecture
-> TODO @jason We need a diagram with a full view of all
+TigerBeetle is a distributed database built for native financial accounting support. It leverages the original Mojaloop Central Ledger logic in order to implement the financial accounting logic natively, within the database. In this proposed solution, the Mojaloop application layer optimizes its database interactions and defers the financial accounting logic to TigerBeetle.
+
+## 3. Architecture & Design
+### 3.1. Current Mojaloop Architecture
+This diagram shows the current architecture of a Mojaloop payments hub and illustrates interactions between the hub and external entities such as a settlement bank, a global account lookup service and other financial service providers.
 
 ![System Context Diagram](solution_design/arch-mojaloop.svg)
 
-### 3.2. System Context Diagram Central Ledger As Is
+### 3.2. As Is - Central Ledger
 > @jason Add the central-settlement as part of the design diagrams...
 
 ![System Context Diagram As](solution_design/central-ledger-system-context.svg)
 
-### 3.3. System Context Diagram Central Ledger with TigerBeetle
+### 3.3. To Be - Central Ledger
 ![System Context Diagram](solution_design/central-ledger-system-context.svg)
 
 ### 3.4. Functional Requirements
