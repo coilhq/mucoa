@@ -1,28 +1,28 @@
-# Mojaloop Tigerbeetle Solution Design
+# Solution Design: Mojaloop-TigerBeetle Integration
 
-* [Glossary](#glossary)
-* [1. Purpose](#1-purpose)
-* [2. Introduction](#2-introduction)
-* [3. Architecture & Design](#3-architecture-&-design)
-  * [3.1. Architecture and Design Principles](#31-architecture-and-design-principles)
-  * [3.2. Current Mojaloop Architecture](#32-current-mojaloop-architecture)
-  * [3.3. Central Ledger Architecture](#33-central-ledger-architecture)
-  * [3.4. Central Settlement Architecture](#33-central-settlement-architecture)
-* [4. Requirements](#4-requirements)
-  * [4.1. Functional Requirements](#41-functional-requirements)
-  * [4.2. Non-Functional Requirements](#42-non-functional-requirements)
-* [5. Assumptions, Dependencies & Considerations](#5-assumptions-dependencies--considerations)
-* [6. Scope Exclusions](#6-scope-exclusions)
-* [7. Detailed Design](#7-detailed-design)
-  * [7.1. Participants](#71-participants)
-  * [7.2. Transfers](#72-transfers)
-  * [7.3. Settlement](#73-settlement)
-* [8. Canonical Model](#8-canonical-model)
-  * [8.1. TigerBeetle](#81-tigerbeetle)
-  * [8.2. CentralLedger](#72-centralledger)
+[Glossary](#glossary)
+1. [Purpose](#1-purpose)
+2. [Introduction](#2-introduction)
+3. [Architecture & Design](#3-architecture-&-design)  
+3.1. [Architecture and Design Principles](#31-architecture-and-design-principles)  
+3.2. [Current Mojaloop Architecture](#32-current-mojaloop-architecture)  
+3.3. [Central Ledger Architecture](#33-central-ledger-architecture)  
+3.4. [Central Settlement Architecture](#33-central-settlement-architecture)
+4. [Requirements](#4-requirements)  
+4.1. [Functional Requirements](#41-functional-requirements)  
+4.2. [Non-Functional Requirements](#42-non-functional-requirements)
+5. [Assumptions, Dependencies & Considerations](#5-assumptions-dependencies--considerations)
+6. [Scope Exclusions](#6-scope-exclusions)
+7. [Detailed Design](#7-detailed-design)  
+7.1. [Participants](#71-participants)  
+7.2. [Transfers](#72-transfers)  
+7.3. [Settlement](#73-settlement)
+8. [Canonical Model](#8-canonical-model)  
+8.1. [TigerBeetle](#81-tigerbeetle)  
+8.2. [CentralLedger](#72-centralledger)
 
 
-# Glossary
+## Glossary
 | Definition  | Description                                                                                                                                                                                                                                                               |
 |-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Participant | A provider who is a member of a payment scheme, and subject to that scheme's rules.                                                                                                                                                                                       |
@@ -62,10 +62,10 @@ The diagram below shows the current architecture of a Mojaloop payments hub and 
 
 ### 3.3. Central Ledger Architecture
 #### 3.3.1. As Is - Central Ledger
-![System Context Diagram As](solution_design/central-ledger-system-context.svg)
+![System Context Diagram As](solution_design/central-ledger-diagram-as-is.svg)
 
 #### 3.3.2. To Be - Central Ledger
-![System Context Diagram](solution_design/central-ledger-system-context.svg)
+![System Context Diagram](solution_design/central-ledger-diagram-to-be.svg)
 
 ### 3.4. Central Settlement Architecture
 > @jason Add the central-settlement as part of the design diagrams...
@@ -76,7 +76,7 @@ The diagram below shows the current architecture of a Mojaloop payments hub and 
 
 ## 4. Requirements
 ### 4.1. Functional Requirements
-#### New Functionality
+#### 4.1.1. User Stories & Business Processes
 * TigerBeetle NodeJS integrated into Central-Ledger
   * Make use of existing configuration `default.json` configuration file for client
   * TigerBeetle NodeJS client to be integrated into central-ledger
