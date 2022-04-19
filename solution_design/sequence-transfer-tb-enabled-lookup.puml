@@ -1,6 +1,6 @@
 @startuml
 
-actor "DFSP" as dfsp
+actor "Mojaloop Adapter" as dfsp
 note over dfsp
     * Participant Bank A
     * Participant Bank B
@@ -35,6 +35,7 @@ end box
 box Storage #F9FFF9
 	control "TigerBeetle Client" as tb_client
 	collections "TigerBeetle Nodes" as tb_nodes
+    database "central-ledger" as cl_db
 end box
 
 autonumber
@@ -42,9 +43,11 @@ group Lookup Transfer by ID
     dfsp -> cl_api : //JSON// \n**(id)** and **(participantName)**
     cl_api -> cl_handler : ///jmeter/participants/**{name}**/transfers/**{id}**// \nHandler invoked
     cl_handler -> cl_domain : Service layer invoked
+    cl_domain -> cl_facade : Facade layer invoked
     cl_facade -> tb_client : //transfer// lookup requested
     tb_client <-> tb_nodes : //transfer// fetched\nvia the state machine
     tb_client --> cl_facade : //transfer// data
+    cl_facade <-> cl_db : Additional //Transfer// meta-data is fetched from the CentralLedger database.\n**//OPTIONAL//**
     cl_facade --> cl_domain : Return result
     cl_domain --> cl_handler : Return result
     cl_handler --> cl_api : Return result

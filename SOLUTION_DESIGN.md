@@ -33,7 +33,7 @@
 | REST        | Representational state transfer (REST) is a software architectural style that was created to guide the design and development of the architecture for the World Wide Web.                                                                                                 |
 | VPN Tunnel  | A VPN tunnel is an encrypted link between your computer or mobile device and an outside network. A VPN tunnel — short for virtual private network tunnel — can provide a way to cloak some of your online activity.                                                       |
 | TLS/SSL     | Transport Layer Security (TLS) certificates—most commonly known as SSL, or digital certificates—are the foundation of a safe and secure internet. TLS/SSL certificates secure internet connections by encrypting data sent between systems.                               |
-| HTTPS       | Stands for "HyperText Transport Protocol Secure." HTTPS is the same thing as HTTP, but uses a secure socket layer (SSL) for security purposes.                                                                                                                            |
+| HTTPS       | Stands for "HyperText Transport Protocol Secure." HTTPS is the same thing as HTTP, but uses a secure socket layer (TLS/SSL) for security purposes.                                                                                                                        |
 | WAF         | A WAF or web application firewall helps protect web applications by filtering and monitoring HTTP traffic between a web application and the Internet (_or internal network_).                                                                                             |
 
 
@@ -91,8 +91,8 @@ TigerBeetle provides more performance than a general-purpose relational database
 * TigerBeetle **uses small, simple fixed-size data structures** (accounts and transfers) and a tightly scoped domain.
 * TigerBeetle **performs all balance tracking logic in the database**. This is a paradigm shift where we move the code once to the data, not the data back and forth to the code in the critical path. This eliminates the need for complex caching logic outside the database. The “Accounting” business logic is built in to TigerBeetle so that you can **keep your application layer simple, and completely stateless**.
 * TigerBeetle **supports batching by design**. You can batch all the transfer prepares or commits that you receive in a fixed 10ms window (or in a dynamic 1ms through 10ms window according to load) and then send them all in a single network request to the database. This enables low-overhead networking, large sequential disk write patterns and amortized fsync and consensus across hundreds and thousands of transfers.
-> Everything is a batch. It's your choice whether a batch contains 100 transfers or 10,000 transfers but our measurements show that **latency is _less_ where batch sizes are larger, thanks to Little's Law** (e.g. 50ms for a batch of a hundred transfers vs 20ms for a batch of ten thousand transfers). TigerBeetle is able to amortize the cost of I/O to achieve lower latency, even for fairly large batch sizes, by eliminating the cost of queueing delay incurred by small batches.
-
+  * Everything is a batch. It's your choice whether a batch contains 100 transfers or 10,000 transfers but our measurements show that **latency is _less_ where batch sizes are larger, thanks to Little's Law** (e.g. 50ms for a batch of a hundred transfers vs 20ms for a batch of ten thousand transfers). 
+  * TigerBeetle is able to amortize the cost of I/O to achieve lower latency, even for fairly large batch sizes, by eliminating the cost of queueing delay incurred by small batches.
 * If your system is not under load, TigerBeetle also **optimizes the latency of small batches**. After copying from the kernel's TCP receive buffer (TigerBeetle does not do user-space TCP), TigerBeetle **does zero-copy Direct I/O** from network protocol to disk, and then to state machine and back, to reduce memory pressure and L1-L3 cache pollution.
 * TigerBeetle **uses io_uring for zero-syscall networking and storage I/O**. The cost of a syscall in terms of context switches adds up quickly for a few thousand transfers.
 * TigerBeetle **does zero-deserialization** by using fixed-size data structures, that are optimized for cache line alignment to **minimize L1-L3 cache misses**.
@@ -119,7 +119,7 @@ Strict consistency, CRCs and crash safety are not enough.
 * Non PCI-DSS sensitive information stored in TigerBeetle
 
 ##### Secure Storage at Rest
-* TigerBeetle stores all data at rest encrypted under XXXX (TODO @jason complete.)
+* TigerBeetle stores all data at rest encrypted under 256bit `XChaCha20`
 * MySQL database for CentralLedger to be configured for:
   * TLS/SSL communication between CentralLedger and MySQL
   * MysQL Keyring plugin may be used to encrypt data at rest (https://aimlessengineer.com/2021/04/26/data-at-rest-encryption-in-mysql/)
@@ -155,12 +155,12 @@ The following hardware dependencies are know.
 The following software dependencies are know.
 ##### TigerBeetle
 TigerBeetle release in a single executable file which is supported in the following operating systems:
-* Linux
-* MacOS
-* Windows
+* Linux (`x64`)
+* MacOS (`x64/arm`)
+* Windows (`x64`)
 
 ##### Mojaloop
-The Mojaloop stack relies on the following software components:
+The Mojaloop stack relies on the following software components for data storage:
 * MySQL
 * MongoDB
 * Redis
@@ -171,11 +171,12 @@ The Mojaloop stack relies on the following software components:
 > TODO @jason
 
 ### 3.7. Scope Exclusions
-> TODO @jason
+The following functionality will be excluded from Phase-1:
+* Integration into CentralSettlement
+* Updated NodeJS that merges TigerBeetle `Transfer`/`Commit`
 
 ## 4. Detailed Design
 > @tseli, help to improve please.
-
 The detail design process primarily involves the conversion of the loft from the preliminary design into something that can be built and ultimately flown.
 
 ### 4.1. Participants
@@ -184,7 +185,7 @@ Sequence related to participants with relation to CentralLedger and TigerBeetle.
 #### 4.1.1 Create Participant
 ![Participant Sequence](solution_design/sequence-participant-tb-enabled-create.png)
 
-1. Participant JSON Payload.
+1. Participant JSON Payload for HTTP `POST`.
 ```json
 {
   "id": "123",
@@ -193,19 +194,40 @@ Sequence related to participants with relation to CentralLedger and TigerBeetle.
   "newlyCreated": false
 }
 ```
-2. Handler invoked from `/jmeter/participants/create` `POST` endpoint.
-3. Service layer
-4. Domain to facade
-5. 
+2. Handler invoked from `/jmeter/participants/create` endpoint.
+3. Service layer invoked
+4. Domain / Service to Facade layer
+5. The Database transaction is initiated to store the participant and account data in the following tables;
+   1. `participant`
+   2. `participantCurrency`
+   3. `participantPosition`
+6. The TigerBeetle client is invoked to create the participant account.
+7. The account create request is received.
+8. The account is created and distributed to all TigerBeetle nodes in the cluster via VSR.
+9. Errors for the account creation (which is always batched) is returned. In this case there were no errors.
+10. The database transaction is regarded as successful, and the database transaction is committed.
+11. Result returned.
+12. Result returned.
+13. Result returned.
+14. `JSON` HTTP `200` response returned to indicate success.
 
 #### 4.1.2 Lookup Participant by Name
 ![Participant Sequence](solution_design/sequence-participant-tb-enabled-lookup.png)
 
-1. HTTP request
+1. DFSP/Mojaloop Adapter invokes HTTP request
 2. Handler invoked from `/jmeter/participants/{name}` `GET` endpoint.
-3. Service layer
-4. Domain to facade
-
+3. Service layer invoked.
+4. Domain / Service to Facade layer.
+5. Participant data is retrieved from Redis via participant `name`.
+   1. If the data is not available in the cache, a lookup in the CentralLedger database is performed, followed by caching the participant data.
+6. The TigerBeetle client is invoked in order to obtain the `account` information.
+7. TigerBeetle client fetches the necessary account information from one of the TigerBeetle nodes.
+8. Account data is returned from the TigerBeetle client.
+9. **OPTIONAL** Additional account meta-data is fetched based on `accountId`.
+10. Result returned.
+11. Result returned.
+12. Result returned.
+13. HTTP `JSON` response with account and balance related information.
 
 ### 4.2. Transfers
 Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
@@ -213,7 +235,7 @@ Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
 #### 4.2.1 Create Transfer (2-Phase)
 ![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-create.png)
 
-1. Transfer JSON Payload
+1. DFSP submits a Transfer JSON Payload (Prepare followed by Fulfil)
 ```json
 {
   "payerFsp": "fspJM962250a50c654d1a9f3d32b9a",
@@ -230,8 +252,8 @@ Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
 }
 ```
 2. Handler invoked from `/jmeter/transfers/prepare` `POST` endpoint.
-3. Service layer
-4. Facade
+3. Service layer invoked
+4. Domain / Service to Facade layer.
 5. The following validations are performed prior to the transfer:
    1. `validateFspiopSourceMatchesPayer` -> Asserts headers['fspiop-source'] matches payload.payerFsp
    2. `validateParticipantByName` -> Asserts payer participant exists by doing a lookup by name (discards result of lookup work)
@@ -242,32 +264,96 @@ Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
    7. `validateConditionAndExpiration` -> Validates condition and expiration
    8. `validateDifferentDfsp` -> Asserts lowercase string comparison of `payload.payerFsp` and `payload.payeeFsp` is different
 6. Lookup Payer and Payee Participants via name, account type (_POSITION_) and currency
-7. TB pending
-8. Transfer distributed via the TigerBeetle state machine
-9. The transfer is distributed to 7 TigerBeetle nodes in the cluster
-10. The TigerBeetle API responds with errors during the transfer, which is empty (_no errors_)
-11. Return result to service layer
-12. Return result to the handler layer
-13. Prepare the result in JSON format
-14. Result is returned to the DSFP via the REST API
-15. Insert into the following database tables:
+   1. If participant data is not available in Redis, a database lookup is performed, followed by the participant data being cached in Redis
+7. TigerBeetle pending `pending = true` //Transfer// created via TigerBeetle NodeJS client.
+```ziglang
+   Transfer{
+            .id = 1002,
+            .debit_account_id = 1,
+            .credit_account_id = 2,
+            .user_data = 0,
+            .reserved = [_]u8{0} ** 32,
+            .timeout = std.time.ns_per_hour,
+            .code = 0,
+            .flags = .{
+                .pending = true, // Set this transfer to be two-phase.
+                .linked = true, // Link this transfer with the next transfer 1003.
+            },
+            .amount = 1,
+        }
+```
+8. Transfer distributed via the TigerBeetle state machine.
+9. The transfer is distributed to all 7 TigerBeetle nodes in the cluster.
+10. The TigerBeetle API responds with errors during the transfer, which is empty (_no errors_).
+11. Return result to service layer.
+12. Return result to the handler layer.
+13. Prepare the result in JSON format.
+14. Result is returned to the DFSP via the REST API
+15. Insert duplicate check for //Transfer// into the following database table:
     1. `transferDuplicateCheck`
-    2. `transfer`
-    3. `transferParticipant` (Payer)
-    4. `transferParticipant` (Payee)
-    5. `ilpPacket`
-    6. `transferStateChange`
-    7. `participantPosition`
-    8. `participantPositionChange`
-16. sd
+16. Insert //Transfer// data into the following database tables:
+    1. `transfer`
+    2. `transferParticipant` (Payer)
+    3. `transferParticipant` (Payee)
+    4. `ilpPacket`
+    5. `transferStateChange`
+    6. `participantPosition`
+    7. `participantPositionChange`
+17. The //Transfer// database transaction is committed.
+18. DFSP submits a //Transfer// JSON Fulfi Payload
+```json
+{
+  "transferId": "f75f50d8-f584-4451-889b-fee8bc350db0",
+  "fulfil": true
+}
+```
+19. Handler invoked from `/jmeter/transfers/fulfil` `POST` endpoint.
+20. Service layer invoked
+21. Domain / Service to Facade layer. 
+22. New database transaction is initiated for the //Transfer// fulfil.
+23. The current open `settlementWindowId` is obtained for the current **OPEN** settlement window.
+    1. The settlement window is based on **OPEN** state and currency.
+24. The TigerBeetle client is invoked with a //Transfer// `post_pending_transfer = true` property
+```ziglang
+Transfer{
+            .id = 1001,
+            .debit_account_id = 1,
+            .credit_account_id = 2,
+            .user_data = 0,
+            .reserved = [_]u8{0} ** 32,
+            .timeout = 0,
+            .code = 0,
+            .flags = .{ .post_pending_transfer = true }, // Post the pending two-phase transfer.
+            .amount = 0, // Inherit the amount from the pending transfer.
+        },
+```
+25. Transfer fulfillment distributed via the TigerBeetle state machine.
+26. The transfer fulfilment is distributed to all 7 TigerBeetle nodes in the cluster.
+27. The TigerBeetle client API responds with errors during the transfer, which is empty (_no errors_).
+28. Insert //Transfer// fulfilment data into the following database tables:
+    1. `transferFulfilment`
+    2. `transferStateChange`
+29. Database transaction is commmitted.
+30. Return result to service layer.
+31. Return result to the handler layer.
+32. Prepare the result in JSON format.
+33. Result is returned to the DFSP via the REST API
 
 #### 4.2.2 Lookup Transfer by ID
 ![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-lookup.png)
 
-> TODO @jason
-
-### 4.3. Settlement
-> TODO @jason
+1. DFSP/Mojaloop Adapter invokes HTTP request
+2. Handler invoked from `/jmeter/participants/{name}/transfers/{id}` `GET` endpoint.
+3. Service layer invoked.
+4. Domain / Service to Facade layer.
+5. The TigerBeetle client is invoked in order to obtain the `account` information.
+6. TigerBeetle client fetches the necessary account information from one of the TigerBeetle nodes.
+7. Transfer data is returned from the TigerBeetle client.
+8. **OPTIONAL** Additional transfer meta-data is fetched based on `transactionId`.
+9. Result returned.
+10. Result returned.
+11. Result returned.
+12. HTTP `JSON` response with transfer related information.
 
 ## 5. Canonical Model
 The following CentralLedger and TigerBeetle Canonical Data Model presents data entities and relationships in the simplest possible form.
@@ -318,13 +404,18 @@ Transfers for TB are immutable.
 | timestamp         | `u64`             | The current state machine timestamp of the transfer for state tracking.                                                           |
 
 #### 5.5.4 TransferFlags - `[packed struct]`
+Transfer flags are properties associated with a Transfer to enable additional Transfer functionality, such as:
+* 2-Phase transfers
+* Linked Transfer
+* Reverting a previously created transfer
+* Reverting a previously committed transfer
 
-| Field                            | Type              | Description                                    |
-|----------------------------------|-------------------|------------------------------------------------|
-| linked                           | `bool`            | Is the account linked to another account.      |
-| two_phase_commit                 | `bool`            | Is the transfer a 2phase commit transfer.      |
-| condition                        | `bool`            | Does the transfer support transfer conditions. |
-| padding                          | `u29`             | Data to be used for padding.                   |
+| Field       | Type              | Description                                    |
+|-------------|-------------------|------------------------------------------------|
+| linked      | `bool`            | Is the account linked to another account.      |
+| pending     | `bool`            | Is the transfer a 2-phase commit transfer.     |
+| condition   | `bool`            | Does the transfer support transfer conditions. |
+| padding     | `u29`             | Data to be used for padding.                   |
 
 ### 5.2 CentralLedger
 CentralLedger hosts a wide range of tables in which to store Participant, Account and Transfer related data.
@@ -340,75 +431,94 @@ The following diagrams are used to illustration the relationships between data i
 
 
 #### 5.2.2 Participant (`participant`)
-| Field         | Type           | Description                    |
-|---------------|----------------|--------------------------------|
-| participantId | `int unsigned` | Unique participant identifier. |
-| name          | `varchar(256)` | Unique participant name.       |
-| description   | `varchar(256)` | Unique participant name.       |
-| active        | `tinyint`      | Unique participant name.       |
-| createdDate   | `datetime`     | Unique participant name.       |
-| createdBy     | `datetime`     | Unique participant name.       |
+| Field         | Type           | Description                                        |
+|---------------|----------------|----------------------------------------------------|
+| participantId | `int unsigned` | Unique participant identifier.                     |
+| name          | `varchar(256)` | Unique participant name.                           |
+| description   | `varchar(256)` | Brief description for a participant.               |
+| isActive      | `tinyint`      | Is the participant account active.                 |
+| createdDate   | `datetime`     | Timestamp of when the participant was created.     |
+| createdBy     | `datetime`     | The DFSP responsible for creating the participant. |
 
 #### 5.2.3 Participant Currency (`participantCurrency`)
-| Field         | Type           | Description                    |
-|---------------|----------------|--------------------------------|
-| participantId | `int unsigned` | Unique participant identifier. |
-| name          | `varchar(256)` | Unique participant name.       |
-| description   | `varchar(256)` | Unique participant name.       |
-| active        | `tinyint`      | Unique participant name.       |
-| createdDate   | `datetime`     | Unique participant name.       |
-| createdBy     | `datetime`     | Unique participant name.       |
+| Field                 | Type           | Description                                                |
+|-----------------------|----------------|------------------------------------------------------------|
+| participantCurrencyId | `int unsigned` | Unique participantCurrency identifier.                     |
+| participantId         | `int unsigned` | Foreign key for participant table.                         |
+| currencyId            | `int unsigned` | Foreign key for currency table.                            |
+| ledgerAccountTypeId   | `int unsigned` | Foreign key for ledgerAccountType table.                   |
+| isActive              | `tinyint`      | Is the currency active.                                    |
+| createdDate           | `datetime`     | Timestamp of when the participantCurrency was created.     |
+| createdBy             | `datetime`     | The DFSP responsible for creating the participantCurrency. |
 
-#### 5.2.4 Account
+#### 5.2.4 Participant Contact (`participantContact`)
+| Field                 | Type           | Description                                                  |
+|-----------------------|----------------|--------------------------------------------------------------|
+| participantContactId  | `int unsigned` | Unique participantContact identifier.                        |
+| participantId         | `int unsigned` | Foreign key for participant table.                           |
+| contactTypeId         | `int unsigned` | Foreign key for contactType table.                           |
+| value                 | `varchar(256)` | The details for the contact.                                 |
+| priorityPreference    | `int(9)`       | The priority for the contact.                                |
+| isActive              | `tinyint`      | Whether the contact is active.                               |
+| createdDate           | `datetime`     | Timestamp of when the participantContact was created.        |
+| createdBy             | `datetime`     | The DFSP responsible for creating the participantContact.    |
+
 
 #### 5.2.5 Transfer (`transfer`)
-| Field          | Type   | Description                    |
-|----------------|--------|--------------------------------|
-| transferId     | `TODO` | Unique participant identifier. |
-| amount         | `TODO` | TODO.                          |
-| currencyId     | `TODO` | TODO.                          |
-| expirationDate | `TODO` | TODO.                          |
-| ilpCondition   | `TODO` | TODO.                          |
+| Field          | Type            | Description                                                                    |
+|----------------|-----------------|--------------------------------------------------------------------------------|
+| transferId     | `varchar(36)`   | Unique transfer identifier.                                                    |
+| amount         | `decimal(18,4)` | The amount of the transfer.                                                    |
+| currencyId     | `varchar(3)`    | Foreign key to the transfer currency.                                          |
+| ilpCondition   | `varchar(256)`  | The condition from the ILP packet.                                             |
+| expirationDate | `datetime`      | The timestamp for when the 2-phase transfer expires in the event of no commit. |
+| createdDate    | `datetime`      | The timestamp for when the transfer was created.                               |
 
 #### 5.2.6 Transfer Participant (`transferParticipant`)
-| Field                         | Type   | Description                    |
-|-------------------------------|--------|--------------------------------|
-| transferParticipantId         | `TODO` | Unique participant identifier. |
-| transferId                    | `TODO` | Unique participant identifier. |
-| amount                        | `TODO` | TODO.                          |
-| ledgerEntryTypeId             | `TODO` | TODO.                          |
-| participantCurrencyId         | `TODO` | TODO.                          |
-| transferParticipantRoleTypeId | `TODO` | TODO.                          |
+| Field                         | Type              | Description                                                 |
+|-------------------------------|-------------------|-------------------------------------------------------------|
+| transferParticipantId         | `bigint unsigned` | Unique transferParticipant identifier.                      |
+| transferId                    | `varchar(36)`     | Foreign key for the transfer.                               |
+| participantCurrencyId         | `int unsigned`    | Foreign key for the participantCurrencyId.                  |
+| transferParticipantRoleTypeId | `int unsigned`    | Foreign key for the transferParticipantRoleTypeId.          |
+| ledgerEntryTypeId             | `int unsigned`    | Foreign key for the ledgerEntryTypeId.                      |
+| amount                        | `decimal(18,4)`   | The amount of the transfer.                                 |
+| createdDate                   | `datetime`        | The timestamp for when the transferParticipant was created. |
 
 #### 5.2.7 ILP Packet (`ilpPacket`)
-| Field      | Type   | Description                    |
-|------------|--------|--------------------------------|
-| transferId | `TODO` | Unique participant identifier. |
-| value      | `TODO` | Unique participant identifier. |
+| Field        | Type          | Description                                       |
+|--------------|---------------|---------------------------------------------------|
+| transferId   | `varchar(36)` | Foreign key for the transfer.                     |
+| value        | `text`        | Complete ilpPacket.                               |
+| createdDate  | `datetime`    | The timestamp for when the ilpPacket was created. |
 
 #### 5.2.8 Transfer State Change (`transferStateChange`)
-| Field           | Type   | Description                    |
-|-----------------|--------|--------------------------------|
-| transferStateId | `TODO` | Unique participant identifier. |
-| transferId      | `TODO` | Unique participant identifier. |
-| createdDate     | `TODO` | Unique participant identifier. |
-| reason          | `TODO` | Unique participant identifier. |
+| Field                 | Type              | Description                                                 |
+|-----------------------|-------------------|-------------------------------------------------------------|
+| transferStateChangeId | `bigint`          | Unique transferStateChange identifier.                      |
+| transferId            | `varchar(36)`     | Foreign key for the transfer.                               |
+| transferStateId       | `varchar(50)`     | Foreign key for the transferStateId.                        |
+| reason                | `varchar(512)`    | Reason for state change.                                    |
+| createdDate           | `datetime`        | The timestamp for when the transferStateChange was created. |
 
 #### 5.2.9 Participant Position (`participantPosition`)
-| Field                  | Type   | Description                    |
-|------------------------|--------|--------------------------------|
-| participantPositionId  | `TODO` | Unique participant identifier. |
-| value                  | `TODO` | Unique participant identifier. |
-| changedDate            | `TODO` | Unique participant identifier. |
+| Field                 | Type              | Description                                                      |
+|-----------------------|-------------------|------------------------------------------------------------------|
+| participantPositionId | `bigint unsigned` | Unique participantPosition identifier.                           |
+| participantCurrencyId | `int unsigned`    | Foreign key for the participantCurrency.                         |
+| value                 | `decimal(18,4)`   | Current participant position.                                    |
+| reservedValue         | `decimal(18,4)`   | Current participant reserved position.                           |
+| changedDate           | `datetime`        | The timestamp for when the participantPosition was last updated. |
 
 #### 5.2.10 Participant Position Change (`participantPositionChange`)
-| Field                 | Type   | Description                    |
-|-----------------------|--------|--------------------------------|
-| participantPositionId | `TODO` | Unique participant identifier. |
-| transferStateChangeId | `TODO` | Unique participant identifier. |
-| value                 | `TODO` | Unique participant identifier. |
-| reservedValue         | `TODO` | Unique participant identifier. |
-| createdDate           | `TODO` | Unique participant identifier. |
+| Field                       | Type                 | Description                                                    |
+|-----------------------------|----------------------|----------------------------------------------------------------|
+| participantPositionChangeId | `bigint unsigned`    | Unique participantPositionChangeId identifier.                 |
+| participantPositionId       | `bigint unsigned`    | Foreign key for the participantPosition.                       |
+| transferStateChangeId       | `bigint unsigned`    | Foreign key for the transferStateChange.                       |
+| value                       | `decimal(18,4)`      | The participant position at time of state change.              |
+| reservedValue               | `decimal(18,4)`      | The participant reserved position at time of state change.     |
+| createdDate                 | `datetime`           | The timestamp for when the participantPositionChange occurred. |
 
 #### 5.2.11 Participant Limit (`participantLimit`)
 | Field              | Type   | Description                    |
@@ -417,12 +527,9 @@ The following diagrams are used to illustration the relationships between data i
 | value              | `TODO` | Unique participant identifier. |
 
 #### 5.2.12 Transfer Duplicate Check (`transferDuplicateCheck`)
-| Field      | Type   | Description                    |
-|------------|--------|--------------------------------|
-| transferId | `TODO` | Unique participant identifier. |
-| hash       | `TODO` | Unique participant identifier. |
-
-#### 5.2.X Transfer Fulfil
-
-
+| Field        | Type           | Description                                                  |
+|--------------|----------------|--------------------------------------------------------------|
+| transferId   | `varchar(32)`  | Unique transfer identifier (UUID).                           |
+| hash         | `varchar(256)` | Unique hash for the transfer JSON request.                   |
+| createdDate  | `datetime`     | The timestamp for when the transferDuplicateCheck occurred.  |
 
