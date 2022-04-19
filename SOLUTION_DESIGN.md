@@ -73,7 +73,7 @@ This diagram depicts the proposed Central Services architecture with the Central
 > @jason Add the central-settlement as part of the design diagrams...
 #### 3.4.1. As Is - Central Settlement
 > TODO
-#### 3.4.2. As Is - Central Settlement
+#### 3.4.2. To Be - Central Settlement
 > TODO
 
 ## 4. Requirements
@@ -134,11 +134,11 @@ Strict consistency, CRCs and crash safety are not enough.
 * Non PCI-DSS sensitive information stored in TigerBeetle
 
 ##### Secure Storage at Rest
-* TigerBeetle stores all data at rest encrypted under 256bit `XChaCha20`
+* TigerBeetle stores all data at rest encrypted under 256-bit `XChaCha20`.
 * MySQL database for CentralLedger to be configured for:
-  * TLS/SSL communication between CentralLedger and MySQL
-  * MysQL Keyring plugin may be used to encrypt data at rest (https://aimlessengineer.com/2021/04/26/data-at-rest-encryption-in-mysql/)
-* Security of sensitive data in the database
+  * TLS/SSL communication between CentralLedger and MySQL.
+  * MysQL Keyring plugin may be used to encrypt data at rest (https://aimlessengineer.com/2021/04/26/data-at-rest-encryption-in-mysql/).
+* Security of sensitive data in the database.
 
 ##### Other
 * Authentication of the CL API
@@ -191,7 +191,6 @@ The following functionality will be excluded from Phase-1:
 * Updated NodeJS that merges TigerBeetle `Transfer`/`Commit`
 
 ## 7. Detailed Design
-> @tseli, help to improve please.
 The detail design process primarily involves the conversion of the loft from the preliminary design into something that can be built and ultimately flown.
 
 ### 7.1. Participants
@@ -281,21 +280,21 @@ Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
 6. Lookup Payer and Payee Participants via name, account type (_POSITION_) and currency
    1. If participant data is not available in Redis, a database lookup is performed, followed by the participant data being cached in Redis
 7. TigerBeetle pending `pending = true` //Transfer// created via TigerBeetle NodeJS client.
-```ziglang
-   Transfer{
-            .id = 1002,
-            .debit_account_id = 1,
-            .credit_account_id = 2,
-            .user_data = 0,
-            .reserved = [_]u8{0} ** 32,
-            .timeout = std.time.ns_per_hour,
-            .code = 0,
-            .flags = .{
-                .pending = true, // Set this transfer to be two-phase.
-                .linked = true, // Link this transfer with the next transfer 1003.
-            },
-            .amount = 1,
-        }
+```zig
+Transfer{
+    .id = 1002,
+    .debit_account_id = 1,
+    .credit_account_id = 2,
+    .user_data = 0,
+    .reserved = [_]u8{0} ** 32,
+    .timeout = std.time.ns_per_hour,
+    .code = 0,
+    .flags = .{
+        .pending = true, // Set this transfer to be two-phase.
+        .linked = true, // Link this transfer with the next transfer 1003.
+    },
+    .amount = 1,
+}
 ```
 8. Transfer distributed via the TigerBeetle state machine.
 9. The transfer is distributed to all 7 TigerBeetle nodes in the cluster.
@@ -329,18 +328,18 @@ Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
 23. The current open `settlementWindowId` is obtained for the current **OPEN** settlement window.
     1. The settlement window is based on **OPEN** state and currency.
 24. The TigerBeetle client is invoked with a //Transfer// `post_pending_transfer = true` property
-```ziglang
+```zig
 Transfer{
-            .id = 1001,
-            .debit_account_id = 1,
-            .credit_account_id = 2,
-            .user_data = 0,
-            .reserved = [_]u8{0} ** 32,
-            .timeout = 0,
-            .code = 0,
-            .flags = .{ .post_pending_transfer = true }, // Post the pending two-phase transfer.
-            .amount = 0, // Inherit the amount from the pending transfer.
-        },
+    .id = 1001,
+    .debit_account_id = 1,
+    .credit_account_id = 2,
+    .user_data = 0,
+    .reserved = [_]u8{0} ** 32,
+    .timeout = 0,
+    .code = 0,
+    .flags = .{ .post_pending_transfer = true }, // Post the pending two-phase transfer.
+    .amount = 0, // Inherit the amount from the pending transfer.
+},
 ```
 25. Transfer fulfillment distributed via the TigerBeetle state machine.
 26. The transfer fulfilment is distributed to all 7 TigerBeetle nodes in the cluster.
