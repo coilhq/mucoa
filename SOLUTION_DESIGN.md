@@ -84,7 +84,11 @@ This diagram depicts the proposed Central Services architecture with the Central
   * TigerBeetle NodeJS client to be integrated into central-ledger
   * TigerBeetle enablement through on/off switch
   * TigerBeetle and central-ledger facade (Translate from CL Acc+Transfer to TB Acc+Transfer)
-* jMeter endpoints added for full 
+* jMeter endpoints for:
+  * Create a participant
+  * Lookup participant
+  * Create a Transfer
+  * Lookup a Transfer
 * Timeout function to be reliant on TB instead of timer
 * Transfer duplicate check performed as part of TB built in functionality
 * jMeter testing suite to test the following functionality:
