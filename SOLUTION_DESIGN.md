@@ -373,9 +373,6 @@ Transfer{
 11. Result returned.
 12. HTTP `JSON` response with transfer related information.
 
-### 7.3. Settlement
-> TODO @jason
-
 ## 8. Canonical Model
 The following CentralLedger and TigerBeetle Canonical Data Model presents data entities and relationships in the simplest possible form.
 
