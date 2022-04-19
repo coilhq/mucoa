@@ -197,7 +197,7 @@ The detail design process primarily involves the conversion of the loft from the
 Sequence related to participants with relation to CentralLedger and TigerBeetle.
 
 #### 7.1.1 Create Participant
-![Participant Sequence](solution_design/sequence-participant-tb-enabled-create.png)
+![Participant Sequence](solution_design/sequence-participant-tb-enabled-create.svg)
 
 1. Participant JSON Payload for HTTP `POST`.
 ```json
@@ -226,7 +226,7 @@ Sequence related to participants with relation to CentralLedger and TigerBeetle.
 14. `JSON` HTTP `200` response returned to indicate success.
 
 #### 7.1.2 Lookup Participant by Name
-![Participant Sequence](solution_design/sequence-participant-tb-enabled-lookup.png)
+![Participant Sequence](solution_design/sequence-participant-tb-enabled-lookup.svg)
 
 1. DFSP/Mojaloop Adapter invokes HTTP request
 2. Handler invoked from `/jmeter/participants/{name}` `GET` endpoint.
@@ -247,7 +247,7 @@ Sequence related to participants with relation to CentralLedger and TigerBeetle.
 Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
 
 #### 7.2.1 Create Transfer (2-Phase)
-![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-create.png)
+![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-create.svg)
 
 1. DFSP submits a Transfer JSON Payload (Prepare followed by Fulfil)
 ```json
@@ -354,7 +354,7 @@ Transfer{
 33. Result is returned to the DFSP via the REST API
 
 #### 7.2.2 Lookup Transfer by ID
-![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-lookup.png)
+![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-lookup.svg)
 
 1. DFSP/Mojaloop Adapter invokes HTTP request
 2. Handler invoked from `/jmeter/participants/{name}/transfers/{id}` `GET` endpoint.
@@ -441,10 +441,10 @@ CentralLedger hosts a wide range of tables in which to store Participant, Accoun
 The following diagrams are used to illustration the relationships between data in CentralLedger.
 
 ##### Participants and Accounts
-![SQL Relationships - Participants](solution_design/central-ledger-data-participant.png)
+![SQL Relationships - Participants](solution_design/central-ledger-data-participant.svg)
 
 ##### Transfer
-![SQL Relationships - Transfers](solution_design/central-ledger-data-transfer.png)
+![SQL Relationships - Transfers](solution_design/central-ledger-data-transfer.svg)
 
 
 #### 8.2.2 Participant (`participant`)
