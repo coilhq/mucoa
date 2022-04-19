@@ -62,10 +62,12 @@ The diagram below shows the current architecture of a Mojaloop payments hub and 
 
 ### 3.3. Central Ledger Architecture
 #### 3.3.1. As Is - Central Ledger
-![System Context Diagram As](solution_design/central-ledger-diagram-as-is.svg)
+A closer look at the current Central Services architecture, with the Central Ledger using SQL, PostgreSQL and Redis.<br><br>
+![System Context Diagram As](solution_design/central-ledger-diagram-as-is.png)
 
 #### 3.3.2. To Be - Central Ledger
-![System Context Diagram](solution_design/central-ledger-diagram-to-be.svg)
+This diagram depicts the proposed Central Services architecture with the Central Ledger running TigerBeetle together with SQL and Redis databases.<br><br>
+![System Context Diagram](solution_design/central-ledger-diagram-to-be.png)
 
 ### 3.4. Central Settlement Architecture
 > @jason Add the central-settlement as part of the design diagrams...
