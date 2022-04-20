@@ -3,24 +3,21 @@
 [Glossary](#glossary)
 1. [Purpose](#1-purpose)
 2. [Introduction](#2-introduction)
-3. [Architecture & Design](#3-architecture-&-design)  
+3. [Architecture & Design](#3-architecture--design)  
 3.1. [Architecture and Design Principles](#31-architecture-and-design-principles)  
 3.2. [Current Mojaloop Architecture](#32-current-mojaloop-architecture)  
-3.3. [Central Ledger Architecture](#33-central-ledger-architecture)  
-3.4. [Central Settlement Architecture](#33-central-settlement-architecture)
+3.3. [Central Ledger Architecture](#33-central-ledger-architecture)
 4. [Requirements](#4-requirements)  
 4.1. [Functional Requirements](#41-functional-requirements)  
 4.2. [Non-Functional Requirements](#42-non-functional-requirements)
-5. [Assumptions, Dependencies & Considerations](#5-assumptions-dependencies--considerations)
+5. [Assumptions, Dependencies & Considerations](#5-dependencies--considerations)
 6. [Scope Exclusions](#6-scope-exclusions)
-7. [Detailed Design](#7-detailed-design)  
+7. [Detailed Design](#7-detailed-design---tigerbeetle-in-centralledger)  
 7.1. [Participants](#71-participants)  
-7.2. [Transfers](#72-transfers)  
-7.3. [Settlement](#73-settlement)
+7.2. [Transfers](#72-transfers)
 8. [Canonical Model](#8-canonical-model)  
 8.1. [TigerBeetle](#81-tigerbeetle)  
-8.2. [CentralLedger](#72-centralledger)
-
+8.2. [CentralLedger](#82-centralledger)
 
 ## Glossary
 | Definition  | Description                                                                                                                                                                                                                                                               |
@@ -54,9 +51,25 @@ TigerBeetle is a distributed database built for native financial accounting supp
 
 ## 3. Architecture & Design
 ### 3.1 Architecture and Design Principles
-> TODO
+
+The underlying design principles include:
+
+- A push payment model with immediate funds transfer and same day settlement 
+- Open-loop interoperability between providers
+- Adherence to well-defined and adopted international standards
+- Adequate system-wide shared fraud and security protection
+- Efficient and proportional identity and know-your-customer (KYC) requirements
+- Meeting or exceeding the convenience, cost and utility of cash
+
 ### 3.2. Current Mojaloop Architecture
 The diagram below shows the current architecture of a Mojaloop payments hub and it illustrates interactions between the hub and external entities such as a settlement bank, a global account lookup service and the systems of other financial service providers.
+
+The Mojaloop Hub is the primary container and reference we use to describe the Mojaloop ecosystem which is split into the following domains:
+- Mojaloop Open Source Services 
+  - Core Mojaloop Open Source Software (OSS) that has been supported by the Bill & Melinda Gates Foundation in partnership with the Open Source Community. 
+- Mojaloop Hub 
+  - Overall Mojaloop reference (and customizable) implementation for Hub Operators is based on the above OSS solution.
+
 <br><br>
 ![System Context Diagram](solution_design/arch-mojaloop.svg)
 
@@ -69,13 +82,6 @@ A closer look at the current Central Services architecture, with the Central Led
 This diagram depicts the proposed Central Services architecture with the Central Ledger running TigerBeetle together with SQL and Redis databases.<br><br>
 ![System Context Diagram](solution_design/central-ledger-diagram-to-be.svg)
 
-### 3.4. Central Settlement Architecture
-> @jason Add the central-settlement as part of the design diagrams...
-#### 3.4.1. As Is - Central Settlement
-> TODO
-#### 3.4.2. To Be - Central Settlement
-> TODO
-
 ## 4. Requirements
 ### 4.1. Functional Requirements
 #### 4.1.1. User Stories & Business Processes
@@ -83,20 +89,21 @@ This diagram depicts the proposed Central Services architecture with the Central
   * Make use of existing configuration `default.json` configuration file for client
   * TigerBeetle NodeJS client to be integrated into central-ledger
   * TigerBeetle enablement through on/off switch
-  * TigerBeetle and central-ledger facade (Translate from CL Acc+Transfer to TB Acc+Transfer)
+  * TigerBeetle and central-ledger facade (Translate from CL Acc+Transfer to TigerBeetle Acc+Transfer)
 * jMeter endpoints for:
   * Create a participant
   * Lookup participant
   * Create a Transfer
   * Lookup a Transfer
-* Timeout function to be reliant on TB instead of timer
-* Transfer duplicate check performed as part of TB built in functionality
+* Timeout function to be reliant on TigerBeetle instead of timer
+* Transfer duplicate check performed as part of TigerBeetle built in functionality
 * jMeter testing suite to test the following functionality:
   * Transfer
   * 2-Phase Transfer
   * Account & Participant Creation
   * Account Lookups
   * Transfer Lookups
+* This is a change.
 
 #### Impact On User Experience
 #### System Behaviour In different scenarios
@@ -156,19 +163,33 @@ Testing coverage includes:
 * Unit testing for TigerBeetle NodeJS client
 * Integration testing for TigerBeetle NodeJS client
 * Integration testing for CentralLedger and TigerBeetle
-  * TB enabled
-  * TB disabled (_traditional_)
+  * TigerBeetle enabled
+  * TigerBeetle disabled (_traditional_)
 * Performance, throughput and safety (_via jMeter_)
 
-## 5. Assumptions, Dependencies & Considerations
-
-### 5.1 Assumptions
-> TODO @jason
+## 5. Dependencies & Considerations
 
 ### 5.2 Hardware Dependencies
 The following hardware dependencies are known.
 #### TigerBeetle
-#### CentralLedger
+- 7x TigerBeetle nodes, each being
+  - 2x vCPUs, 4GB of RAM, and >5gb storage (depending on use case)
+
+#### Mojaloop Hub
+- Control Plane (i.e. Master Node)
+  - https://kubernetes.io/docs/setup/cluster-large/#size-of-master-and-master-components
+- 3x Master Nodes for future node scaling and HA (High Availability)
+- ETCd Plane:
+  - https://etcd.io/docs/v3.3.12/op-guide/hardware
+  - 3x ETCd nodes for HA (High Availability)
+- Compute Plane (i.e. Worker Node):
+  - TBC once load testing has been concluded. However the current general recommended size:
+- 3x Worker nodes, each being:
+  - 4x vCPUs, 16GB of RAM, and 40gb storage
+  
+> Note that this would also depend on your underlying infrastructure, and it does NOT include requirements for persistent volumes/storage.
+
+![Kube Infrastructure Arch](solution_design/KubeInfrastructureArch.svg)
 
 ### 5.3 Software Dependencies
 The following software dependencies are known.
@@ -179,22 +200,34 @@ TigerBeetle release in a single executable file which is supported in the follow
 * Windows (`x64`)
 
 #### Mojaloop
-The Mojaloop stack relies on the following software components for data storage:
-* MySQL
-* MongoDB
-* Redis
-* Kafka
-* NodeJS
 
-### 5.4 Considerations
-> TODO @jason
+The Mojaloop Hub is the primary container and reference we use to describe the core Mojaloop components.
+The following component diagram shows the break-down of the Mojaloop services and its micro-service architecture:
+
+![Kube Infrastructure Arch](solution_design/Arch-Mojaloop-overview-PI14.svg)
+
+> Note: Colour-grading indicates the relationship between data-store, and message-streaming / adapter-interconnects. E.g. Central-Services utilise `MySQL` as a Data-store, and leverage on `Kafka` for Messaging
+
+These consist of:
+- The Mojaloop API Adapters (ML-API-Adapter) provide the standard set of interfaces a DFSP can implement to connect to the system for Transfers. A DFSP that wants to connect up can adapt our example code or implement the standard interfaces into their own software. The goal is for it to be as straightforward as possible for a DFSP to connect to the interoperable network.
+- The `Central Services` (CentralLedger, CentralSettlement etc.) provide the set of components required to move money from one DFSP to another through the Mojaloop API Adapters. This is similar to how money moves through a central bank or clearing house in developed countries. The Central Services contains the core Central Ledger logic to move money but also will be extended to provide fraud management and enforce scheme rules.
+- The Account Lookup Service (ALS) provides a mechanism to resolve FSP routing information through the Participant API or orchestrate a Party request based on an internal Participant look-up. The internal Participant look-up is handled by a number of standard Oracle adapter or services. Example Oracle adapter/service would be to look-up Participant information from Pathfinder or a Merchant Registry. These Oracle adapters or services can easily be added depending on the schema requirements.
+- The Quoting Service (QA) provides Quoting is the process that determines any fees and any commission required to perform a financial transaction between two FSPs. It is always initiated by the Payer FSP to the Payee FSP, which means that the quote flows in the same way as a financial transaction.
+- The Simulator (SIM) mocks several DFSP functions as follows:
+  - Oracle end-points for Oracle Participant CRUD operations using in-memory cache;
+  - Participant end-points for Oracles with support for parameterized partyIdTypes;
+  - Parties end-points for Payer and Payee FSPs with associated callback responses;
+  - Transfer end-points for Payer and Payee FSPs with associated callback responses; and
+  - Query APIs to verify transactions (requests, responses, callbacks, etc) to support QA testing and verification.
+  - On either side of the Mojaloop Hub there is sample open source code to show how a DFSP can send and receive payments and the client that an existing DFSP could host to connect to the network.
+
 
 ## 6. Scope Exclusions
 The following functionality will be excluded from Phase-1:
 * Integration into CentralSettlement
 * Updated NodeJS that merges TigerBeetle `Transfer`/`Commit`
 
-## 7. Detailed Design
+## 7. Detailed Design - TigerBeetle in CentralLedger 
 The detail design process primarily involves the conversion of the loft from the preliminary design into something that can be built and ultimately flown.
 
 ### 7.1. Participants
@@ -406,7 +439,7 @@ Mutable data set for account related data.
 | padding                          | `u29`             | Data to be used for padding.                 |
 
 #### 8.1.3 Transfer
-Transfers for TB are immutable.
+Transfers for TigerBeetle are immutable.
 
 | Field             | Type              | Description                                                                                                                       |
 |-------------------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------|
@@ -539,10 +572,17 @@ The following diagrams are used to illustration the relationships between data i
 | createdDate                 | `datetime`           | The timestamp for when the participantPositionChange occurred. |
 
 #### 8.2.11 Participant Limit (`participantLimit`)
-| Field              | Type   | Description                    |
-|--------------------|--------|--------------------------------|
-| participantLimitId | `TODO` | Unique participant identifier. |
-| value              | `TODO` | Unique participant identifier. |
+| Field                                 | Type              | Description                                              |
+|---------------------------------------|-------------------|----------------------------------------------------------|
+| participantLimitId                    | `bigint unsigned` | Unique participantLimit identifier.                      |
+| participantCurrencyId                 | `bigint unsigned` | Foreign key for the participantCurrency.                 |
+| participantLimitTypeId                | `bigint unsigned` | Foreign key for the participantLimitType.                |
+| startAfterParticipantPositionChangeId | `bigint unsigned` | Foreign key for the participantPositionChange.           |
+| value                                 | `decimal(18,4)`   | Unique participant identifier.                           |
+| thresholdAlarmPercentage              | `decimal(5,2)`    | The allowed threshold of the alarm.                      |
+| isActive                              | `tinyint`         | Whether the participant limit is active.                 |
+| createdDate                           | `datetime`        | Timestamp of when the participantLimit was created.      |
+| createdBy                             | `datetime`        | The DFSP responsible for creating the participantLimit.  |
 
 #### 8.2.12 Transfer Duplicate Check (`transferDuplicateCheck`)
 | Field        | Type           | Description                                                  |
