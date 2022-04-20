@@ -6,7 +6,7 @@
 3. [Architecture & Design](#3-architecture--design)  
 3.1. [Architecture and Design Principles](#31-architecture-and-design-principles)  
 3.2. [Current Mojaloop Architecture](#32-current-mojaloop-architecture)  
-3.3. [Central Ledger Architecture](#33-central-ledger-architecture)
+3.3. [CentralLedger Architecture](#33-centralledger-architecture)
 4. [Requirements](#4-requirements)  
 4.1. [Functional Requirements](#41-functional-requirements)  
 4.2. [Non-Functional Requirements](#42-non-functional-requirements)
@@ -34,7 +34,7 @@
 | TLS/SSL     | Transport Layer Security (TLS) certificates—most commonly known as SSL, or digital certificates—are the foundation of a safe and secure internet. TLS/SSL certificates secure internet connections by encrypting data sent between systems.                               |
 | HTTPS       | Stands for "HyperText Transport Protocol Secure." HTTPS is the same thing as HTTP, but uses a secure socket layer (TLS/SSL) for security purposes.                                                                                                                        |
 | WAF         | A WAF or web application firewall helps protect web applications by filtering and monitoring HTTP traffic between a web application and the Internet (_or internal network_).                                                                                             |
-
+---
 
 ## 1. Purpose
 This document proposes the solution architecture and system design for integrating a TigerBeetle database as part of a Mojaloop payments system.
@@ -47,7 +47,7 @@ Different sections of this document can be used by an audience that is focussed 
 ## 2. Introduction
 The original design of the Mojaloop payments system uses Redis for caching and SQL databases to record participant, transaction, settlement and operational data. In the original design, the application layer implements the business processing and financial accounting logic, interacting with the database to persist and retrieve the data. 
 
-TigerBeetle is a distributed database built for native financial accounting support. It leverages the original Mojaloop Central Ledger logic in order to implement the financial accounting logic natively, within the database. In this proposed solution, the Mojaloop application layer optimizes its database interactions and defers the financial accounting logic to TigerBeetle.
+TigerBeetle is a distributed database built for native financial accounting support. It leverages the original Mojaloop CentralLedger logic in order to implement the financial accounting logic natively, within the database. In this proposed solution, the Mojaloop application layer optimizes its database interactions and defers the financial accounting logic to TigerBeetle.
 
 ## 3. Architecture & Design
 ### 3.1 Architecture and Design Principles
@@ -73,13 +73,13 @@ The Mojaloop Hub is the primary container and reference we use to describe the M
 <br><br>
 ![System Context Diagram](solution_design/arch-mojaloop.svg)
 
-### 3.3. Central Ledger Architecture
-#### 3.3.1. As Is - Central Ledger
-A closer look at the current Central Services architecture, with the Central Ledger using SQL, PostgreSQL and Redis.<br><br>
+### 3.3. CentralLedger Architecture
+#### 3.3.1. As Is - CentralLedger
+A closer look at the current Central Services architecture, with the CentralLedger using SQL, PostgreSQL and Redis.<br><br>
 ![System Context Diagram As](solution_design/central-ledger-diagram-as-is.svg)
 
-#### 3.3.2. To Be - Central Ledger
-This diagram depicts the proposed Central Services architecture with the Central Ledger running TigerBeetle together with SQL and Redis databases.<br><br>
+#### 3.3.2. To Be - CentralLedger
+This diagram depicts the proposed Central Services architecture with the CentralLedger running TigerBeetle together with SQL and Redis databases.<br><br>
 ![System Context Diagram](solution_design/central-ledger-diagram-to-be.svg)
 
 ## 4. Requirements
@@ -210,7 +210,7 @@ The following component diagram shows the break-down of the Mojaloop services an
 
 These consist of:
 - The Mojaloop API Adapters (ML-API-Adapter) provide the standard set of interfaces a DFSP can implement to connect to the system for Transfers. A DFSP that wants to connect up can adapt our example code or implement the standard interfaces into their own software. The goal is for it to be as straightforward as possible for a DFSP to connect to the interoperable network.
-- The `Central Services` (CentralLedger, CentralSettlement etc.) provide the set of components required to move money from one DFSP to another through the Mojaloop API Adapters. This is similar to how money moves through a central bank or clearing house in developed countries. The Central Services contains the core Central Ledger logic to move money but also will be extended to provide fraud management and enforce scheme rules.
+- The `Central Services` (CentralLedger, CentralSettlement etc.) provide the set of components required to move money from one DFSP to another through the Mojaloop API Adapters. This is similar to how money moves through a central bank or clearing house in developed countries. The Central Services contains the core CentralLedger logic to move money but also will be extended to provide fraud management and enforce scheme rules.
 - The Account Lookup Service (ALS) provides a mechanism to resolve FSP routing information through the Participant API or orchestrate a Party request based on an internal Participant look-up. The internal Participant look-up is handled by a number of standard Oracle adapter or services. Example Oracle adapter/service would be to look-up Participant information from Pathfinder or a Merchant Registry. These Oracle adapters or services can easily be added depending on the schema requirements.
 - The Quoting Service (QA) provides Quoting is the process that determines any fees and any commission required to perform a financial transaction between two FSPs. It is always initiated by the Payer FSP to the Payee FSP, which means that the quote flows in the same way as a financial transaction.
 - The Simulator (SIM) mocks several DFSP functions as follows:
