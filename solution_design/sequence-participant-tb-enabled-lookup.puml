@@ -49,7 +49,7 @@ group Lookup Participant by Name
     autonumber stop
     cl_facade <--> cl_db : If the participant data is not available in Redis, \na database lookup is performed followed by storing the participant\ndata in Redis cache.
     autonumber resume
-    cl_facade -> tb_client : Account lookup via id.
+    cl_facade -> tb_client : Account lookup using id via the CL-TB interface.
     tb_client <-> tb_nodes : TigerBeetle //account//\n fetched.
     tb_client --> cl_facade : //account// data returned.
     cl_facade <-> cl_db : Additional meta-data is fetched from the CentralLedger database.\n**//OPTIONAL//**
