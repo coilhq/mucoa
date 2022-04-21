@@ -6,18 +6,19 @@
 3. [Architecture & Design](#3-architecture--design)  
 3.1. [Architecture and Design Principles](#31-architecture-and-design-principles)  
 3.2. [Current Mojaloop Architecture](#32-current-mojaloop-architecture)  
-3.3. [CentralLedger Architecture](#33-centralledger-architecture)
+3.3. [Central-Ledger Architecture](#33-central-ledger-architecture)
 4. [Requirements](#4-requirements)  
 4.1. [Functional Requirements](#41-functional-requirements)  
 4.2. [Non-Functional Requirements](#42-non-functional-requirements)
 5. [Assumptions, Dependencies & Considerations](#5-dependencies--considerations)
 6. [Scope Exclusions](#6-scope-exclusions)
-7. [Detailed Design](#7-detailed-design---tigerbeetle-in-centralledger)  
+7. [Detailed Design](#7-detailed-design---tigerbeetle-in-central-ledger)  
 7.1. [Participants](#71-participants)  
 7.2. [Transfers](#72-transfers)
 8. [Canonical Model](#8-canonical-model)  
 8.1. [TigerBeetle](#81-tigerbeetle)  
-8.2. [CentralLedger](#82-centralledger)
+8.2. [Central-Ledger](#82-central-ledger)
+[References](#references)
 
 ## Glossary
 | Definition  | Description                                                                                                                                                                                                                                                               |
@@ -47,7 +48,7 @@ Different sections of this document can be used by an audience that is focussed 
 ## 2. Introduction
 The original design of the Mojaloop payments system uses Redis for caching and SQL databases to record participant, transaction, settlement and operational data. In the original design, the application layer implements the business processing and financial accounting logic, interacting with the database to persist and retrieve the data. 
 
-TigerBeetle is a distributed database built for native financial accounting support. It leverages the original Mojaloop CentralLedger logic in order to implement the financial accounting logic natively, within the database. In this proposed solution, the Mojaloop application layer optimizes its database interactions and defers the financial accounting logic to TigerBeetle.
+TigerBeetle is a distributed database built for native financial accounting support. It leverages the original Mojaloop Central-Ledger logic in order to implement the financial accounting logic natively, within the database. In this proposed solution, the Mojaloop application layer optimizes its database interactions and defers the financial accounting logic to TigerBeetle.
 
 ## 3. Architecture & Design
 ### 3.1 Architecture and Design Principles
@@ -71,15 +72,15 @@ The Mojaloop Hub is the primary container and reference we use to describe the M
   - Overall Mojaloop reference (and customizable) implementation for Hub Operators is based on the above OSS solution.
 
 <br><br>
-![System Context Diagram](solution_design/arch-mojaloop.svg)
+![System Context Diagram](solution_design/Arch-mojaloop-central-ledger.svg)
 
-### 3.3. CentralLedger Architecture
-#### 3.3.1. As Is - CentralLedger
-A closer look at the current Central Services architecture, with the CentralLedger using SQL, PostgreSQL and Redis.<br><br>
+### 3.3. Central-Ledger Architecture
+#### 3.3.1. As Is - Central-Ledger
+A closer look at the current Central Services architecture, with the Central-Ledger using SQL, PostgreSQL and Redis.<br><br>
 ![System Context Diagram As](solution_design/central-ledger-diagram-as-is.svg)
 
-#### 3.3.2. To Be - CentralLedger
-This diagram depicts the proposed Central Services architecture with the CentralLedger running TigerBeetle together with SQL and Redis databases.<br><br>
+#### 3.3.2. To Be - Central-Ledger
+This diagram depicts the proposed Central Services architecture with the Central-Ledger running TigerBeetle together with SQL and Redis databases.<br><br>
 ![System Context Diagram](solution_design/central-ledger-diagram-to-be.svg)
 
 ## 4. Requirements
@@ -111,7 +112,7 @@ This diagram depicts the proposed Central Services architecture with the Central
 
 ### 4.2. Non-functional Requirements
 #### Performance In TigerBeetle
-Making use of TigerBeetle in CentralLedger would mean a significant increase in performance and throughput.
+Making use of TigerBeetle in Central-Ledger would mean a significant increase in performance and throughput.
 TigerBeetle provides more performance than a general-purpose relational database such as MySQL or an in-memory database such as Redis:
 
 * TigerBeetle **uses small, simple fixed-size data structures** (accounts and transfers) and a tightly scoped domain.
@@ -141,28 +142,28 @@ Strict consistency, CRCs and crash safety are not enough.
 
 ##### Secure Transport
 * HTTPS on central-ledger endpoints may be configured in NodeJS or WAF/Load-Balancer
-* Communication between CentralLedger and TigerBeetle will make use of a secure VPN tunnel
+* Communication between Central-Ledger and TigerBeetle will make use of a secure VPN tunnel
 * Non PCI-DSS sensitive information stored in TigerBeetle
 
 ##### Secure Storage at Rest
-* TigerBeetle stores all data at rest encrypted under 256-bit `XChaCha20`.
-* MySQL database for CentralLedger to be configured for:
-  * TLS/SSL communication between CentralLedger and MySQL.
+* TigerBeetle stores all data at rest encrypted.
+* MySQL database for Central-Ledger to be configured for:
+  * TLS/SSL communication between Central-Ledger and MySQL.
   * MysQL Keyring plugin may be used to encrypt data at rest (https://aimlessengineer.com/2021/04/26/data-at-rest-encryption-in-mysql/).
 * Security of sensitive data in the database.
 
 ##### Other
 * Authentication of the CL API
-* Update CentralLedger documentation during the course of the project
+* Update Central-Ledger documentation during the course of the project
 
 #### Testing
-Existing unit tests for CentralLedger will be updated to test TigerBeetle and CentralLedger integration. 
+Existing unit tests for Central-Ledger will be updated to test TigerBeetle and Central-Ledger integration. 
 jUnit will be used to test performance and safety.
 
 Testing coverage includes:
 * Unit testing for TigerBeetle NodeJS client
 * Integration testing for TigerBeetle NodeJS client
-* Integration testing for CentralLedger and TigerBeetle
+* Integration testing for Central-Ledger and TigerBeetle
   * TigerBeetle enabled
   * TigerBeetle disabled (_traditional_)
 * Performance, throughput and safety (_via jMeter_)
@@ -210,7 +211,7 @@ The following component diagram shows the break-down of the Mojaloop services an
 
 These consist of:
 - The Mojaloop API Adapters (ML-API-Adapter) provide the standard set of interfaces a DFSP can implement to connect to the system for Transfers. A DFSP that wants to connect up can adapt our example code or implement the standard interfaces into their own software. The goal is for it to be as straightforward as possible for a DFSP to connect to the interoperable network.
-- The `Central Services` (CentralLedger, CentralSettlement etc.) provide the set of components required to move money from one DFSP to another through the Mojaloop API Adapters. This is similar to how money moves through a central bank or clearing house in developed countries. The Central Services contains the core CentralLedger logic to move money but also will be extended to provide fraud management and enforce scheme rules.
+- The `Central Services` (Central-Ledger, CentralSettlement etc.) provide the set of components required to move money from one DFSP to another through the Mojaloop API Adapters. This is similar to how money moves through a central bank or clearing house in developed countries. The Central Services contains the core Central-Ledger logic to move money but also will be extended to provide fraud management and enforce scheme rules.
 - The Account Lookup Service (ALS) provides a mechanism to resolve FSP routing information through the Participant API or orchestrate a Party request based on an internal Participant look-up. The internal Participant look-up is handled by a number of standard Oracle adapter or services. Example Oracle adapter/service would be to look-up Participant information from Pathfinder or a Merchant Registry. These Oracle adapters or services can easily be added depending on the schema requirements.
 - The Quoting Service (QA) provides Quoting is the process that determines any fees and any commission required to perform a financial transaction between two FSPs. It is always initiated by the Payer FSP to the Payee FSP, which means that the quote flows in the same way as a financial transaction.
 - The Simulator (SIM) mocks several DFSP functions as follows:
@@ -227,11 +228,11 @@ The following functionality will be excluded from Phase-1:
 * Integration into CentralSettlement
 * Updated NodeJS that merges TigerBeetle `Transfer`/`Commit`
 
-## 7. Detailed Design - TigerBeetle in CentralLedger 
+## 7. Detailed Design - TigerBeetle in Central-Ledger 
 The detail design process primarily involves the conversion of the loft from the preliminary design into something that can be built and ultimately flown.
 
 ### 7.1. Participants
-Sequence related to participants with relation to CentralLedger and TigerBeetle.
+Sequence related to participants with relation to Central-Ledger and TigerBeetle.
 
 #### 7.1.1 Create Participant
 ![Participant Sequence](solution_design/sequence-participant-tb-enabled-create.svg)
@@ -270,7 +271,7 @@ Sequence related to participants with relation to CentralLedger and TigerBeetle.
 3. Service layer invoked.
 4. Domain / Service to Facade layer.
 5. Participant data is retrieved from Redis via participant `name`.
-   1. If the data is not available in the cache, a lookup in the CentralLedger database is performed, followed by caching the participant data.
+   1. If the data is not available in the cache, a lookup in the Central-Ledger database is performed, followed by caching the participant data.
 6. The TigerBeetle client is invoked in order to obtain the `account` information.
 7. TigerBeetle client fetches the necessary account information from one of the TigerBeetle nodes.
 8. Account data is returned from the TigerBeetle client.
@@ -281,7 +282,7 @@ Sequence related to participants with relation to CentralLedger and TigerBeetle.
 13. HTTP `JSON` response with account and balance related information.
 
 ### 7.2. Transfers
-Sequence related to a transfer with relation to CentralLedger and TigerBeetle.
+Sequence related to a transfer with relation to Central-Ledger and TigerBeetle.
 
 #### 7.2.1 Create Transfer (2-Phase)
 ![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-create.svg)
@@ -407,7 +408,7 @@ Transfer{
 12. HTTP `JSON` response with transfer related information.
 
 ## 8. Canonical Model
-The following CentralLedger and TigerBeetle Canonical Data Model presents data entities and relationships in the simplest possible form.
+The following Central-Ledger and TigerBeetle Canonical Data Model presents data entities and relationships in the simplest possible form.
 
 ### 8.1 TigerBeetle
 TigerBeetle supports only `Account` and `Transfer` data types.
@@ -468,11 +469,14 @@ Transfer flags are properties associated with a Transfer to enable additional Tr
 | condition   | `bool`            | Does the transfer support transfer conditions. |
 | padding     | `u29`             | Data to be used for padding.                   |
 
-### 8.2 CentralLedger
-CentralLedger hosts a wide range of tables in which to store Participant, Account and Transfer related data.
+### 8.2 Central-Ledger
+Central-Ledger hosts a wide range of tables in which to store Participant, Account and Transfer related data.
 
 #### 8.2.1 Data Relationships
-The following diagrams are used to illustration the relationships between data in CentralLedger.
+The following diagrams are used to illustration the relationships between data in Central-Ledger.
+
+##### Central-Ledger Schema with Relationships
+![Data-Central-Ledger](solution_design/central-ledger-schema.png)
 
 ##### Participants and Accounts
 ![SQL Relationships - Participants](solution_design/central-ledger-data-participant.svg)
@@ -591,3 +595,13 @@ The following diagrams are used to illustration the relationships between data i
 | hash         | `varchar(256)` | Unique hash for the transfer JSON request.                   |
 | createdDate  | `datetime`     | The timestamp for when the transferDuplicateCheck occurred.  |
 
+
+## References
+| Title                            | Link                                                                        |
+|----------------------------------|-----------------------------------------------------------------------------|
+| TigetBeetle                      | https://www.tigerbeetle.com/                                                |
+| TigetBeetle on GitHub            | https://github.com/coilhq/tigerbeetle                                       |
+| Central-Ledger on GitHub         | https://github.com/mojaloop/central-ledger                                  |
+| Mojaloop Technical Overview      | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/                |
+| Central-Ledger Process Design    | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/central-ledger/ |
+| Central-Ledger API Specification | https://docs.mojaloop.io/legacy/api/#central-ledger-api                     |

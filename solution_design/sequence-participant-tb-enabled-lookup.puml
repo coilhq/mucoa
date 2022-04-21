@@ -6,7 +6,7 @@ note over dfsp
     * Participant Bank B
 end note
 
-box CentralLedger #FFFFF9
+box Central-Ledger #FFFFF9
     participant "**API**" as cl_api
     participant "__api__ / Handler" as cl_handler
     participant "__domain__ / Service" as cl_domain
@@ -34,7 +34,7 @@ end box
 
 box Storage #F9FFF9
     control "TigerBeetle Client" as tb_client
-    collections "TigerBeetle Nodes" as tb_nodes
+    collections "TigerBeetle Cluster" as tb_nodes
     database "central-ledger" as cl_db
     database "Redis" as redis_cache
 end box
