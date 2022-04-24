@@ -416,19 +416,19 @@ TigerBeetle supports only `Account` and `Transfer` data types.
 #### 8.1.1 Account
 Mutable data set for account related data.
 
-| Field            | Type              | Description                                                                                                                      |
-|------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| id               | `u128`            | Global unique id for an account.                                                                                                 |
-| user_data        | `u128`            | Implementation specific data on account. Opaque third-party identifier to link this account (many-to-one) to an external entity. |
-| reserved         | `[48]u8 - array`  | Accounting policy primitives. Not available.                                                                                     |
-| unit             | `u16`             | A transfer unit describing the currency associated with the account.                                                             |
-| code             | `u16`             | A chart of accounts code describing the type of account (e.g. clearing, settlement)                                              |
-| flags            | `AccountFlags`    | See account flags.                                                                                                               |
-| debits_pending   | `u64`             | Balance for reserved debits.                                                                                                     |
-| debits_posted    | `u64`             | Balance for accepted debits.                                                                                                     |
-| credits_pending  | `u64`             | Balance for reserved credits.                                                                                                    |
-| credits_posted   | `u64`             | Balance for accepted credits.                                                                                                    |
-| timestamp        | `u64`             | The current state machine timestamp of the account for state tracking.                                                           |
+| Field           | Type             | Description                                                                                                                      |
+|-----------------|------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| id              | `u128`           | Global unique id for an account.                                                                                                 |
+| user_data       | `u128`           | Implementation specific data on account. Opaque third-party identifier to link this account (many-to-one) to an external entity. |
+| reserved        | `[48]u8 - array` | Accounting policy primitives. Not available.                                                                                     |
+| ledger          | `u16`            | The ledger the account belongs to (position, settlement, fees etc).                                                              |
+| code            | `u16`            | The currency code/type for the account                                                                                           |
+| flags           | `AccountFlags`   | See account flags.                                                                                                               |
+| debits_pending  | `u64`            | Balance for reserved debits.                                                                                                     |
+| debits_posted   | `u64`            | Balance for accepted debits.                                                                                                     |
+| credits_pending | `u64`            | Balance for reserved credits.                                                                                                    |
+| credits_posted  | `u64`            | Balance for accepted credits.                                                                                                    |
+| timestamp       | `u64`            | The current state machine timestamp of the account for state tracking.                                                           |
 
 #### 8.1.2 AccountFlags - `[packed struct]`
 
@@ -594,6 +594,42 @@ The following diagrams are used to illustration the relationships between data i
 | transferId   | `varchar(32)`  | Unique transfer identifier (UUID).                           |
 | hash         | `varchar(256)` | Unique hash for the transfer JSON request.                   |
 | createdDate  | `datetime`     | The timestamp for when the transferDuplicateCheck occurred.  |
+
+### 8.3 TigerBeetle and Central-Ledger Mapping
+The following tables illustrate the data mappings between Central-Ledger and TigerBeetle.
+
+#### 8.3.1 Account
+The mapping between TigerBeetle accounts and Central-Ledger participant and surrounding mappings (participant, participantCurrency, participantPosition etc.).
+
+| TigerBeetle Field   | Central-Ledger Mapping                   | Description                                                                                                             |
+|---------------------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `id`                | Not applicable.                          | Global unique id for an account.                                                                                        |
+| `user_data`         | `participant.participantId`              | Each participant will have multiple accounts per `participantId` depending on `ledger` and `code`. One to many mapping. |
+| `reserved`          | Not applicable.                          | Reserved for future use.                                                                                                |
+| `ledger`            | `ledgerAccountType.ledgerAccountTypeId`  | Each Central-Ledger 'leger account type' maps to a TigerBeetle ledger.                                                  |
+| `code`              | `currency.currencyId`                    | Each Central-Ledger 'currency id' maps to a TigerBeetle code.                                                           |
+| `flags`             | `participantLimit`                       | Flags are TigerBeetle specific. Typical flags would be credit/debit to not exceed credit/debit.                         |
+| `debits_pending`    | `participantPosition`                    | Debit balance for an account awaiting rollback or fulfilment.                                                           |
+| `debits_posted`     | `participantPosition`                    | Debit balance for fulfilled transfers.                                                                                  |
+| `credits_pending`   | `participantPosition`                    | Credit balance for an account awaiting rollback or fulfilment.                                                          |
+| `credits_posted`    | `participantPosition`                    | Credit balance for fulfilled transfers.                                                                                 |
+| `timestamp`         | Not applicable.                          | TigerBeetle specific functionality.                                                                                     |
+
+#### 8.3.2 Transfer
+The mapping between TigerBeetle transfers and Central-Ledger transfer and surrounding mappings (transfer, transferParticipant, expiringTransfer etc.).
+
+| TigerBeetle Field     | Central-Ledger Mapping                       | Description                                                                                |
+|-----------------------|----------------------------------------------|--------------------------------------------------------------------------------------------|
+| `id`                  | Not applicable.                              | Global unique id for a transfer.                                                           |
+| `debit_account_id`    | `transferParticipant.transferParticipantId`  | The TigerBeetle `account.id` referenced as the foreign key for Payer.                      |
+| `credit_account_id`   | `transferParticipant. transferParticipantId` | The TigerBeetle `account.id` referenced as the foreign key for Payee.                      |
+| `user_data`           | `transfer.transferId`                        | The Central-Ledger `transferId` referenced to link transfers in TigerBeetle.               |
+| `reserved`            | Not applicable.                              | Reserved for future use.                                                                   |
+| `timeout`             | `expiringTransfer.expirationDate`            | The TigerBeetle transfer timeout matches the Central-Ledger `expirationDate`.              |
+| `code`                | `currency.currencyId`                        | Each Central-Ledger 'currency id' maps to a TigerBeetle code.                              |
+| `flags`               | Not applicable.                              | TigerBeetle internal flags for linking transfers, posting and reversing 2-phase transfers. |
+| `amount`              | `transfer.amount`                            | Values are expressed in the minor denomination (e.g. cents) for TigerBeetle.               |
+| `timestamp`           | Not applicable.                              | The current state machine timestamp of the transfer for state tracking.                    |
 
 
 ## References

@@ -1,6 +1,6 @@
 @startuml
 
-actor "Mojaloop Adapter" as dfsp
+entity "Mojaloop Adapter" as dfsp
 note over dfsp
     * Participant Bank A
     * Participant Bank B
