@@ -1,13 +1,13 @@
-# Solution Design: Mojaloop-TigerBeetle Integration
+# Solution Design: Mojaloop TigerBeetle Integration
 
 [Glossary](#glossary)
 1. [Purpose](#1-purpose)
 2. [Introduction](#2-introduction)
-3. [Architecture & Design](#3-architecture-&-design)  
+3. [Architecture & Design](#3-architecture-and-design)  
 3.1. [Architecture and Design Principles](#31-architecture-and-design-principles)  
 3.2. [Current Mojaloop Architecture](#32-current-mojaloop-architecture)  
 3.3. [Central Ledger Architecture](#33-central-ledger-architecture)  
-3.4. [Central Settlement Architecture](#33-central-settlement-architecture)
+3.4. [Central Settlement Architecture](#34-central-settlement-architecture)
 4. [Requirements](#4-requirements)  
 4.1. [Functional Requirements](#41-functional-requirements)  
 4.2. [Non-Functional Requirements](#42-non-functional-requirements)
@@ -19,28 +19,30 @@
 7.3. [Settlement](#73-settlement)
 8. [Canonical Model](#8-canonical-model)  
 8.1. [TigerBeetle](#81-tigerbeetle)  
-8.2. [CentralLedger](#72-centralledger)
+8.2. [CentralLedger](#82-centralledger)
 
 
 ## Glossary
 | Definition  | Description                                                                                                                                                                                                                                                               |
 |-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Participant | A provider who is a member of a payment scheme, and subject to that scheme's rules.                                                                                                                                                                                       |
-| Hub         | The Mojaloop operator.                                                                                                                                                                                                                                                    |
-| Transfer    | A debit/credit from one account to another account.                                                                                                                                                                                                                       |
 | DFSP        | Digital Financial Service Provider.                                                                                                                                                                                                                                       |
-| TigerBeetle | A financial accounting database designed for mission critical safety and performance to power the future of financial services.                                                                                                                                           |
+| DMZ         | A demilitarized zone is perimeter network or subnetwork that adds a layer of network security, typically for connections to entities that are external to a network, but also used for internal connections, to enforce restricted network access.                        |
 | Endpoint    | An API is a set of protocols and tools to facilitate interaction between two applications. An endpoint is a place on the API where the exchange happens. Endpoints are URIs (Uniform Resource Indices) on an API that an application can access. All APIs have endpoints. |
-| JSON        | JSON (JavaScript Object Notation) is a lightweight data-interchange format.                                                                                                                                                                                               |
-| REST        | Representational state transfer (REST) is a software architectural style that was created to guide the design and development of the architecture for the World Wide Web.                                                                                                 |
-| VPN Tunnel  | A VPN tunnel is an encrypted link between your computer or mobile device and an outside network. A VPN tunnel — short for virtual private network tunnel — can provide a way to cloak some of your online activity.                                                       |
-| TLS/SSL     | Transport Layer Security (TLS) certificates—most commonly known as SSL, or digital certificates—are the foundation of a safe and secure internet. TLS/SSL certificates secure internet connections by encrypting data sent between systems.                               |
 | HTTPS       | Stands for "HyperText Transport Protocol Secure." HTTPS is the same thing as HTTP, but uses a secure socket layer (SSL) for security purposes.                                                                                                                            |
+| Hub         | A Mojaloop platform where one ore more financial services providers integrate multiple payments systems and channels into a payments platform that is managed by one ore more hub operators.                                                                              |
+| JSON        | JSON (JavaScript Object Notation) is a lightweight data-interchange format.                                                                                                                                                                                               |
+| Participant | A provider who is a member of a payment scheme, and subject to that scheme's rules.                                                                                                                                                                                       |
+| PISP        | A payments initiation service provider is an authorized third-party that enables payments initiation directly from the wallet or account of an account holder.                                                                                                            |
+| REST        | Representational state transfer (REST) is a software architectural style that was created to guide the design and development of the architecture for the World Wide Web.                                                                                                 |
+| TigerBeetle | A financial accounting database designed for mission critical safety and performance to power the future of financial services.                                                                                                                                           |
+| TLS/SSL     | Transport Layer Security (TLS) certificates—most commonly known as SSL, or digital certificates—are the foundation of a safe and secure internet. TLS/SSL certificates secure internet connections by encrypting data sent between systems.                               |
+| Transfer    | A debit/credit from one account to another account.                                                                                                                                                                                                                       |
+| VPN Tunnel  | A VPN tunnel is an encrypted link between your computer or mobile device and an outside network. A VPN tunnel — short for virtual private network tunnel — can provide a way to cloak some of your online activity.                                                       |
 | WAF         | A WAF or web application firewall helps protect web applications by filtering and monitoring HTTP traffic between a web application and the Internet (_or internal network_).                                                                                             |
 
 
 ## 1. Purpose
-This document proposes the solution architecture and system design for integrating a TigerBeetle database as part of a Mojaloop payments system.
+This document proposes the solution architecture and design for using a TigerBeetle database as the back-end for the Central Ledger services of a Mojaloop payments system.
 
 Different sections of this document can be used by an audience that is focussed on:
 * the business drivers and user stories for the solution;
@@ -52,7 +54,7 @@ The original design of the Mojaloop payments system uses Redis for caching and S
 
 TigerBeetle is a distributed database built for native financial accounting support. It leverages the original Mojaloop Central Ledger logic in order to implement the financial accounting logic natively, within the database. In this proposed solution, the Mojaloop application layer optimizes its database interactions and defers the financial accounting logic to TigerBeetle.
 
-## 3. Architecture & Design
+## 3. Architecture and Design
 ### 3.1 Architecture and Design Principles
 > TODO
 ### 3.2. Current Mojaloop Architecture
@@ -79,6 +81,18 @@ This diagram depicts the proposed Central Services architecture with the Central
 ## 4. Requirements
 ### 4.1. Functional Requirements
 #### 4.1.1. User Stories & Business Processes
+In the table below, the Mojaloop hub use-cases and transaction scenarios are mapped to the TigerBeetle functional areas:
+
+| Requirements                                                       | Accounts | Transfers | Queries |
+|--------------------------------------------------------------------|----------|-----------|---------|
+| Funds transfers                                                    | X        | X         |         |
+| Purchase goods                                                     | X        | X         |         |
+| Bulk purchases                                                     | X        | X         |         |
+| Enquiries (accounts & balances)                                    |          |           | X       |
+| Account management (participants & customers)                      | X        |           |         |
+| Fraud Checks and blacklists (enforce account statuses)             |          |           | X       |
+| Tiered risk management (enforce account statuses & balance limits) |          |           | X       |
+ 
 * TigerBeetle NodeJS integrated into Central-Ledger
   * Make use of existing configuration `default.json` configuration file for client
   * TigerBeetle NodeJS client to be integrated into central-ledger
