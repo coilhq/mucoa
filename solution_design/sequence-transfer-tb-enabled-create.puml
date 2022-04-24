@@ -1,12 +1,12 @@
 @startuml
 
-actor "DFSP" as dfsp
+entity "Mojaloop Adapter" as dfsp
 note over dfsp
     * Participant Bank A
     * Participant Bank B
 end note
 
-box CentralLedger #FFFFF9
+box Central-Ledger #FFFFF9
     participant "**API**" as cl_api
     participant "__api__ / Handler" as cl_handler
     participant "__domain__ / Service" as cl_domain
@@ -34,7 +34,7 @@ end box
 
 box Storage #F9FFF9
 	control "TigerBeetle Client" as tb_client
-	collections "TigerBeetle Nodes" as tb_nodes
+	collections "TigerBeetle Cluster" as tb_nodes
 	database "central-ledger" as cl_db
 	database "Redis" as redis_cache
 end box
@@ -51,9 +51,9 @@ group Create Transfer (2-Phase)
     cl_facade --> cl_db : If the participant data is not available in Redis, a database lookup is performed
     cl_facade --> redis_cache : Data looked up is now stored in Redis.
     autonumber resume
-    cl_facade -> tb_client : Pending //Transfer// requested
-    tb_client -> tb_nodes : //transfer// Distributed to nodes\n via the state machine
-    tb_nodes -> tb_nodes : Replication via VSR
+    cl_facade -> tb_client : Pending //Transfer// requested via the CL-TB interface.
+    tb_client -> tb_nodes : //transfer// Distributed to nodes\n via the state machine.
+    tb_nodes -> tb_nodes : Replication via VSR.
     tb_client --> cl_facade : //transfer// create error **(none)**
     cl_facade --> cl_domain : Return result
     cl_domain --> cl_handler : Return result
@@ -69,21 +69,21 @@ group Create Transfer (2-Phase)
 
     == Transfer Fulfilment ==
     dfsp -> cl_api : //JSON// \n(fulfil transfer data with //**transferId**//)
-    cl_api -> cl_handler : ///jmeter/transfers/fulfil// \nHandler invoked
+    cl_api -> cl_handler : ///jmeter/transfers/fulfil// \nHandler invoked.
     cl_handler -> cl_domain : Service layer invoked \n//handlePayeeResponse//
     cl_domain -> cl_facade : Domain to facade \n//savePayeeTransferResponse//
-    cl_facade -> cl_db : New Database transaction for fulfillment
-    cl_facade -> cl_db : Obtain //**settlementWindowId**// for window where state is **OPEN**
-    cl_facade -> tb_client : //Transfer// posting requested
-    tb_client -> tb_nodes : //transfer// Distributed to nodes\n via the state machine
-    tb_nodes -> tb_nodes : Replication via VSR
-    tb_client --> cl_facade : //transfer// posting create error **(none)**
-    cl_facade -> cl_db : Create \n*//transferFulfilment// \n*//transferStateChange// \nDatabase records
-    cl_facade -> cl_db : Database transaction committed
-    cl_facade --> cl_domain : Return result
-    cl_domain --> cl_handler : Return result
-    cl_handler --> cl_api : Return result
-    cl_api --> dfsp : Return result
+    cl_facade -> cl_db : New Database transaction for fulfillment.
+    cl_facade -> cl_db : Obtain //**settlementWindowId**// for window where state is **OPEN**.
+    cl_facade -> tb_client : //Transfer// posting requested via the CL-TB interface.
+    tb_client -> tb_nodes : //transfer// Distributed to nodes\n via the state machine.
+    tb_nodes -> tb_nodes : Replication via VSR.
+    tb_client --> cl_facade : //transfer// posting create error **(none)**.
+    cl_facade -> cl_db : Create \n*//transferFulfilment// \n*//transferStateChange// \nDatabase records.
+    cl_facade -> cl_db : Database transaction committed.
+    cl_facade --> cl_domain : Return result.
+    cl_domain --> cl_handler : Return result.
+    cl_handler --> cl_api : Return result.
+    cl_api --> dfsp : Return result.
 end
 
 @enduml

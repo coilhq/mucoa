@@ -3,10 +3,44 @@
 object transferDuplicateCheck
     transferDuplicateCheck : **//(PK)// participantId** = //unsigned int//
     transferDuplicateCheck : hash = //varchar(256)//
+    transferDuplicateCheck : createdDate = //datetime//
+object transfer
+    transfer : **//(PK)// transferId** = //unsigned int//
+object transferParticipant
+    transferParticipant : **//(PK)// transferParticipantId** = //unsigned int//
+    transferParticipant : **//(FK)// transferId** = //unsigned int//
+    transferParticipant : **//(FK)// participantCurrencyId** = //unsigned int//
+    transferParticipant : **//(FK)// transferParticipantRoleTypeId** = //unsigned int//
+    transferParticipant : **//(FK)// ledgerEntryTypeId** = //unsigned int//
+    transferParticipant : amount = //decimal(18,4)//
+    transferParticipant : createdDate = //timestamp//
+object participantCurrency
+    participantCurrency : **//(PK)// participantCurrencyId** = //unsigned int//
+    participantCurrency : **//(FK)// currencyId** = //unsigned int//
+    participantCurrency : **//(FK)// participantId** = //unsigned int//
+    participantCurrency : **//(FK)// ledgerAccountTypeId** = //unsigned int//
+object ilpPacket
+    ilpPacket : **//(FK)// transferId** = //varchar(36)//
+object transferState
+    transferState : **//(PK)// transferStateId** = //unsigned int//
+object transferStateChange
+    transferStateChange : **//(PK)// transferStateChangeId** = //bigint unsigned//
+    transferStateChange : **//(FK)// transferId** = //varchar(36)//
+    transferStateChange : **//(FK)// transferStateId** = //varchar(50)//
+    transferStateChange : reason = //varchar(512)//
+    transferStateChange : createdDate = //datetime//
+object participant
+    participant : **//(PK)// participantId** = //unsigned int//
+    participant : name = //varchar(256)//
+object currency
+    currency : **//(PK)// currencyId** = //unsigned int//
+
+transfer <|-- ilpPacket : //transferId//
+transfer <|-- transferParticipant : //transferId//
 currency <|-- participantCurrency : //currencyId//
-ledgerAccountType <|-- participantCurrency : //ledgerAccountTypeId//
+participantCurrency <|-- transferParticipant : //participantCurrencyId//
 participant <|-- participantCurrency : //participantId//
-participant <|-- participantContact : //participantId//
-contactType <|-- participantContact : //contactTypeId//
+transferState <|-- transferStateChange : //transferStateId//
+transfer <|-- transferStateChange : //transferId//
 
 @enduml
