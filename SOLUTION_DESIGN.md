@@ -632,18 +632,22 @@ The mapping between TigerBeetle accounts and Central-Ledger participant and surr
 #### 8.3.2 Transfer
 The mapping between TigerBeetle transfers and Central-Ledger transfer and surrounding mappings (transfer, transferParticipant, expiringTransfer etc.).
 
-| TigerBeetle Field     | Central-Ledger Mapping                       | Description                                                                                |
-|-----------------------|----------------------------------------------|--------------------------------------------------------------------------------------------|
-| `id`                  | Not applicable.                              | Global unique id for a transfer.                                                           |
-| `debit_account_id`    | `transferParticipant.transferParticipantId`  | The TigerBeetle `account.id` referenced as the foreign key for Payer.                      |
-| `credit_account_id`   | `transferParticipant. transferParticipantId` | The TigerBeetle `account.id` referenced as the foreign key for Payee.                      |
-| `user_data`           | `transfer.transferId`                        | The Central-Ledger `transferId` referenced to link transfers in TigerBeetle.               |
-| `reserved`            | Not applicable.                              | Reserved for future use.                                                                   |
-| `timeout`             | `expiringTransfer.expirationDate`            | The TigerBeetle transfer timeout matches the Central-Ledger `expirationDate`.              |
-| `code`                | `currency.currencyId`                        | Each Central-Ledger 'currency id' maps to a TigerBeetle code.                              |
-| `flags`               | Not applicable.                              | TigerBeetle internal flags for linking transfers, posting and reversing 2-phase transfers. |
-| `amount`              | `transfer.amount`                            | Values are expressed in the minor denomination (e.g. cents) for TigerBeetle.               |
-| `timestamp`           | Not applicable.                              | The current state machine timestamp of the transfer for state tracking.                    |
+TigerBeetle financial domain makes use of double-entry ![T](solution_design/t.svg)-accounts.
+
+| TigerBeetle Field   | Central-Ledger Mapping                       | Description                                                                                |
+|---------------------|----------------------------------------------|--------------------------------------------------------------------------------------------|
+| `id`                | Not applicable.                              | Global unique id for a transfer.                                                           |
+| `debit_account_id`  | `transferParticipant.transferParticipantId`  | The TigerBeetle `account.id` referenced as the foreign key for Payer.                      |
+| `credit_account_id` | `transferParticipant. transferParticipantId` | The TigerBeetle `account.id` referenced as the foreign key for Payee.                      |
+| `user_data`         | `transfer.transferId`                        | The Central-Ledger `transferId` referenced to link transfers in TigerBeetle.               |
+| `reserved`          | Not applicable.                              | Reserved for future use.                                                                   |
+| `pending_id`        | Not applicable.                              | The TigerBeetle id for the Transfer created as a prepare transfer.                         |
+| `ledger`            | `ledgerAccountType.ledgerAccountTypeId`      | The TigerBeetle ledger type, such as settlement, position, fees etc.                       |
+| `timeout`           | `expiringTransfer.expirationDate`            | The TigerBeetle transfer timeout matches the Central-Ledger `expirationDate`.              |
+| `code`              | `currency.currencyId`                        | Each Central-Ledger 'currency id' maps to a TigerBeetle code.                              |
+| `flags`             | Not applicable.                              | TigerBeetle internal flags for linking transfers, posting and reversing 2-phase transfers. |
+| `amount`            | `transfer.amount`                            | Values are expressed in the minor denomination (e.g. cents) for TigerBeetle.               |
+| `timestamp`         | Not applicable.                              | The current state machine timestamp of the transfer for state tracking.                    |
 
 
 ## References
