@@ -6,8 +6,6 @@ The process of settlement is the process by which a debtor DFSP reimburses a cre
 
 This guide describes how settlements are managed by the Mojaloop Scheme using various accounts (Chart of Accounts) and the partner settlement bank(s), and introduces the main building blocks of settlement processing.
 
-> TODO @jason add Fees for transfer and credit extension.
-
 ## Index
 * [Definitions](#definitions)
 * [Participant Joins the Scheme](#participant-joins-scheme)
@@ -19,29 +17,34 @@ This guide describes how settlements are managed by the Mojaloop Scheme using va
 * [Participant Close Account](#participant-withdraw-collateral-from-scheme)
 
 ## Definitions
-| Definition  | Description                                                                         |
-|-------------|-------------------------------------------------------------------------------------|
-| Participant | A provider who is a member of a payment scheme, and subject to that scheme's rules. |
-| Scheme      | The Mojaloop operator.                                                              |
-| Transfer    | A debit/credit from one account to another account.                                 |
-| DFSP        | Digital Financial Service Provider.                                                 |
-| KYC         | Know your customer.                                                                 |
-
-> TODO @jason, rest of definitions still to be added.
+| Definition     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Clearing       | The process of transmitting, reconciling, and, in some cases, confirming transactions prior to settlement, potentially including the netting of transactions and the establishment of final positions for settlement. Sometimes this term is also used (imprecisely) to cover settlement. For the clearing of futures and options, this term also refers to the daily balancing of profits and losses and the daily calculation of collateral requirements.     |
+| Clearing House | A central location or central processing mechanism through which financial institutions agree to exchange payment instructions or other financial obligations (for example, securities). The institutions settle for items exchanged at a designated time based on the rules and procedures of the clearinghouse. In some cases, the clearinghouse may assume significant counterparty, financial, or risk management responsibilities for the clearing system. |
+| Participant    | A provider who is a member of a payment scheme, and subject to that scheme's rules.                                                                                                                                                                                                                                                                                                                                                                             |
+| Scheme         | The Mojaloop operator.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Transfer       | A debit/credit from one account to another account.                                                                                                                                                                                                                                                                                                                                                                                                             |
+| DFSP           | Digital Financial Service Provider.                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| KYC            | Know your customer.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Account        | An account that may receive debit/credit transfers.                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Deposit        | The exchange of digital/physical funds from a participant to a scheme.                                                                                                                                                                                                                                                                                                                                                                                          |
+| Withdraw       | The exchange of digital/physical funds from a scheme to a participant.                                                                                                                                                                                                                                                                                                                                                                                          |
+| API            | Application Programming Interface. A set of clearly defined methods of communication to allow interaction and sharing of data between different software programs.                                                                                                                                                                                                                                                                                              |
+| Liquidity      | The availability of liquid assets to support an obligation. Banks and non-bank providers need liquidity to meet their obligations. Agents need liquidity to meet cash-out transactions by consumers and small merchants.                                                                                                                                                                                                                                        |
+| Payer          | The payer of electronic funds in a payment transaction.	                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Payee          | The recipient of electronic funds in a payment transaction.                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ## Participant Joins Scheme
 A new participant joins the scheme and the necessary participant and configuration data is provisioned in the system.
 At this time the participant has no liquidity _(a current position of zero and a net debit cap of zero)_. 
-All the necessary KYC requirements will be captured and completed by the DFSP when on-boarding contacts. 
-
-> TODO @jason, make all the headings Title Case (h1...h4).
+All the necessary KYC requirements will be captured and completed by the DFSP when on-boarding contacts.
 
 ### Entities
 * Scheme - (Scheme operator)
 * Participant A - (Participant on the Scheme that may be a Payer/Payee)
 
 ### Events
-Participant with relevant information is captured, but no accounts have been created for the participant.
+Participant with relevant information is captured, but no financial accounts have been created for the participant.
 
 ## Participant Deposits Collateral to Scheme
 A participant decides to deposit `110` units collateral into the Scheme.
@@ -53,27 +56,25 @@ A participant decides to deposit `110` units collateral into the Scheme.
 * **Fee** - Account recording fees charged by the scheme
 
 > TODO @jason, add Fee's as part of the mix for Transfer also.
+> 
 > TODO @jason, add the credit extension for the liquidity when participant joins the scheme.
-> TODO @jason Write out full journal entries as participant accounts `DR Participant A Deposit`
-> TODO @jason Right align the journal entry amounts
 
 ### Events
 A cash deposit is made at a bank that supports loading of assets into the Scheme. The scheme is notified of the payment.
-The necessary accounts are created  
+The necessary accounts are created as part of a chained event.  
 
 #### Participant A Deposits Collateral (Bank to Scheme, then Scheme to Participant):
 The handing of assets occur outside the scheme. A notification event is sent to the scheme to inform the scheme of the deposit.
 (either all collateral they have, or at most N units, in this case at most 100 units)
 
-> TODO @jason use the below as an example for styling the journal entries.
 ```
-DR A Deposit                                    110
-    CR A Collateral                                    110
-DR A Collateral                                 110
-    CR A Liquidity                                     110
+DR Participant A Deposit                        110
+    CR Participant A Collateral                        110
+DR Participant A Collateral                     110
+    CR Participant A Liquidity                         110
 ```
 
-#### Scheme Charges Fees on Deposit of Collateral:
+#### Scheme Change Fees on Deposit of Collateral:
 Scheme Fee's are not mandatory for a deposit and may also be applicable to;
   * Transfer - Fee charged per transaction
   * Account - Monthly account service charges
@@ -81,31 +82,26 @@ Scheme Fee's are not mandatory for a deposit and may also be applicable to;
 Fee's will be applied to the participant `Liquidity` accounts.
 
 ```
-DR A Liquidity                                   10
-    CR A Fees                                           10
+DR Participant A Liquidity                       10
+    CR Participant A Fees                               10
 ```
 
-> TODO @jason Negative values will have DR and  `DR 110 / CR 110`
-> TODO @jason ^^^^ Amount needs to be aligned
-> TODO @jason Remove the bolding on the Account column for opening balances.
-> TODO @jason Drop row `Opening Balances`
-> TODO @jason Bold headers instead of backticks `Opening Balances` to **Opening Balances**
-
 ### Account Balances
-Starting account balance is `0` units for all participants.
+Starting account balance is `0` units for all participants. 
+The table below depicts the events for depositing collateral into the Scheme.   
 
-| Account              | Debits | Credits | Balance  |
-|----------------------|--------|---------|----------|
-| **A Deposit**        | `0`    | `0`     | `0`      |------> Opening Balance <-------
-| **A Collateral**     | `0`    | `0`     | `0`      |------> Opening Balance <-------
-| **A Liquidity**      | `0`    | `0`     | `0`      |------> Opening Balance <-------
-| **A Fees**           | `0`    | `0`     | `0`      |------> Opening Balance <-------
-| Deposit 1            |        |         |          |------> Deposit 1 <-------
-| **A Deposit**        | `110`  |         | `DR 110` |--> Debit for Scheme
-| **A Collateral**     | `110`  | `110`   | `0`      |--> Collateral (Recording)
-| **A Liquidity**      |        | `110`   | `CR 110` |--> Liquidity Available
-| **A Liquidity**      | `10`   |         | `CR 100` |--> Fee Charge on A
-| **A Fees**           |        | `10`    | `CR 10`  |--> Fee Recorded for Scheme 
+| Account                  | Debits (DR) | Credits (CR) | Balance  |
+|--------------------------|-------------|--------------|----------|
+| Participant A Deposit    | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant A Collateral | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant A Liquidity  | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant A Fees       | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| **Deposit 1**            |             |              |          |------> Deposit 1 <-------
+| Participant A Deposit    | `110`       |              | `DR 110` |--> Debit for Scheme
+| Participant A Collateral | `110`       | `110`        | `0`      |--> Collateral (Recording)
+| Participant A Liquidity  |             | `110`        | `CR 110` |--> Liquidity Available
+| Participant A Liquidity  | `10`        |              | `CR 100` |--> Fee Charge on A
+| Participant A Fees       |             | `10`         | `CR 10`  |--> Fee Recorded for Scheme 
 
 ### Summary
 * A Deposit DR balance of; `0 + 110`
@@ -120,77 +116,78 @@ Starting account balance is `0` units for all participants.
 ## Transfer (Clearing)
 Participant A (Payer) would like to transfer funds to participant B (Payee, these are linked transfers i.e. they succeed or fail together as a transaction). 
 At this time the Payer participant A has liquidity of `100` units liquidity.
-Participant A would like to transfer `100` units to Participant B.
-The liquidity from A to B is immediately available to B, however, 
+Participant A would like to transfer `100` units to Participant B. The liquidity from A to B is immediately available to B, however, 
 the settlement reservation and commit is a separate action that is between A to Scheme and B from Scheme.
 
-> TODO @jason explain what a linked transfer is here...
-
 ### Accounts
-* **Liquidity A** - Pay Participant - B (Payer)
-* **Liquidity B** - Receive payment from Participant - A (Payee)
+* **Participant Liquidity A** - Pay Participant - B (Payer)
+* **Participant Liquidity B** - Receive payment from Participant - A (Payee)
 * **Participant A Clearing B** - Existing or on demand account to record the clearing from A to B
 
 ### Events
-A pays B = 70, these are linked transfers, then 
-> TODO @jason complete the event.
+A transfer of units is made between two participants of the Scheme (Payer/Payee). The scheme is notified of the transfer.
 
 #### Participant A Transfer Units to Participant B (Payer to Payee Direct):
 Scheme allows for direct liquidity to Payee.
 
 ```
-DR A Liquidity                                   70
-    CR A Clearing (B)                                   70
-DR A Clearing (B)                                70
-    CR B Liquidity                                      70
+DR Participant A Liquidity                       70
+    CR Participant A Clearing (B)                       70
+DR Participant A Clearing (B)                    70
+    CR Participant B Liquidity                          70
 ```
 
-### Account Balances - Transfer 1
-The fo
+### Account Balances
+Participant A and B's CR balances start at `100` units.
+Participant A transfers `70` units to Participant B.
 
-| Account          | Debits | Credits | Balance  |
-|------------------|--------|---------|----------|
-| **A Liquidity**  | `0`    | `0`     | `CR 100` |------> Opening Balance <-------
-| **B Liquidity**  | `0`    | `0`     | `CR 100` |------> Opening Balance <-------
-| **A Clearing B** | `0`    | `0`     | `0`      |------> Opening Balance <-------
-| Transfer 1       |        |         |          |------> Transer 1 <-------
-| **A Liquidity**  | `70`   |         | `CR 30`  |--> Deduct from A
-| **A Clearing B** | `70`   | `70`    | `0`      |--> Cleaaring (Recording)
-| **B Liquidity**  |        | `70`    | `CR 170` |--> Increase at B
+| Account                  | Debits (DR) | Credits (CR) | Balance  |
+|--------------------------|-------------|--------------|----------|
+| Participant A Liquidity  | `0`         | `0`          | `CR 100` |------> Opening Balance <-------
+| Participant B Liquidity  | `0`         | `0`          | `CR 100` |------> Opening Balance <-------
+| Participant A Clearing B | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| **Transfer 1**           |             |              |          |------> Transer 1 <-------
+| Participant A Liquidity  | `70`        |              | `CR 30`  |--> Deduct from A
+| Participant A Clearing B | `70`        | `70`         | `0`      |--> Cleaaring (Recording)
+| Participant B Liquidity  |             | `70`         | `CR 170` |--> Increase at B
 
-Now let's add Participant C into the mix (B pays C).
+Now let's add Participant C into the mix _(Participant B pays Participant C)_.
 ```
-DR B Liquidity                                  170
-    CR B Clearing (C)                                  170
-DR B Clearing (C)                               170
-    CR C Liquidity                                     170
-```
-
-C decides to pay A.
-```
-DR C Liquidity                                   50
-    CR C Clearing (A)                                   50
-DR C Clearing (A)                                50
-    CR A Liquidity                                      50
+DR Participant B Liquidity                      170
+    CR Participant B Clearing (C)                      170
+DR Participant B Clearing (C)                   170
+    CR Participant C Liquidity                         170
 ```
 
-### Account Balances - Transfer 2 & 3
-| Account          | Debits | Credits | Balance  |
-|------------------|--------|---------|----------|
-| **A Liquidity**  | `0`    | `0`     | `CR 30`  |------> Opening Balance <-------
-| **B Liquidity**  | `0`    | `0`     | `CR 170` |------> Opening Balance <-------
-| **C Liquidity**  | `0`    | `0`     | `CR 100` |------> Opening Balance <-------
-| **A Clearing B** | `0`    | `0`     | `0`      |------> Opening Balance <-------
-| **B Clearing C** | `0`    | `0`     | `0`      |------> Opening Balance <-------
-| **C Clearing A** | `0`    | `0`     | `0`      |------> Opening Balance <-------
-| Transfer 2       |        |         |          |------> Transer 2 <-------
-| **B Liquidity**  | `170`  |         | `0`      |--> Deduct from B
-| **B Clearing C** | `170`  | `170`   | `0`      |--> Cleaaring (Recording)
-| **C Liquidity**  |        | `170`   | `CR 270` |--> Increase at C
-| Transfer 3       |        |         |          |------> Transer 3 <-------
-| **C Liquidity**  | `50`   |         | `CR 220` |--> Deduct from C
-| **C Clearing A** | `50`   | `50`    | `0`      |--> Cleaaring (Recording)
-| **A Liquidity**  |        | `50`    | `CR 80`  |--> Increase at A
+Participant C decides to pay Participant A.
+```
+DR Participant C Liquidity                       50
+    CR Participant C Clearing (A)                       50
+DR Participant C Clearing (A)                    50
+    CR Participant A Liquidity                          50
+```
+
+### Account Balances
+The table below illustrates the account balance updates between Transfer 2 & 3.
+Transfer 2 is for `170` units from Participant B to Participant C.
+Transfer 3 is for `50` units from Participant C to Participant A.
+
+| Account                   | Debits (DR) | Credits (CR) | Balance  |
+|---------------------------|-------------|--------------|----------|
+| Participant A Liquidity   | `0`         | `0`          | `CR 30`  |------> Opening Balance <-------
+| Participant B Liquidity   | `0`         | `0`          | `CR 170` |------> Opening Balance <-------
+| Participant C Liquidity   | `0`         | `0`          | `CR 100` |------> Opening Balance <-------
+| Participant A Clearing B  | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant B Clearing C  | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant C Clearing A  | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| **Transfer 2**            |             |              |          |------> Transer 2 <-------
+| Participant B Liquidity   | `170`       |              | `0`      |--> Deduct from B
+| Participant B Clearing C  | `170`       | `170`        | `0`      |--> Cleaaring (Recording)
+| Participant C Liquidity   |             | `170`        | `CR 270` |--> Increase at C
+| **Transfer 3**            |             |              |          |------> Transer 3 <-------
+| Participant C Liquidity   | `50`        |              | `CR 220` |--> Deduct from C
+| Participant C Clearing A  | `50`        | `50`         | `0`      |--> Cleaaring (Recording)
+| Participant A Liquidity   |             | `50`         | `CR 80`  |--> Increase at A
 
 
 ### Summary
@@ -218,42 +215,43 @@ The reservation restricts the Payer from any Funds-Out (_Withdraw of funds from 
 The settlement reservation may be performed on a per-transaction basis, or as a batch operation (immediate or deferred).
 
 ### Accounts
-* **A Settlement C** - Settlement from Payer (A) to Payee (C) debited 
-* **B Settlement C** - Settlement from Payer (B) to Payee (C) debited 
-* **A Liquidity** - Participant A liquidity is restored
-* **B Liquidity** - Participant B liquidity is restored
+* **Participant A Settlement C** - Settlement from Payer (A) to Payee (C) debited 
+* **Participant B Settlement C** - Settlement from Payer (B) to Payee (C) debited 
+* **Participant A Liquidity** - Participant A liquidity is restored
+* **Participant B Liquidity** - Participant B liquidity is restored
 
 ### Events
-> An external event or Scheme trigger will instruct the Settlement Reservation event.
+An external event or Scheme trigger will instruct the Settlement Reservation event.
+The Settlement event will occur as a batch process.
 ```
-DR A Settlement (C)                              20
-    CR A Liquidity                                      20
+DR Participant A Settlement (C)                  20
+    CR Participant A Liquidity                          20
 
-DR B Settlement (C)                             100
-    CR B Liquidity                                     100
+DR Participant B Settlement (C)                 100
+    CR Participant B Liquidity                         100
 ```
 
-### Account Balances - 
-> TODO @jason Do not describe the headers, rather explain below each header.
+### Account Balances
+The table below illustrates the settlement account balance updates between Participants A and B. 
+There is no need to settle Participant C account, since the CR balance is above `100` units (`100` Collateral Deposit).
 
-Settlement 1, 2 & 3 (single settlement transfer) @jason Complete...Reword.
-
-| Account             | Debits | Credits | Balance   |
-|---------------------|--------|---------|-----------|
-| **A Settlement C**  | `0`    | `0`     | `0`       |------> Opening Balance <-------
-| **B Settlement C**  | `0`    | `0`     | `0`       |------> Opening Balance <-------
-| **A Liquidity**     | `0`    | `0`     | `CR 80`   |------> Opening Balance <-------
-| **B Liquidity**     | `0`    | `0`     | `0`       |------> Opening Balance <-------
-| **C Liquidity**     | `0`    | `0`     | `CR 220`  |------> Opening Balance <-------
-| Settlement 1, 2 & 3 |        |         |           |------> Settlement 2 & 3 <-------
-| **A Settlement C**  | `20`   |         | `DR 20`   |--> A Settlement to B
-| **A Liquidity**     |        | `20`    | `CR 100`  |--> A Liquidity is restored
-| **B Settlement C**  | `100`  |         | `DR 100`  |--> B Settlement to C
-| **B Liquidity**     |        | `100`   | `CR 100`  |--> B Liquidity is restored
+| Account                         | Debits (DR) | Credits (CR) | Balance  |
+|---------------------------------|-------------|--------------|----------|
+| Participant A Settlement C      | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant B Settlement C      | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant A Liquidity         | `0`         | `0`          | `CR 80`  |------> Opening Balance <-------
+| Participant B Liquidity         | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant C Liquidity         | `0`         | `0`          | `CR 220` |------> Opening Balance <-------
+| **Settlement 1, 2 & 3**         |             |              |          |------> Settlement 2 & 3 <-------
+| Participant A Settlement C      | `20`        |              | `DR 20`  |--> A Settlement to B
+| Participant A Liquidity         |             | `20`         | `CR 100` |--> A Liquidity is restored
+| Participant B Settlement C      | `100`       |              | `DR 100` |--> B Settlement to C
+| Participant B Liquidity         |             | `100`        | `CR 100` |--> B Liquidity is restored
 
 
 ### Bilateral Net Settlement Model:
 Settlements are deferred net if a number of transfers are settled together. Net settlements _(in which a number of transfers are settled together)_ are by definition deferred _(since it takes time to construct a batch.)_
+
 Settlements are bilateral if each pair of participants settles with each other for the net of all transfers between them.
 
 ```
@@ -268,6 +266,7 @@ C liquidity plus settlement = 220 + 50 - 170 = 220 - 120 = 100
 
 ### Multilateral Net Settlement Model:
 Settlements are deferred net if a number of transfers are settled together. Net settlements _(in which a number of transfers are settled together)_ are by definition deferred _(since it takes time to construct a batch.)_
+
 Settlements are multilateral if each participant settles with the Hub for the net of all transfers to which it has been a party, no matter who the other party was.
 
 ```
@@ -295,22 +294,26 @@ An existing participant A would like to withdraw `units` from the Scheme.
 
 #### 1. Transfer The Participant Liquidity To The Scheme Deposit Account:
 ```
-DR A Liquidity                                  100
-    CR A Collateral                                    100
-DR A Collateral                                 100
-    CR A Deposit                                       100
+DR Participant A Liquidity                      100
+    CR Participant A Collateral                        100
+DR Participant A Collateral                     100
+    CR Participant A Deposit                           100
 ```
 
-### Account Balances - Withdraw
-| Account           | Debits | Credits | Balance  |
-|-------------------|--------|---------|----------|
-| **A Liquidity**   | `0`    | `0`     | `CR 100` |------> Opening Balance <-------
-| **A Collateral**  | `0`    | `0`     | `0`      |------> Opening Balance <-------
-| **A Deposit**     | `0`    | `0`     | `DR 110` |------> Opening Balance <-------
-| Settlement 2 & 3  |        |         |          |------> Settlement 2 & 3 <-------
-| **A Liquidity**   | `100`  |         | `0`      |--> A Settlement to B
-| **A Collateral**  | `100`  | `100`   | `0`      |--> Recording Collateral withdraw
-| **A Deposit**     |        | `100`   | `DR 10`  |--> A deposit
+### Account Balances
+The table below depicts the events for withdrawing collateral from the Scheme. 
+The transfer of funds is from liquidity to collateral and then from collateral to deposit.
+The Participant A Deposit account has a debit balance of `10` units, due to the CR Participant A Fees charges incurred during deposit.  
+
+| Account                    | Debits (DR) | Credits (CR)  | Balance  |
+|----------------------------|-------------|---------------|----------|
+| Participant A Liquidity    | `0`         | `0`           | `CR 100` |------> Opening Balance <-------
+| Participant A Collateral   | `0`         | `0`           | `0`      |------> Opening Balance <-------
+| Participant A Deposit      | `0`         | `0`           | `DR 110` |------> Opening Balance <-------
+| **Settlement 2 & 3**       |             |               |          |------> Settlement 2 & 3 <-------
+| Participant A Liquidity    | `100`       |               | `0`      |--> A Settlement to B
+| Participant A Collateral   | `100`       | `100`         | `0`      |--> Recording Collateral withdraw
+| Participant A Deposit      |             | `100`         | `DR 10`  |--> A deposit
 
 ### Summary
 * A's Liquidity has a net CR balance of;  `100 - 100 = 0`
@@ -318,17 +321,26 @@ DR A Collateral                                 100
 * S's Collateral has a net CR balance of;  `0 + 100 - 100 = 0`
     * `100` units from A, then `100` units to bank
 * Bank settles with Scheme outside the Scheme
-* The Deposit has a negative CR balance due to the `10` unit fee charge
+* The Deposit has a DR balance due to the `10` unit fee charge
 
 ## Participant Closes Account
 An account may only be closed when the DR/CR Liquidity balance for a participant is `0` units.
 
 ### Entities
->>>> TODO
+* Scheme - (Scheme operator)
+* Participant A - (Participant on the Scheme that may be a Payer/Payee)
 
-## NOTES
+## Notes
+Please keep the following notes in mind.
 
-* How do we link the accounts in TB;
-    * Create accounts with the same `user_data` per Participant, then mark them as linked?
-    * For each account type, we use `code`
-    * For each currency, we use `ledger`
+- How do we link the accounts in TigerBeetle with Mojaloop;
+  - Create accounts with the same `user_data` per Participant, then mark them as linked?
+  - For each account type, we use `code`
+  - For each currency, we use `ledger`
+- How linked flags work in TigerBeetle;
+  - When the .linked flag is specified, it links an event with the next event in the batch, to create a chain of events, of arbitrary length, which all succeed or fail together.
+  - The tail of a chain is denoted by the first event without this flag.
+  - The last event in a batch may therefore never have the `.linked` flag set as this would leave a chain open-ended.
+  - Multiple chains or individual events may coexist within a batch to succeed or fail independently.
+  - Events within a chain are executed within order, or are rolled back on error, so that the effect of each event in the chain is visible to the next, and so that the chain is either visible or invisible as a unit to subsequent events after the chain. 
+  - The event that was the first to break the chain will have a unique error result. Other events in the chain will have their error result set to `.linked_event_failed`.
