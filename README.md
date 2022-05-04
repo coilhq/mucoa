@@ -61,10 +61,7 @@ A participant decides to deposit `110` units collateral into the Scheme.
 * **Collateral** - Account recording the collateral deposited by the participant
 * **Liquidity** - Account recording the liquidity available for the participant
 * **Fee** - Account recording fees charged by the scheme
-
-> TODO @jason, add Fee's as part of the mix for Transfer also.
-> 
-> TODO @jason, add the credit extension for the liquidity when participant joins the scheme.
+* **Signup Bonus** - Account recording Scheme signup bonuses
 
 ### Events
 A cash deposit is made at a bank that supports loading of assets into the Scheme. The scheme is notified of the payment.
@@ -80,45 +77,64 @@ DR Participant A Deposit                        110
 DR Participant A Collateral                     110
     CR Participant A Liquidity                         110
 ```
+At this point, the Participant A CR liquidity balance is `110` units.
 
 #### Scheme Change Fees on Deposit of Collateral:
 Scheme Fee's are not mandatory for a deposit and may also be applicable to;
   * Transfer - Fee charged per transaction
   * Account - Monthly account service charges
-(where fee is a function of collateral deposit amount = 110 * 9.1% = 10)
+(where fee is a function of collateral deposit amount = 110 * 18% = 20)
 Fee's will be applied to the participant `Liquidity` accounts.
 
 ```
-DR Participant A Liquidity                       10
-    CR Participant A Fees                               10
+DR Participant A Liquidity                       20
+    CR Participant A Fees                               20
 ```
+At this point, the Participant A liquidity CR balance is `110 - 20 = 90` units.
+
+#### Scheme Extends 9% Liquidity as Sign On Bonus:
+The Scheme provides a 9% bonus on liquidity for the first time deposit.
+The bonus is based on the participant deposit amount.
+
+```
+DR Participant A Signup Bonus                    10
+    CR Participant A Liquidity                          10
+```
+At this point, the Participant A liquidity CR balance is `90 + 10 = 100` units.
 
 ### Account Balances
 Starting account balance is `0` units for all participants. 
 The table below depicts the events for depositing collateral into the Scheme.   
 
-| Account                  | Debits (DR) | Credits (CR) | Balance  |
-|--------------------------|-------------|--------------|----------|
-| Participant A Deposit    | `0`         | `0`          | `0`      |------> Opening Balance <-------
-| Participant A Collateral | `0`         | `0`          | `0`      |------> Opening Balance <-------
-| Participant A Liquidity  | `0`         | `0`          | `0`      |------> Opening Balance <-------
-| Participant A Fees       | `0`         | `0`          | `0`      |------> Opening Balance <-------
-| **Deposit 1**            |             |              |          |------> Deposit 1 <-------
-| Participant A Deposit    | `110`       |              | `DR 110` |--> Debit for Scheme
-| Participant A Collateral | `110`       | `110`        | `0`      |--> Collateral (Recording)
-| Participant A Liquidity  |             | `110`        | `CR 110` |--> Liquidity Available
-| Participant A Liquidity  | `10`        |              | `CR 100` |--> Fee Charge on A
-| Participant A Fees       |             | `10`         | `CR 10`  |--> Fee Recorded for Scheme 
+| Account                    | Debits (DR) | Credits (CR) | Balance  |
+|----------------------------|-------------|--------------|----------|
+| Participant A Deposit      | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant A Collateral   | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant A Liquidity    | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant A Fees         | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant A Signup Bonus | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| **Deposit 1**              |             |              |          |------> Deposit 1 <-------
+| Participant A Deposit      | `110`       |              | `DR 110` |--> Debit for Scheme
+| Participant A Collateral   | `110`       | `110`        | `0`      |--> Collateral (Recording)
+| Participant A Liquidity    |             | `110`        | `CR 110` |--> Liquidity Available
+| Participant A Liquidity    | `20`        |              | `CR 90`  |--> Fee Charge on A
+| Participant A Fees         |             | `20`         | `CR 20`  |--> Fee Recorded for Scheme
+| Participant A Signup Bonus | `10`        |              | `DR 10`  |--> Signup Bonus
+| Participant A Liquidity    |             | `10`         | `CR 100` |--> Credit Extension to A
 
 ### Summary
 * A Deposit DR balance of; `0 + 110`
   * `110` units deposit at the bank; `0 - 110 = -110`
 * A's Collateral has a CR balance of; `0 + 110 - 110 = 0`
   * `110` units for deposit, minus `110` to be made available for liquidity
-* A's Liquidity has a CR balance of; `0 + 110 - 10 = 100`
-    * `100` units for initial release, minus `10` as a Deposit Fee charge
-* A's Fees has a CR balance of; `0 + 10 = 10`
-  * `10` units fee charge for deposit on liquidity
+* A's Liquidity has a CR balance of; `0 + 110 - 20 + 10 = 100`
+  * `110` units for initial release;
+  * deduct `20` as a Deposit Fee charge
+  * add `10` as a first time Sign On bonus
+* A's Fees has a CR balance of; `0 + 20 = 20`
+  * `20` units fee charge for deposit on liquidity
+* A's Bonus has a DR balance of; `0 + 10 = 10`
+  * `10` additional units for first time deposit on liquidity
 
 ## Transfer (Clearing)
 Participant A (Payer) would like to transfer funds to participant B (Payee, these are linked transfers i.e. they succeed or fail together as a transaction). 
@@ -127,12 +143,24 @@ Participant A would like to transfer `100` units to Participant B. The liquidity
 the settlement reservation and commit is a separate action that is between A to Scheme and B from Scheme.
 
 ### Accounts
-* **Participant Liquidity A** - Pay Participant - B (Payer)
-* **Participant Liquidity B** - Receive payment from Participant - A (Payee)
-* **Participant A Clearing B** - Existing or on demand account to record the clearing from A to B
+* **Liquidity** - Account recording the liquidity available for the participant
+* **Clearing** - Existing or on demand account to record the clearing from A to B
+* **Fee** - Account recording fees charged by the Scheme for the transfer
 
 ### Events
-A transfer of units is made between two participants of the Scheme (Payer/Payee). The scheme is notified of the transfer.
+A transfer of units is made between two participants of the Scheme (Payer/Payee). 
+In the 1st example, the transfer will be from Participant A to Participant B.
+It is important for Participant A _(Payer)_ to have enough available units to cover Fee charges as part of the transfer. 
+The scheme is notified of the transfer.
+
+#### Scheme Change Fees on Transfer of Liquidity:
+The Scheme charges a `10` unit Fee for the Transfer from A to B. The Payer (Participant A) is liable for the charges.
+
+```
+DR Participant A Liquidity                       10
+    CR Participant A Fees                               10
+```
+At this point, the Participant A CR liquidity balance is `90` units.
 
 #### Participant A Transfer Units to Participant B (Payer to Payee Direct):
 Scheme allows for direct liquidity to Payee.
@@ -143,6 +171,9 @@ DR Participant A Liquidity                       70
 DR Participant A Clearing (B)                    70
     CR Participant B Liquidity                          70
 ```
+At this point, the Participant A CR liquidity balance is `20` units, while Participant B liquidity balance is `170` units.
+The clearing and fee charge will be part of a linked transfer, this will ensure the fee charge and clearance will either succeed or fail together
+_(Failure may be Payer reaching his liquidity limit, thus not having enough available liquidity for the transfer)_.
 
 ### Account Balances
 Participant A and B's CR balances start at `100` units.
@@ -150,38 +181,45 @@ Participant A transfers `70` units to Participant B.
 
 | Account                  | Debits (DR) | Credits (CR) | Balance  |
 |--------------------------|-------------|--------------|----------|
+| Participant A Fees       | `0`         | `0`          | `CR 20`  |------> Opening Balance <-------
 | Participant A Liquidity  | `0`         | `0`          | `CR 100` |------> Opening Balance <-------
 | Participant B Liquidity  | `0`         | `0`          | `CR 100` |------> Opening Balance <-------
 | Participant A Clearing B | `0`         | `0`          | `0`      |------> Opening Balance <-------
 | **Transfer 1**           |             |              |          |------> Transer 1 <-------
-| Participant A Liquidity  | `70`        |              | `CR 30`  |--> Deduct from A
-| Participant A Clearing B | `70`        | `70`         | `0`      |--> Cleaaring (Recording)
+| Participant A Liquidity  | `10`        |              | `CR 90`  |--> Fee Applied to Payer
+| Participant A Fees       |             | `10`         | `CR 20`  |--> Scheme Credited for Transfer
+| Participant A Liquidity  | `70`        |              | `CR 20`  |--> Deduct from A
+| Participant A Clearing B | `70`        | `70`         | `0`      |--> Clearing (Recording)
 | Participant B Liquidity  |             | `70`         | `CR 170` |--> Increase at B
 
-Now let's add Participant C into the mix _(Participant B pays Participant C)_.
+Now let's add Participant C into the mix _(Participant B pays Participant C)_. 
+We will exclude any transfer fee charges for Transfers 2 & 3.
 ```
 DR Participant B Liquidity                      170
     CR Participant B Clearing (C)                      170
 DR Participant B Clearing (C)                   170
     CR Participant C Liquidity                         170
 ```
+At this point, the Participant B CR liquidity balance is `0` units, while Participant C liquidity balance is `270` units.
 
 Participant C decides to pay Participant A.
 ```
-DR Participant C Liquidity                       50
-    CR Participant C Clearing (A)                       50
-DR Participant C Clearing (A)                    50
-    CR Participant A Liquidity                          50
+DR Participant C Liquidity                       60
+    CR Participant C Clearing (A)                       60
+DR Participant C Clearing (A)                    60
+    CR Participant A Liquidity                          60
 ```
+At this point, the Participant A CR liquidity balance is `80` units, 
+Participant B CR liquidity balance is `0` units, while Participant C liquidity balance is `210` units.
 
 ### Account Balances
 The table below illustrates the account balance updates between Transfer 2 & 3.
 Transfer 2 is for `170` units from Participant B to Participant C.
-Transfer 3 is for `50` units from Participant C to Participant A.
+Transfer 3 is for `60` units from Participant C to Participant A.
 
 | Account                   | Debits (DR) | Credits (CR) | Balance  |
 |---------------------------|-------------|--------------|----------|
-| Participant A Liquidity   | `0`         | `0`          | `CR 30`  |------> Opening Balance <-------
+| Participant A Liquidity   | `0`         | `0`          | `CR 20`  |------> Opening Balance <-------
 | Participant B Liquidity   | `0`         | `0`          | `CR 170` |------> Opening Balance <-------
 | Participant C Liquidity   | `0`         | `0`          | `CR 100` |------> Opening Balance <-------
 | Participant A Clearing B  | `0`         | `0`          | `0`      |------> Opening Balance <-------
@@ -192,55 +230,56 @@ Transfer 3 is for `50` units from Participant C to Participant A.
 | Participant B Clearing C  | `170`       | `170`        | `0`      |--> Cleaaring (Recording)
 | Participant C Liquidity   |             | `170`        | `CR 270` |--> Increase at C
 | **Transfer 3**            |             |              |          |------> Transer 3 <-------
-| Participant C Liquidity   | `50`        |              | `CR 220` |--> Deduct from C
-| Participant C Clearing A  | `50`        | `50`         | `0`      |--> Cleaaring (Recording)
-| Participant A Liquidity   |             | `50`         | `CR 80`  |--> Increase at A
+| Participant C Liquidity   | `60`        |              | `CR 210` |--> Deduct from C
+| Participant C Clearing A  | `60`        | `60`         | `0`      |--> Cleaaring (Recording)
+| Participant A Liquidity   |             | `60`         | `CR 80`  |--> Increase at A
 
 
 ### Summary
-* A's Liquidity has a CR balance of;  `100 - 70 + 50 = 80`
+* A's Liquidity has a CR balance of;  `100 - 10 - 70 + 60 = 80`
   * Opening balance of `100` units 
+  * `10` units fee charge
   * `70` units transferred to B
-  * `50` units received from C
+  * `60` units received from C
 * B's Liquidity has a CR balance of;  `100 + 70 - 170 = 0`
   * Opening balance of `100` units
   * `70` units received from A
   * `170` units sent to C
-* C's Liquidity has a CR balance of;  `100 + 170 - 50 = 220`
+* C's Liquidity has a CR balance of;  `100 + 170 - 60 = 210`
   * Opening balance of `100` units
-  * `70` units received from A
-  * `170` units sent to C
-* Total liquidity backed by collateral remains constant = `300` units. 
+  * `170` units received from B
+  * `60` units sent to A
+* Total liquidity backed by collateral remains constant = `330` units (`110` units for each Participant). 
 * Participant B can no longer clear payments because B's liquidity is exhausted.
 * The goal of settlement is to get liquidity back to what it was before clearing.
 
 ## Settlement
-An existing transfer between Payer and Payee has been completed successfully. The purpose of the Settlement
-reservation is the instruction to reserve the transfer settlement for the Payer and Payee as collateral (_On the previously successful transfer_).
+The purpose of the Settlement reservation is the instruction to reserve the transfer settlement for the Payer and Payee as collateral (_On the previously successful transfer_).
 The reservation restricts the Payer from any Funds-Out (_Withdraw of funds from Payer account_) operations.
+An existing transfer between Payer and Payee has been completed successfully.
 
 The settlement reservation may be performed on a per-transaction basis, or as a batch operation (immediate or deferred).
 
 ### Accounts
-* **Participant A Settlement C** - Settlement from Payer (A) to Payee (C) debited 
-* **Participant B Settlement C** - Settlement from Payer (B) to Payee (C) debited 
-* **Participant A Liquidity** - Participant A liquidity is restored
-* **Participant B Liquidity** - Participant B liquidity is restored
+* **Participant X Settlement Y** - Settlement from Payer (A) to Payee (C) debited 
+* **Participant Liquidity** - Participant A,C liquidity is restored
 
 ### Events
 An external event or Scheme trigger will instruct the Settlement Reservation event.
 The Settlement event will occur as a batch process.
 ```
-DR Participant A Settlement (C)                  20
-    CR Participant A Liquidity                          20
+DR Participant A Settlement (C)                  30
+    CR Participant A Liquidity                          30
 
-DR Participant B Settlement (C)                 100
-    CR Participant B Liquidity                         100
+DR Participant B Settlement (C)                 110
+    CR Participant B Liquidity                         110
 ```
+At this point, the Participant A CR liquidity balance is `110` units,
+Participant B CR liquidity balance is `110` units, while Participant C liquidity remains at `210` units.
 
 ### Account Balances
 The table below illustrates the settlement account balance updates between Participants A and B. 
-There is no need to settle Participant C account, since the CR balance is above `100` units (`100` Collateral Deposit).
+There is no need to settle Participant C account, since the CR balance is above `110` units (`110` Collateral Deposit).
 
 | Account                         | Debits (DR) | Credits (CR) | Balance  |
 |---------------------------------|-------------|--------------|----------|
@@ -248,12 +287,12 @@ There is no need to settle Participant C account, since the CR balance is above 
 | Participant B Settlement C      | `0`         | `0`          | `0`      |------> Opening Balance <-------
 | Participant A Liquidity         | `0`         | `0`          | `CR 80`  |------> Opening Balance <-------
 | Participant B Liquidity         | `0`         | `0`          | `0`      |------> Opening Balance <-------
-| Participant C Liquidity         | `0`         | `0`          | `CR 220` |------> Opening Balance <-------
+| Participant C Liquidity         | `0`         | `0`          | `CR 210` |------> Opening Balance <-------
 | **Settlement 1, 2 & 3**         |             |              |          |------> Settlement 2 & 3 <-------
-| Participant A Settlement C      | `20`        |              | `DR 20`  |--> A Settlement to B
-| Participant A Liquidity         |             | `20`         | `CR 100` |--> A Liquidity is restored
-| Participant B Settlement C      | `100`       |              | `DR 100` |--> B Settlement to C
-| Participant B Liquidity         |             | `100`        | `CR 100` |--> B Liquidity is restored
+| Participant A Settlement C      | `30`        |              | `DR 30`  |--> A Settlement to B
+| Participant A Liquidity         |             | `30`         | `CR 110` |--> A Liquidity is restored
+| Participant B Settlement C      | `110`       |              | `DR 110` |--> B Settlement to C
+| Participant B Liquidity         |             | `110`        | `CR 110` |--> B Liquidity is restored
 
 
 ### Bilateral Net Settlement Model:
@@ -266,9 +305,9 @@ A owes B less what B owes A = 70
 B owes C less what C owes B = 170
 C owes A less what A owes C = 50
 
-A liquidity plus settlement = 80 + 70 - 50 = 80 + 20 = 100
-B liquidity plus settlement = 0 + 170 - 70 = 0 + 100 = 100
-C liquidity plus settlement = 220 + 50 - 170 = 220 - 120 = 100
+A liquidity plus settlement = 90 - 70 + 60 = 80 + 30      = 110
+B liquidity plus settlement = 100 + 70 - 170 = 0 + 110    = 110
+C liquidity plus settlement = 100 + 170 - 60 = 210 - 110  = 110
 ```
 
 ### Multilateral Net Settlement Model:
@@ -281,14 +320,14 @@ A owes someone who owes someone else, so A should go direct to C:
 (there are multiple ways to arrange who pays what, all are valid)
 
 A owes C (up to what A owes B) less what C owes A = 70 - 50 = 20
-B owes C less what A owes C on B's behalf = 170 - 70 = 100
+B owes C less what A owes C on B's behalf = 170 - 60 = 110
 
-After settlement, A and B's liquidity is now both back up to 100, while C remains at 220.
+After settlement, A and B's liquidity is now both back up to 110, while C remains at 210.
 
 This is the most efficient way of doing multilateral net because it doesn't require a "pot" at all and minimizes the number of settlement transactions.
 
-Another simpler way to do this is for anyone who owes something to pay into a "pot" and then for anyone who is owed something to be
-paid out of the "pot". This requires a pot and a few more transactions.
+Another simpler way to do this is for anyone who owes something to pay into a "pot" and then for anyone who is owed something to be paid out of the "pot". 
+This requires a pot and a few more transactions.
 ```
 
 ## Participant Withdraw Collateral From Scheme
@@ -303,41 +342,42 @@ An existing participant A would like to withdraw `units` from the Scheme.
 Participant A would like to withdraw all collateral from the Scheme.
 The transfer of funds are:
 - liquidity to collateral, and then;
-- collateral to deposit
-The Participant 
+- collateral to deposit 
 
 #### 1. Transfer The Participant Liquidity To The Scheme Deposit Account:
 ```
-DR Participant A Liquidity                      100
-    CR Participant A Collateral                        100
-DR Participant A Collateral                     100
-    CR Participant A Deposit                           100
+DR Participant A Liquidity                      110
+    CR Participant A Collateral                        110
+DR Participant A Collateral                     110
+    CR Participant A Deposit                           110
 ```
+At this point, the Participant A CR liquidity and collateral balance is `0` units.
+The Participant Deposit account CR balance is now recovered back to a balance of `110` units. 
 
 ### Account Balances
 The table below depicts the events for withdrawing collateral from the Scheme.
 The Participant A Deposit account has a debit balance of `10` units, due to the CR Participant A Fees charges incurred during deposit.  
 
-| Account                    | Debits (DR) | Credits (CR)  | Balance  |
-|----------------------------|-------------|---------------|----------|
-| Participant A Liquidity    | `0`         | `0`           | `CR 100` |------> Opening Balance <-------
-| Participant A Collateral   | `0`         | `0`           | `0`      |------> Opening Balance <-------
-| Participant A Deposit      | `0`         | `0`           | `DR 110` |------> Opening Balance <-------
-| **Settlement 2 & 3**       |             |               |          |------> Settlement 2 & 3 <-------
-| Participant A Liquidity    | `100`       |               | `0`      |--> A Settlement to B
-| Participant A Collateral   | `100`       | `100`         | `0`      |--> Recording Collateral withdraw
-| Participant A Deposit      |             | `100`         | `DR 10`  |--> A deposit
+| Account                    | Debits (DR) | Credits (CR) | Balance  |
+|----------------------------|-------------|--------------|----------|
+| Participant A Liquidity    | `0`         | `0`          | `CR 110` |------> Opening Balance <-------
+| Participant A Collateral   | `0`         | `0`          | `0`      |------> Opening Balance <-------
+| Participant A Deposit      | `0`         | `0`          | `DR 110` |------> Opening Balance <-------
+| **Settlement 2 & 3**       |             |              |          |------> Settlement 2 & 3 <-------
+| Participant A Liquidity    | `110`       |              | `0`      |--> A Settlement to B
+| Participant A Collateral   | `110`       | `110`        | `0`      |--> Recording Collateral withdraw
+| Participant A Deposit      |             | `110`        | `0`      |--> Deposit is recovered
 
 ### Summary
-* A's Liquidity has a net CR balance of;  `100 - 100 = 0`
-    * `100` units debited to the bank where A will receive 'cash'
-* S's Collateral has a net CR balance of;  `0 + 100 - 100 = 0`
-    * `100` units from A, then `100` units to bank
+* A's Liquidity has a net CR balance of;  `110 - 110 = 0`
+    * `110` units debited to the bank where A will receive 'cash'
+* S's Collateral has a net CR balance of;  `0 + 110 - 110 = 0`
+    * `110` units from A, then `110` units to bank
 * Bank settles with Scheme outside the Scheme
-* The Deposit has a DR balance due to the `10` unit fee charge
 
 ## Participant Closes Account
-An account may only be closed when the DR/CR Liquidity balance for a participant is `0` units.
+An account may only be closed when the DR/CR Liquidity and Collateral balance for a participant is `0` units.
+The positive Participant Deposit CR balance indicates the collateral is now out of the scheme.
 
 ### Entities
 * Scheme - (Scheme operator)
