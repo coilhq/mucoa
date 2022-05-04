@@ -1,10 +1,15 @@
 # Chart Of Accounts
+
+The goal for the COA (Chart of Accounts) for Mojaloop, is to categorize all the financial transactions conducted during a specific accounting period for the Scheme. 
+This document will assist in mapping out the type of accounts and how they interact with one another depending on the type of events that occur on the Mojaloop switch.
+
+
 When a payment is made in a real-time payments system like Mojaloop, the DFSP who is the custodian of the beneficiary’s account (the creditor DFSP) agrees to credit the beneficiary with the funds immediately. 
 But the creditor DFSP has not yet received the funds from the DFSP who is the custodian of the debtor’s account: all that has happened so far is that the debtor DFSP has incurred an obligation to reimburse the creditor DFSP, and that obligation has been recorded in the Mojaloop Scheme.
 
 The process of settlement is the process by which a debtor DFSP reimburses a creditor DFSP for the obligations that the debtor DFSP has incurred as a consequence of transfers.
 
-This guide describes how settlements are managed by the Mojaloop Scheme using various accounts (Chart of Accounts) and the partner settlement bank(s), and introduces the main building blocks of settlement processing.
+This guide describes how clearing & settlements are managed by the Mojaloop Scheme using various accounts (Chart of Accounts) and the partner settlement bank(s), and introduces the main building blocks of settlement processing.
 
 ## Index
 * [Definitions](#definitions)
@@ -15,10 +20,12 @@ This guide describes how settlements are managed by the Mojaloop Scheme using va
 * [Settlement](#settlement)
 * [Participant Withdraw Collateral from Scheme](#participant-withdraw-collateral-from-scheme)
 * [Participant Close Account](#participant-withdraw-collateral-from-scheme)
+* [References](#references)
 
 ## Definitions
 | Definition     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 |----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| COA            | Chart of Accounts.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Clearing       | The process of transmitting, reconciling, and, in some cases, confirming transactions prior to settlement, potentially including the netting of transactions and the establishment of final positions for settlement. Sometimes this term is also used (imprecisely) to cover settlement. For the clearing of futures and options, this term also refers to the daily balancing of profits and losses and the daily calculation of collateral requirements.     |
 | Clearing House | A central location or central processing mechanism through which financial institutions agree to exchange payment instructions or other financial obligations (for example, securities). The institutions settle for items exchanged at a designated time based on the rules and procedures of the clearinghouse. In some cases, the clearinghouse may assume significant counterparty, financial, or risk management responsibilities for the clearing system. |
 | Participant    | A provider who is a member of a payment scheme, and subject to that scheme's rules.                                                                                                                                                                                                                                                                                                                                                                             |
@@ -46,7 +53,7 @@ All the necessary KYC requirements will be captured and completed by the DFSP wh
 ### Events
 Participant with relevant information is captured, but no financial accounts have been created for the participant.
 
-## Participant Deposits Collateral to Scheme
+## Participant Deposits Collateral To Scheme
 A participant decides to deposit `110` units collateral into the Scheme.
 
 ### Accounts
@@ -292,6 +299,13 @@ An existing participant A would like to withdraw `units` from the Scheme.
 * Scheme Collateral - Scheme operator collateral
 * Participant Liquidity A - The participants liquidity on the Scheme
 
+### Events
+Participant A would like to withdraw all collateral from the Scheme.
+The transfer of funds are:
+- liquidity to collateral, and then;
+- collateral to deposit
+The Participant 
+
 #### 1. Transfer The Participant Liquidity To The Scheme Deposit Account:
 ```
 DR Participant A Liquidity                      100
@@ -301,8 +315,7 @@ DR Participant A Collateral                     100
 ```
 
 ### Account Balances
-The table below depicts the events for withdrawing collateral from the Scheme. 
-The transfer of funds is from liquidity to collateral and then from collateral to deposit.
+The table below depicts the events for withdrawing collateral from the Scheme.
 The Participant A Deposit account has a debit balance of `10` units, due to the CR Participant A Fees charges incurred during deposit.  
 
 | Account                    | Debits (DR) | Credits (CR)  | Balance  |
@@ -344,3 +357,12 @@ Please keep the following notes in mind.
   - Multiple chains or individual events may coexist within a batch to succeed or fail independently.
   - Events within a chain are executed within order, or are rolled back on error, so that the effect of each event in the chain is visible to the next, and so that the chain is either visible or invisible as a unit to subsequent events after the chain. 
   - The event that was the first to break the chain will have a unique error result. Other events in the chain will have their error result set to `.linked_event_failed`.
+
+## References
+| Description                                        | Link                                                                                                 |
+|----------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| Mojaloop Ledgers in the Hub                        | https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Settlement/ledgers-in-the-hub.html     |
+| Sheet for Chart of Accounts in Mojaloop            | https://docs.google.com/spreadsheets/d/19TnECdsKjBcJkIKWqqTUNMa8Ur21668UhxMp_8TJ81I/edit?usp=sharing |
+| Business Onboarding of DFSP                        | https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Onboarding/business-onboarding.html    |
+| vNext Reference Architecture - Accounts & Balances | https://mojaloop.github.io/reference-architecture-doc/boundedContexts/accountsAndBalances/           |
+| vNext Miro Board                                   | https://miro.com/app/board/o9J_lJyA1TA=/                                                             |
