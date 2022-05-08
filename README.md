@@ -1,8 +1,7 @@
 # Chart Of Accounts
 
-This Mojaloop COA (Chart of Accounts) document aims to identify a typical list of general ledger accounts for a Mojaloop Scheme. The goal is to guide the process of identifying a COA for a Mojaloop Scheme and to describe how transactions impact the accounts. 
-
-This document serves as a baseline reference while acknowledging that particular accounting systems, compliance regulation and Scheme rules, amongst other things, ultimately impact the COA and the account interactions for a Scheme. 
+The purpose of this document is to guide the process of identifying the COA (Chart of Accounts) for a Mojaloop Scheme and to describe how typical transactions impact the accounts. 
+This document that can be used as a baseline or for reference, with acknowledgement that particular accounting systems, compliance regulation and Scheme rules, amongst other things, ultimately impact the COA and the account interactions for a Scheme. 
 
 ## Contents
 * [Definitions](#definitions)
@@ -12,7 +11,7 @@ This document serves as a baseline reference while acknowledging that particular
 * [Payer Transfer units to a Payee](#transfer-clearing)
 * [Settlement](#settlement)
 * [Participant Withdraw Collateral from Scheme](#participant-withdraw-collateral-from-scheme)
-* [Participant Close Account](#participant-withdraw-collateral-from-scheme)
+* [Participant Close Account](#participant-closes-account)
 * [References](#references)
 
 ## Definitions
@@ -52,7 +51,7 @@ All the necessary KYC requirements will be captured and completed by the DFSP wh
 ### Entities
 The following entities are present for a participant joining the Scheme: 
 * Scheme
-* Participant A - a DFSP on the Scheme that may be a Payer/Payee
+* Participant A - a DFSP on the Scheme, this may be a Payer/Payee
 
 ### Events
 Participant with relevant KYC information is captured, **but no financial accounts** have been created for the participant.
