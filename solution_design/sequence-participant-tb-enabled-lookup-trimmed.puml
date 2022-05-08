@@ -1,0 +1,40 @@
+@startuml
+
+participant "Mojaloop Adapter" as dfsp #B0D5FF
+
+box Central-Ledger #FFFFF9
+    participant "**API**" as cl_api
+    participant "__api__ / Handler" as cl_handler
+    participant "__domain__ / Service" as cl_domain
+    participant "__models__ / Facade" as cl_facade
+
+end box
+
+box Storage #F9FFF9
+    participant "TigerBeetle Client" as tb_client #D5E8D4
+    collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
+    database "central-ledger" as cl_db #DAE8FC
+    database "Redis" as redis_cache #E1D5E7
+end box
+
+autonumber
+group Lookup Participant by Name
+    dfsp -> cl_api : //JSON// \n**(name)**
+    cl_api -> cl_handler : ///jmeter/participants/**{name}**// \nHandler invoked
+    cl_handler -> cl_domain : Service invoked
+    cl_domain -> cl_facade : Facade invoked
+    cl_facade <-> redis_cache : Account id for participant is obtained via Redis lookup.
+    autonumber stop
+    cl_facade <--> cl_db : If the participant data is not available in Redis, \na database lookup is performed followed by storing the participant\ndata in Redis cache.
+    autonumber resume
+    cl_facade -> tb_client : Account lookup using id via the CL-TB interface.
+    tb_client <-> tb_nodes : TigerBeetle //account//\n fetched.
+    tb_client --> cl_facade : //account// data returned.
+    cl_facade <-> cl_db : Additional meta-data is fetched from the CentralLedger database.\n**//OPTIONAL//**
+    cl_facade --> cl_domain : Return result
+    cl_domain --> cl_handler : Return result
+    cl_handler --> cl_api : Return result
+    cl_api --> dfsp : Return result
+end
+
+@enduml

@@ -1,10 +1,6 @@
 @startuml
 
 participant "Mojaloop Adapter" as dfsp #B0D5FF
-note over dfsp
-    * Participant Bank A
-    * Participant Bank B
-end note
 
 box Central-Ledger #FFFFF9
     participant "**API**" as cl_api
@@ -12,25 +8,21 @@ box Central-Ledger #FFFFF9
     participant "__domain__ / Service" as cl_domain
     participant "__models__ / Facade" as cl_facade
 
-note over cl_api
-        NodeJS interface
-        invokes REST API
-    end note
-
-    note over cl_handler
-        JSON request decoded & sent
-        for processing via a handler
+    note over cl_api
+            NodeJS interface
+            invokes REST API
     end note
 
     note over cl_domain
-        Domain folder where the service
-        functions are exposed.
+            Domain folder exposing
+            service functions
     end note
 
     note over cl_facade
-        Facade for storing/retrieving data from
-        MySQL and TigerBeetle
+        Facade stores & retrieves
+        data to & from databases
     end note
+
 end box
 
 box Storage #F9FFF9
@@ -42,28 +34,29 @@ end box
 
 autonumber
 group Create Transfer (2-Phase)
+== Transfer Prepare ==
     dfsp -> cl_api : //JSON// \n**(transfer data)**
     cl_api -> cl_handler : ///jmeter/transfers/prepare// \nHandler invoked
     cl_handler -> cl_domain : Service layer invoked
     cl_domain -> cl_facade : Domain to facade
-    cl_facade -> cl_db : Perform the following validations against the database:\n*//validateFspiopSourceMatchesPayer//\n*//validateParticipantByName//\n*//validatePositionAccountByNameAndCurrency//\n*//validateParticipantByName//\n*//validateAmount//\n*//validateConditionAndExpiration//\n*//validateDifferentDfsp//
-    cl_facade -> redis_cache : Lookup participant data by \n//name//, //account type// (POSITION) and //currency//.
+    cl_facade -> cl_db : Database validations:\n*//validateFspiopSourceMatchesPayer//\n*//validateParticipantByName//\n*//validatePositionAccountByNameAndCurrency//\n*//validateParticipantByName//\n*//validateAmount//\n*//validateConditionAndExpiration//\n*//validateDifferentDfsp//
+    cl_facade -> redis_cache : Lookup Participant data by \n//name//, //account type// (POSITION) and //currency//.
     autonumber stop
-    cl_facade --> cl_db : If the participant data is not available in Redis, a database lookup is performed
-    cl_facade --> redis_cache : Data looked up is now stored in Redis.
+    cl_facade --> cl_db : Retrieve Participant data from database, when not found in cache
+    cl_facade --> redis_cache : Retrieved data cached
     autonumber resume
-    cl_facade -> tb_client : Pending //Transfer// requested via the CL-TB interface.
-    tb_client -> tb_nodes : //transfer// Distributed to nodes\n via the state machine.
-    tb_nodes -> tb_nodes : Replication via VSR.
-    tb_client --> cl_facade : //transfer// create error **(none)**
+    cl_facade -> tb_client : Pending //Transfer// requested via the CL-TB interface
+    tb_client -> tb_nodes : //Transfer// updated to cluster\n via the state machine
+    tb_nodes -> tb_nodes : VSR replicates \nacross cluster
+    tb_client --> cl_facade : Return result
     cl_facade --> cl_domain : Return result
     cl_domain --> cl_handler : Return result
     cl_handler --> cl_api : Return result
     cl_api --> dfsp : Return result with //**transferId**//
     == Asynchronous Database Activities START ==
-    cl_facade -> cl_db : **[ASYNC 1.1]**\n*//transferDuplicateCheck// DB record created.
+    cl_facade -> cl_db : **[ASYNC 1.1]**\n*//transferDuplicateCheck// DB record created
     cl_facade -> cl_db : **[ASYNC 1.2]**\n*//transfer//, \n*//transferParticipant//, \n*//ilpPacket// \n*//transferStateChange// \n*//transferExtension//\nDatabase records created.
-    cl_db <--> cl_facade : **[ASYNC 1.3]**\n Database transaction committed.
+    cl_db <--> cl_facade : **[ASYNC 1.3]**\n Database transaction committed
     == Asynchronous Database Activities STOP ==
 
 ||70||

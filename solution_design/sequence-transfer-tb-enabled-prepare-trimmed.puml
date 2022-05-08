@@ -1,0 +1,46 @@
+@startuml
+
+participant "Mojaloop Adapter" as dfsp #B0D5FF
+
+box Central-Ledger #FFFFF9
+    participant "**API**" as cl_api
+    participant "__api__ / Handler" as cl_handler
+    participant "__domain__ / Service" as cl_domain
+    participant "__models__ / Facade" as cl_facade
+end box
+
+box Storage #F9FFF9
+	participant "TigerBeetle Client" as tb_client #D5E8D4
+	collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
+	database "SQL / PostgreSQL" as cl_db #DAE8FC
+	database "Redis" as redis_cache #E1D5E7
+end box
+
+autonumber
+group Create Transfer (2-Phase)
+== Transfer Prepare ==
+    dfsp -> cl_api : //JSON// \n**(transfer data)**
+    cl_api -> cl_handler : ///jmeter/transfers/prepare// \nHandler invoked
+    cl_handler -> cl_domain : Service layer invoked
+    cl_domain -> cl_facade : Domain to facade
+    cl_facade <--> cl_db : Database validations: //Payer//, //Participant name//, //position account & currency//, //amount//, //condition & expiry//, //DFSP//
+    cl_facade <--> redis_cache : Lookup Participant data by //name//, //account type// (POSITION) & //currency//
+    autonumber stop
+    cl_facade <--> cl_db : Retrieve Participant data from database, when not found in cache
+    cl_facade -> redis_cache : Retrieved Participant data cached
+    autonumber resume
+    cl_facade -> tb_client : Pending //Transfer// requested via the CL-TB interface
+    tb_client -> tb_nodes : //Transfer// update
+    tb_nodes -> tb_nodes : Replicate across cluster
+    tb_client --> cl_facade : Return result
+    cl_facade --> cl_domain : Return result
+    cl_domain --> cl_handler : Return result
+    cl_handler --> cl_api : Return result
+    cl_api --> dfsp : Return result with //**transferId**//
+
+    cl_facade -> cl_db : **[ASYNC]**\n//transferDuplicateCheck// DB record created
+    cl_facade -> cl_db : **[ASYNC]**\nCreate database records: //transfer//, //transferParticipant//, //ilpPacket//, //transferStateChange//, //transferExtension//
+    cl_db <--> cl_facade : **[ASYNC]**\n Database transaction committed
+end
+
+@enduml

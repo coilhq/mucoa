@@ -1,10 +1,6 @@
 @startuml
 
 participant "Mojaloop Adapter" as dfsp #B0D5FF
-note over dfsp
-    * Participant Bank A
-    * Participant Bank B
-end note
 
 box Central-Ledger #FFFFF9
     participant "**API**" as cl_api
@@ -15,11 +11,6 @@ box Central-Ledger #FFFFF9
     note over cl_api
         NodeJS interface
         invokes REST API
-    end note
-
-    note over cl_handler
-        JSON request decoded &
-        sent for processing via a handler
     end note
 
     note over cl_domain
@@ -46,12 +37,12 @@ group Create Participant
     cl_api -> cl_handler : ///jmeter/participants/create// \nHandler invoked
     cl_handler -> cl_domain : Service layer invoked
     cl_domain -> cl_facade : Domain to facade
-    cl_facade -> cl_db : **[ASYNC]**\n*//participant//, \n*//participantCurrency//, \n*//participantPosition// \n DB records created
+    cl_facade -> cl_db : **[ASYNC]** \nCreate DB records \n*//participant//, \n*//participantCurrency//, \n*//participantPosition//
     cl_facade -> tb_client : //account// create requested via the CL-TB interface
     tb_client -> tb_nodes : //account// distributed to nodes\n via the state machine
-    tb_nodes -> tb_nodes : replication across \ncluster via VSR
-    tb_client --> cl_facade : //account// create error **(none)**
-    cl_db <--> cl_facade : **[ASYNC]**\n Database transaction committed
+    tb_nodes -> tb_nodes : VSR replicates account \nacross cluster
+    tb_client --> cl_facade : return //account// create error **(if applicable)**
+    cl_facade <-- cl_db : **[ASYNC]**\n Database transaction committed
     cl_facade --> cl_domain : Return result
     cl_domain --> cl_handler : Return result
     cl_handler --> cl_api : Return result

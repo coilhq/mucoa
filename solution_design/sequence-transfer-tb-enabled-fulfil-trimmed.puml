@@ -1,0 +1,44 @@
+@startuml
+
+participant "Mojaloop Adapter" as dfsp #B0D5FF
+
+box Central-Ledger #FFFFF9
+    participant "**API**" as cl_api
+    participant "__api__ / Handler" as cl_handler
+    participant "__domain__ / Service" as cl_domain
+    participant "__models__ / Facade" as cl_facade
+
+end box
+
+box Storage #F9FFF9
+	participant "TigerBeetle Client" as tb_client #D5E8D4
+	collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
+	database "SQL / PostgreSQL" as cl_db #DAE8FC
+	database "Redis" as redis_cache #E1D5E7
+end box
+
+autonumber
+group Create Transfer (2-Phase)
+== Transfer Fulfilment ==
+    dfsp -> cl_api : //JSON// \n(fulfil transfer data with //**transferId**//)
+    cl_api -> cl_handler : ///jmeter/transfers/fulfil// \nHandler invoked.
+    cl_handler -> cl_domain : Service layer invoked \n//handlePayeeResponse//
+    cl_domain -> cl_facade : Domain to facade \n//savePayeeTransferResponse//
+    cl_facade -> cl_db : New Database transaction for fulfillment
+    cl_facade -> cl_db : Obtain //**settlementWindowId**// for window where state is **OPEN**
+    cl_facade -> tb_client : //Transfer// posting requested via the CL-TB interface
+    tb_client -> tb_nodes : //Transfer// update
+    tb_nodes -> tb_nodes : Replicate across cluster
+    tb_client --> cl_facade : Return TigerBeetle result
+
+    cl_facade --> cl_domain : Return result
+    cl_domain --> cl_handler : Return result
+    cl_handler --> cl_api : Return result
+    cl_api --> dfsp : Return result
+
+    cl_facade -> cl_db : **[ASYNC]**\nCreate database records: //transferFulfilment//, //transferStateChange
+    cl_facade <-- cl_db: **[ASYNC]**\nDatabase transaction committed
+
+end
+
+@enduml
