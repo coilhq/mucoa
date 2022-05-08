@@ -18,6 +18,7 @@
 8. [Canonical Model](#8-canonical-model)  
 8.1. [TigerBeetle](#81-tigerbeetle)  
 8.2. [Central-Ledger](#82-central-ledger)
+8.3. [TigerBeetle and Central-Ledger Mapping](#83-tigerbeetle-and-central-ledger-mapping)
 [References](#references)
 
 ## Glossary
@@ -615,35 +616,39 @@ The following tables illustrate the data mappings between Central-Ledger and Tig
 #### 8.3.1 Account
 The mapping between TigerBeetle accounts and Central-Ledger participant and surrounding mappings (participant, participantCurrency, participantPosition etc.).
 
-| TigerBeetle Field   | Central-Ledger Mapping                   | Description                                                                                                             |
-|---------------------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
-| `id`                | Not applicable.                          | Global unique id for an account.                                                                                        |
-| `user_data`         | `participant.participantId`              | Each participant will have multiple accounts per `participantId` depending on `ledger` and `code`. One to many mapping. |
-| `reserved`          | Not applicable.                          | Reserved for future use.                                                                                                |
-| `ledger`            | `ledgerAccountType.ledgerAccountTypeId`  | Each Central-Ledger 'leger account type' maps to a TigerBeetle ledger.                                                  |
-| `code`              | `currency.currencyId`                    | Each Central-Ledger 'currency id' maps to a TigerBeetle code.                                                           |
-| `flags`             | `participantLimit`                       | Flags are TigerBeetle specific. Typical flags would be credit/debit to not exceed credit/debit.                         |
-| `debits_pending`    | `participantPosition`                    | Debit balance for an account awaiting rollback or fulfilment.                                                           |
-| `debits_posted`     | `participantPosition`                    | Debit balance for fulfilled transfers.                                                                                  |
-| `credits_pending`   | `participantPosition`                    | Credit balance for an account awaiting rollback or fulfilment.                                                          |
-| `credits_posted`    | `participantPosition`                    | Credit balance for fulfilled transfers.                                                                                 |
-| `timestamp`         | Not applicable.                          | TigerBeetle specific functionality.                                                                                     |
+| TigerBeetle Field   | Central-Ledger Mapping                    | Description                                                                                                             |
+|---------------------|-------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `id`                | Not applicable.                           | Global unique id for an account.                                                                                        |
+| `user_data`         | `participant.participantId`               | Each participant will have multiple accounts per `participantId` depending on `ledger` and `code`. One to many mapping. |
+| `reserved`          | Not applicable.                           | Reserved for future use.                                                                                                |
+| `ledger`            | `currency.currencyId`                     | Each Central-Ledger 'currency id' maps to a TigerBeetle ledger currency (USD, ZAR, EUR etc).                            |
+| `code`              | `ledgerAccountType.ledgerAccountTypeId`   | Each Central-Ledger ' account type' maps to a TigerBeetle code.                                                         |
+| `flags`             | `participantLimit`                        | Flags are TigerBeetle specific. Typical flags would be credit/debit to not exceed credit/debit.                         |
+| `debits_pending`    | `participantPosition`                     | Debit balance for an account awaiting rollback or fulfilment.                                                           |
+| `debits_posted`     | `participantPosition`                     | Debit balance for fulfilled transfers.                                                                                  |
+| `credits_pending`   | `participantPosition`                     | Credit balance for an account awaiting rollback or fulfilment.                                                          |
+| `credits_posted`    | `participantPosition`                     | Credit balance for fulfilled transfers.                                                                                 |
+| `timestamp`         | Not applicable.                           | TigerBeetle specific functionality.                                                                                     |
 
 #### 8.3.2 Transfer
 The mapping between TigerBeetle transfers and Central-Ledger transfer and surrounding mappings (transfer, transferParticipant, expiringTransfer etc.).
 
-| TigerBeetle Field     | Central-Ledger Mapping                       | Description                                                                                |
-|-----------------------|----------------------------------------------|--------------------------------------------------------------------------------------------|
-| `id`                  | Not applicable.                              | Global unique id for a transfer.                                                           |
-| `debit_account_id`    | `transferParticipant.transferParticipantId`  | The TigerBeetle `account.id` referenced as the foreign key for Payer.                      |
-| `credit_account_id`   | `transferParticipant. transferParticipantId` | The TigerBeetle `account.id` referenced as the foreign key for Payee.                      |
-| `user_data`           | `transfer.transferId`                        | The Central-Ledger `transferId` referenced to link transfers in TigerBeetle.               |
-| `reserved`            | Not applicable.                              | Reserved for future use.                                                                   |
-| `timeout`             | `expiringTransfer.expirationDate`            | The TigerBeetle transfer timeout matches the Central-Ledger `expirationDate`.              |
-| `code`                | `currency.currencyId`                        | Each Central-Ledger 'currency id' maps to a TigerBeetle code.                              |
-| `flags`               | Not applicable.                              | TigerBeetle internal flags for linking transfers, posting and reversing 2-phase transfers. |
-| `amount`              | `transfer.amount`                            | Values are expressed in the minor denomination (e.g. cents) for TigerBeetle.               |
-| `timestamp`           | Not applicable.                              | The current state machine timestamp of the transfer for state tracking.                    |
+TigerBeetle financial domain makes use of double-entry ![T](solution_design/t.svg)-accounts.
+
+| TigerBeetle Field   | Central-Ledger Mapping                       | Description                                                                                  |
+|---------------------|----------------------------------------------|----------------------------------------------------------------------------------------------|
+| `id`                | Not applicable.                              | Global unique id for a transfer.                                                             |
+| `debit_account_id`  | `transferParticipant.transferParticipantId`  | The TigerBeetle `account.id` referenced as the foreign key for Payer.                        |
+| `credit_account_id` | `transferParticipant. transferParticipantId` | The TigerBeetle `account.id` referenced as the foreign key for Payee.                        |
+| `user_data`         | `transfer.transferId`                        | The Central-Ledger `transferId` referenced to link transfers in TigerBeetle.                 |
+| `reserved`          | Not applicable.                              | Reserved for future use.                                                                     |
+| `pending_id`        | Not applicable.                              | The TigerBeetle id for the Transfer created as a prepare transfer.                           |
+| `ledger`            | `currency.currencyId`                        | Each Central-Ledger 'currency id' maps to a TigerBeetle ledger currency (USD, ZAR, EUR etc). |
+| `timeout`           | `expiringTransfer.expirationDate`            | The TigerBeetle transfer timeout matches the Central-Ledger `expirationDate`.                |
+| `code`              | `ledgerAccountType.ledgerAccountTypeId`      | The TigerBeetle account type code, such as 1=position, 2=settlement, 3=fees etc.             |
+| `flags`             | Not applicable.                              | TigerBeetle internal flags for linking transfers, posting and reversing 2-phase transfers.   |
+| `amount`            | `transfer.amount`                            | Values are expressed in the minor denomination (e.g. cents) for TigerBeetle.                 |
+| `timestamp`         | Not applicable.                              | The current state machine timestamp of the transfer for state tracking.                      |
 
 
 ## References
