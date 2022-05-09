@@ -1,17 +1,19 @@
 # Chart Of Accounts
 
 The purpose of this document is to guide the process of identifying the COA (Chart of Accounts) for a Mojaloop Scheme and to describe how typical transactions impact the accounts. 
+
 This document that can be used as a baseline or for reference, with acknowledgement that particular accounting systems, compliance regulation and Scheme rules, amongst other things, ultimately impact the COA and the account interactions for a Scheme. 
 
 ## Contents
 * [Definitions](#definitions)
-* [Participant Joins the Scheme](#participant-joins-scheme)
-* [Participant Deposit Collateral to Scheme](#participant-deposits-collateral-to-scheme)
+* [Overview](#overview)
+* [Participant Joins Scheme](#participant-joins-scheme)
+* [Participant Deposits Collateral](#participant-deposits-collateral-to-scheme)
 * [Fees](#scheme-charges-fees-on-deposit-of-collateral)
-* [Payer Transfer to Payee](#transfer-clearing)
+* [Payer Transfer to Payee](#transfer--clearing)
 * [Settlement](#settlement)
-* [Participant Withdraw Collateral from Scheme](#participant-withdraw-collateral-from-scheme)
-* [Participant Close Account](#participant-closes-account)
+* [Participant Withdraws Collateral](#participant-withdraw-collateral-from-scheme)
+* [Participant Closes Account](#participant-closes-account)
 * [References](#references)
 
 ## Definitions
@@ -36,12 +38,24 @@ This document that can be used as a baseline or for reference, with acknowledgem
 | Transfer       | A debit/credit from one account to another account.                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Withdraw       | The exchange of digital/physical funds from a scheme to a participant.                                                                                                                                                                                                                                                                                                                                                                                          |
 
-# Primary User Stories
-In the sections that follow, we take the context of a Mojaloop switch and we:
-* Map out the general ledger accounts for typical hub scenarios and user stories.
-* Identify how the accounts interact with one another, depending on the events and transactions.
-* Define the main building blocks for settlement processing.
-* Describe how clearing and settlement impacts the accounts of partner settlement entities/banks.
+# Overview
+The sections that follow illustrate how a Mojaloop Scheme can:
+* Map out the general ledger accounts for 6 typical scenarios.
+* Identify the impact of the scenarios on the accounts and balances.
+* Show how the accounts interact with one another, depending on the events.
+* Define the main building blocks for settlement processing and describe how clearing and settlement impacts the accounts of partner settlement entities/banks.
+
+There are 6 scenarios or user stories that are covered, to illustrate the COA definition and impact.
+
+| Number | User Story                                                               |
+|--------|--------------------------------------------------------------------------|
+| 1      | A new participant joins an existing Mojaloop Scheme.                     |
+| 2      | The new participant deposits collateral into the Mojaloop Scheme.        |
+| 3      | Transfers between the new and the existing Mojaloop Scheme participants. |
+| 4      | Settlement processing to restore liquidity between the participants.     |
+| 5      | A participant withdraws collateral from the Mojaloop Scheme.             |
+| 6      | A participant exit the Mojaloop Scheme.                                  |
+
 
 ## Participant Joins Scheme
 A new participant joins the scheme and the necessary participant and configuration data is provisioned in the system.
