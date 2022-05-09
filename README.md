@@ -45,7 +45,7 @@ The sections that follow illustrate how a Mojaloop Scheme can:
 * Show how the accounts interact with one another, depending on the events.
 * Define the main building blocks for settlement processing and describe how clearing and settlement impacts the accounts of partner settlement entities/banks.
 
-There are 6 scenarios or user stories that are covered, to illustrate the COA definition and impact.
+There are 6 scenarios or user stories that are covered:
 
 | Number | User Story                                                               |
 |--------|--------------------------------------------------------------------------|
