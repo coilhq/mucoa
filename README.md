@@ -51,10 +51,10 @@ There are 6 scenarios or user stories that are covered:
 |--------|--------------------------------------------------------------------------|
 | 1      | A new participant joins an existing Mojaloop Scheme.                     |
 | 2      | The new participant deposits collateral into the Mojaloop Scheme.        |
-| 3      | Transfers between the new and the existing Mojaloop Scheme participants. |
-| 4      | Settlement processing to restore liquidity between the participants.     |
+| 3      | Transfers between new and existing participants.                         |
+| 4      | Settlement processing to restore liquidity between participants.         |
 | 5      | A participant withdraws collateral from the Mojaloop Scheme.             |
-| 6      | A participant exit the Mojaloop Scheme.                                  |
+| 6      | A participant exits the Mojaloop Scheme.                                 |
 
 
 ## Participant Joins Scheme
