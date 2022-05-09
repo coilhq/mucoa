@@ -8,7 +8,7 @@ This document that can be used as a baseline or for reference, with acknowledgem
 * [Participant Joins the Scheme](#participant-joins-scheme)
 * [Participant Deposit Collateral to Scheme](#participant-deposits-collateral-to-scheme)
 * [Fees](#scheme-charges-fees-on-deposit-of-collateral)
-* [Payer Transfer units to a Payee](#transfer-clearing)
+* [Payer Transfer to Payee](#transfer-clearing)
 * [Settlement](#settlement)
 * [Participant Withdraw Collateral from Scheme](#participant-withdraw-collateral-from-scheme)
 * [Participant Close Account](#participant-closes-account)
@@ -146,7 +146,7 @@ The table below depicts the impact on account balances when depositing collatera
 * A's Bonus has a DR balance of `0 - 10 = -10`
   * `10` additional units for first time deposit on liquidity
 
-## Transfer (Clearing)
+## Transfer & Clearing
 When a payment is made on a real-time payments system, the DFSP who is the custodian of the beneficiary’s account (the creditor DFSP) agrees to credit the beneficiary with the funds immediately.
 The creditor DFSP has not yet received the funds from the DFSP who is the custodian of the debtor’s account. At this stage, the debtor DFSP has incurred an obligation to reimburse the creditor DFSP, and the obligation has been recorded in the Mojaloop Scheme.
 
