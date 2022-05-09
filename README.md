@@ -282,7 +282,7 @@ Transfer 3 is for `60` units from Participant C to Participant A.
 ## Settlement
 Settlement is the process by which a debtor DFSP reimburses a creditor DFSP for obligations incurred as a consequence of clearing transfers.
 
-A Settlement reservation is the instruction to reserve the transfer settlement for the Payer and Payee as collateral *(On the previously successful transfer)*.
+A Settlement reservation is the instruction to reserve the transfer amount for the Payer and Payee as collateral.
 The reservation restricts the Payer from any Funds-Out *(Withdraw of funds from Payer account)* operations.
 An existing transfer between Payer and Payee has been completed successfully in order to settle.
 
