@@ -428,21 +428,6 @@ The following entities are present when a participant closes their account (inac
 * Scheme
 * Participant A - Participant on the Scheme that may be a Payer/Payee
 
-## Notes
-Please keep the following notes in mind.
-
-- Linking the accounts in TigerBeetle with Mojaloop:
-  - Create accounts with the same `user_data` per Participant, then mark them as linked?
-  - For each account type, we use `code`
-  - For each currency, we use `ledger`
-- Indicating linked flags for linked events in TigerBeetle:
-  - When the .linked flag is specified, it links an event with the next event in the batch, to create a chain of events, of arbitrary length, which all succeed or fail together.
-  - The tail of a chain is denoted by the first event without this flag.
-  - The last event in a batch may therefore never have the `.linked` flag set as this would leave a chain open-ended.
-  - Multiple chains or individual events may coexist within a batch to succeed or fail independently.
-  - Events within a chain are executed within order, or are rolled back on error, so that the effect of each event in the chain is visible to the next, and so that the chain is either visible or invisible as a unit to subsequent events after the chain. 
-  - The event that was the first to break the chain will have a unique error result. Other events in the chain will have their error result set to `.linked_event_failed`.
-
 ## References
 | Description                                                               | Link                                                                                                              |
 |---------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
