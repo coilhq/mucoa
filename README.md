@@ -56,7 +56,6 @@ There are 6 scenarios or user stories that are covered:
 | 5      | A participant withdraws collateral from the Mojaloop Scheme.             |
 | 6      | A participant exits the Mojaloop Scheme.                                 |
 
-
 ## Participant Joins Scheme
 A new participant joins the scheme and the necessary participant and configuration data is provisioned in the system.
 At this time the participant has no liquidity _(a current position of zero and a net debit cap of zero)_. 
@@ -429,11 +428,11 @@ The following entities are present when a participant closes their account (inac
 * Participant A - Participant on the Scheme that may be a Payer/Payee
 
 ## References
-| Description                                                               | Link                                                                                                              |
-|---------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| Mojaloop Business Operations Documentation >> Mojaloop Ledgers in the Hub | <code>https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Settlement/ledgers-in-the-hub.html</code>     |
-| Working spreadsheet for Chart of Accounts in Mojaloop                     | <code>https://docs.google.com/spreadsheets/d/19TnECdsKjBcJkIKWqqTUNMa8Ur21668UhxMp_8TJ81I/edit?usp=sharing</code> |
-| Business Onboarding of DFSP                                               | <code>https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Onboarding/business-onboarding.html</code>    |
-| vNext Reference Architecture - Accounts & Balances                        | <code>https://mojaloop.github.io/reference-architecture-doc/boundedContexts/accountsAndBalances/</code>           | 
-| vNext Miro Board                                                          | <code>https://miro.com/app/board/o9J_lJyA1TA=/</code>                                                             |
+| Description                                                               | Link                                                                                                 |
+|---------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| Mojaloop Business Operations Documentation >> Mojaloop Ledgers in the Hub | https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Settlement/ledgers-in-the-hub.html     |
+| Working spreadsheet for Chart of Accounts in Mojaloop                     | https://docs.google.com/spreadsheets/d/19TnECdsKjBcJkIKWqqTUNMa8Ur21668UhxMp_8TJ81I/edit?usp=sharing |
+| Business Onboarding of DFSP                                               | https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Onboarding/business-onboarding.html    |
+| vNext Reference Architecture - Accounts & Balances                        | https://mojaloop.github.io/reference-architecture-doc/boundedContexts/accountsAndBalances/           | 
+| vNext Miro Board                                                          | https://miro.com/app/board/o9J_lJyA1TA=/                                                             |
  
