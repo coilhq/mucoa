@@ -427,6 +427,12 @@ The following entities are present when a participant closes their account (inac
 * Scheme
 * Participant A - Participant on the Scheme that may be a Payer/Payee
 
+### Events
+Participant account state has been updated to `[closed]`.
+
+### Summary
+Participant account is now closed. Account deposit is required to re-open account.
+
 ## References
 | Description                                                               | Link                                                                                                   |
 |---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
