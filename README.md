@@ -428,11 +428,11 @@ The following entities are present when a participant closes their account (inac
 * Participant A - Participant on the Scheme that may be a Payer/Payee
 
 ## References
-| Description                                                               | Link                                                                                                 |
-|---------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| Mojaloop Business Operations Documentation >> Mojaloop Ledgers in the Hub | https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Settlement/ledgers-in-the-hub.html     |
-| Working spreadsheet for Chart of Accounts in Mojaloop                     | https://docs.google.com/spreadsheets/d/19TnECdsKjBcJkIKWqqTUNMa8Ur21668UhxMp_8TJ81I/edit?usp=sharing |
-| Business Onboarding of DFSP                                               | https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Onboarding/business-onboarding.html    |
-| vNext Reference Architecture - Accounts & Balances                        | https://mojaloop.github.io/reference-architecture-doc/boundedContexts/accountsAndBalances/           | 
-| vNext Miro Board                                                          | https://miro.com/app/board/o9J_lJyA1TA=/                                                             |
+| Description                                                               | Link                                                                                                   |
+|---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| Mojaloop Business Operations Documentation >> Mojaloop Ledgers in the Hub | `https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Settlement/ledgers-in-the-hub.html`     |
+| Working spreadsheet for Chart of Accounts in Mojaloop                     | `https://docs.google.com/spreadsheets/d/19TnECdsKjBcJkIKWqqTUNMa8Ur21668UhxMp_8TJ81I/edit?usp=sharing` |
+| Business Onboarding of DFSP                                               | `https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Onboarding/business-onboarding.html`    |
+| vNext Reference Architecture - Accounts & Balances                        | `https://mojaloop.github.io/reference-architecture-doc/boundedContexts/accountsAndBalances/`           | 
+| vNext Miro Board                                                          | `https://miro.com/app/board/o9J_lJyA1TA=/`                                                             |
  
