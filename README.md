@@ -303,8 +303,8 @@ The settlement reservation may be performed on a per-transaction basis, or as a 
 
 ### Entities
 The following entities are present for participant settlement:
-* **Participant X Settlement Y** - Settlement from Payer (A) to Payee (C) debited 
-* **Participant Liquidity** - Participant A,C liquidity is restored
+* **Participant [X] Settlement [Y]** - Settlement from Payer (X) to Payee (Y)
+* **Participant Liquidity** - Participant X, Y liquidity is restored
 
 ### Events
 An external event or Scheme trigger will instruct the Settlement Reservation event.
