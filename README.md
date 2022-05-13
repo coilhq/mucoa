@@ -9,7 +9,7 @@ This document can be used as a baseline or for reference, with acknowledgement t
 * [Overview](#overview)
 * [Participant Joins Scheme](#participant-joins-scheme)
 * [Participant Deposits Collateral](#participant-deposits-collateral-to-scheme)
-* [Fees](#scheme-charges-fees-on-deposit-of-collateral)
+* [Fees](#fees)
 * [Payer Transfer to Payee](#transfer--clearing)
 * [Settlement](#settlement)
 * [Participant Withdraws Collateral](#participant-withdraw-collateral-from-scheme)
@@ -100,12 +100,16 @@ DR Participant A Collateral                     110
 ```
 At this point, the Participant A CR liquidity balance is `110` units, with initial financial accounts created.
 
+### Fees
+The applicable fees are typically determined by the defined Scheme rules. Therefore, fees may be applicable for:
+* Accounts - Once-off or recurring account service charges.
+* Deposits - Applied for the deposit of collateral.
+* Transfers - Charged per transaction, or based on transaction volumes, types etc. 
+
 #### Scheme Charges Fees on Deposit of Collateral:
-Scheme fees are not mandatory for a deposit, thus they may also be applicable for:
-  * Transfers - Charged per individual transaction, based on transaction categories, volumes etc.
-  * Accounts - Once-off or recurring account service charges
-> Fees will be applied to the participant `Liquidity` accounts. 
-> To illustrate, we charge Deposit fees as a function of the collateral deposit amount (i.e. 110 * 18% = 20) and Transfer fees as a fixed fee per transaction. 
+
+For this scenario, fees are applied to the participant `Liquidity` accounts. 
+To illustrate, we charge Deposit fees as a function of the collateral deposit amount (i.e. 110 * 18% = 20) and we charge Transfer fees as a fixed-fee per transaction. 
 
 ```
 DR Participant A Liquidity                       20
@@ -166,7 +170,7 @@ The creditor DFSP has not yet received the funds from the DFSP who is the custod
 This is a series of linked transfers that constitute a transaction that succeeds or fails as a unit:
 * Participant A (Payer) would like to transfer funds to Participant B (Payee). 
 * At this time, Participant A has liquidity of `100` units.
-* Participant A initiates a transfer of `100` units to Participant B. 
+* Participant A initiates a transfer of `70` units to Participant B. 
 * Real-time clearing immediately makes liquidity available to Participant B.
 * The Scheme records an outstanding obligation for settlement from DFSP A to B. 
 
@@ -293,22 +297,20 @@ Transfer 3 is for `60` units from Participant C to Participant A.
 * The goal of settlement is to restore liquidity positions to what they were prior to clearing.
 
 ## Settlement
-Settlement is the process by which a debtor DFSP reimburses a creditor DFSP for obligations incurred as a consequence of clearing transfers.
+In the context of a Mojaloop Scheme, settlement is the process by which a debtor DFSP reimburses a creditor DFSP for obligations incurred as a consequence of clearing transfers.
 
-A Settlement reservation is the instruction to reserve the transfer amount for the Payer and Payee as collateral.
-The reservation restricts the Payer from any Funds-Out *(Withdraw of funds from Payer account)* operations.
-An existing transfer between Payer and Payee has been completed successfully in order to settle.
-
-The settlement reservation may be performed on a per-transaction basis, or as a batch operation *(immediate or deferred)*.
+A Settlement reservation is an instruction to reserve the amount from the Payer to the Payee, to restore liquidity positions.
+The reservation restricts a Payer from any funds-out operations *(i.e. withdraw of funds from the Payer account)*.
+A prerequisite of the settlement reservation is a successful transfer between Payer and Payee and the settlement reservation may be performed on a per-transaction basis, or as a batch operation *(immediate or deferred)*.
 
 ### Entities
 The following entities are present for participant settlement:
-* **Participant [X] Settlement [Y]** - Settlement from Payer (X) to Payee (Y)
-* **Participant Liquidity** - Participant X, Y liquidity is restored
+* **Participant [X] Settlement [Y]** - Settlement to Payee (X) from Payer (Y)
+* **Participant Liquidity** - Participant X liquidity is restored
 
 ### Events
-An external event or Scheme trigger will instruct the Settlement Reservation event.
-The Settlement event will occur as a batch process.
+An external or Scheme event triggers the Settlement Reservation.
+In this instance, the Settlement event gets handled as a batch process.
 ```
 DR Participant A Settlement (C)                  30
     CR Participant A Liquidity                          30
@@ -320,8 +322,8 @@ At this point, the Participant A CR liquidity balance is `110` units,
 Participant B CR liquidity balance is `110` units, while Participant C liquidity remains at `210` units.
 
 ### Account Balances Statement
-The table below illustrates the settlement account balance updates between Participants A and B. 
-There is no need to settle Participant C account, since the CR balance is above `110` units (`110` Collateral Deposit).
+The table below illustrates the settlement account balance updates between participants. 
+There is no need to settle Participant C account, since the CR balance is above `110` units, which is the Collateral Deposit.
 
 | Account                         | Debits (DR) | Credits (CR) | Balance  |
 |---------------------------------|-------------|--------------|----------|
@@ -338,14 +340,12 @@ There is no need to settle Participant C account, since the CR balance is above 
 
 
 ### Bilateral Net Settlement Model:
-Settlements are deferred net if a number of transfers are settled together. Net settlements *(in which a number of transfers are settled together)* are by definition deferred *(since it takes time to construct a batch)*.
-
-Settlements are bilateral if each pair of participants settles with each other for the net of all transfers between them.
+Settlement is net deferred if a number of transfers are settled together. Net settlement is, by definition, deferred because it takes time to construct a batch from a collection of transfers. Settlement is bilateral when two participants settle with each other for the net of all transfers between them.
 
 ```
 A owes B less what B owes A = 70
 B owes C less what C owes B = 170
-C owes A less what A owes C = 50
+C owes A less what A owes C = 60
 
 A liquidity plus settlement = 90 - 70 + 60 = 80 + 30      = 110
 B liquidity plus settlement = 100 + 70 - 170 = 0 + 110    = 110
@@ -353,9 +353,7 @@ C liquidity plus settlement = 100 + 170 - 60 = 210 - 110  = 110
 ```
 
 ### Multilateral Net Settlement Model:
-Settlements are deferred net if a number of transfers are settled together. Net settlements *(in which a number of transfers are settled together)* are by definition deferred *(since it takes time to construct a batch)*.
-
-Settlements are multilateral if each participant settles with the Hub for the net of all transfers to which it has been a party, no matter who the other party was.
+Net settlement is multilateral if each participant settles with the Hub for the net of all transfers to which it has been a party, no matter who the other party was.
 
 ```
 A owes someone who owes someone else, so A should go direct to C:
