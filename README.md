@@ -340,7 +340,9 @@ There is no need to settle Participant C account, since the CR balance is above 
 
 
 ### Bilateral Net Settlement Model:
-Settlement is net deferred if a number of transfers are settled together. Net settlement is, by definition, deferred because it takes time to construct a batch from a collection of transfers. Settlement is bilateral when two participants settle with each other for the net of all transfers between them.
+Settlement is net deferred if a number of transfers are settled together. Net settlement is, by definition, deferred because it takes time to construct a batch from a collection of transfers. 
+
+Settlement is bilateral when two participants settle with each other for the net of all transfers between them.
 
 ```
 A owes B less what B owes A = 70
@@ -353,21 +355,19 @@ C liquidity plus settlement = 100 + 170 - 60 = 210 - 110  = 110
 ```
 
 ### Multilateral Net Settlement Model:
-Net settlement is multilateral if each participant settles with the Hub for the net of all transfers to which it has been a party, no matter who the other party was.
+Multilateral net settlement involves a centralized entity that determines the net effect of transactions by multiple participants. In this instance, the Hub determines the net effect of all transfers by participants, and effects settlement for the net amount to the relevant participant.
 
 ```
-A owes someone who owes someone else, so A should go direct to C:
-(there are multiple ways to arrange who pays what, all are valid)
+If A owes someone who owes C, while C also owes A, then a central entity determines the net effect of settlement between A and C:
+(there can be multiple valid ways to arrange who pays what)
 
-A owes C (up to what A owes B) less what C owes A = 70 - 50 = 20
-B owes C less what A owes C on B's behalf = 170 - 60 = 110
+In this instance:
+A owes C (up to what A owes B) less what C owes A: 70 - 60 = 10
+B owes C less what A owes C on B's behalf = 170 - 70 = 100
 
 After settlement, A and B's liquidity is now both back up to 110, while C remains at 210.
 
-This is the most efficient way of doing multilateral net because it doesn't require a "pot" at all and minimizes the number of settlement transactions.
-
-Another simpler way to do this is for anyone who owes something to pay into a "pot" and then for anyone who is owed something to be paid out of the "pot". 
-This requires a pot and a few more transactions.
+This is an efficient way of doing multilateral netting because it does not require a "settlement pool," thus minimizing the number of settlement transactions.
 ```
 
 ## Participant Withdraw Collateral From Scheme
