@@ -32,7 +32,7 @@ This document can be used as a baseline or for reference, with acknowledgement t
 | Liquidity      | The availability of liquid assets to support an obligation. Banks and non-bank providers need liquidity to meet their obligations. Agents need liquidity to meet cash-out transactions by consumers and small merchants.                                                                                                                                                                                                                                        |
 | Participant    | A provider of financial services who is a member of a payment scheme, and subject to that scheme's rules.                                                                                                                                                                                                                                                                                                                                                       |
 | Payee          | The recipient of electronic funds in a payment transaction.                                                                                                                                                                                                                                                                                                                                                                                                     |
-| Payer          | The payer of electronic funds in a payment transaction.	                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Payer          | The payer of electronic funds in a payment transaction.	                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Scheme         | A group of entities constitute a payments scheme which defines rules and agreements between payments service providers on how they transact. A Mojaloop hub operator is an administrator of the payments scheme.                                                                                                                                                                                                                                                |
 | Settlement     | In financial accounting, the process where one party reimburses another party for financial obligations incurred as a consequence of transaction clearing.                                                                                                                                                                                                                                                                                                      |
 | Transfer       | A debit/credit from one account with a corresponding and opposite credit/debit to another account. Another term for journal entry.                                                                                                                                                                                                                                                                                                                              |
@@ -74,6 +74,8 @@ No financial account has been created as yet, but if joining was successful, the
 
 ## Participant Deposits Collateral To Scheme
 Once a participant successfully joins the scheme, the next step is to provide collateral and track that collateral within the Scheme.
+The collateral is a way to eliminate or mitigate settlement risk by establishing an upper limit to the settlement obligations that are possible between participants.
+
 A participant deposits `110` units of collateral into the Scheme, which enables the participant to initiate transfers.
 
 ### Entities
@@ -341,9 +343,9 @@ There is no need to settle Participant C account, since the CR balance is above 
 
 
 ### Bilateral Net Settlement Model:
-Settlement is net deferred if a number of transfers are settled together. Net settlement is, by definition, deferred because it takes time to construct a batch from a collection of transfers. 
+Settlement is net deferred if the overall or net effect of a collection of transfers are settled together, at a future date. Net settlement is, by definition, deferred because it takes time to construct a batch from a collection of transfers. Amongst other things, the rules of a Scheme can define a settlement window, a schedule for deferred settlement or the controls for mitigating settlement risk between Scheme participants. 
 
-Settlement is bilateral when two participants settle with each other for the net of all transfers between them.
+Settlement is bilateral when two participants settle with each other for the net of all transfers between them, over a period of time.
 
 ```
 A owes B less what B owes A = 70
@@ -356,7 +358,7 @@ C liquidity plus settlement = 100 + 170 - 60 = 210 - 110  = 110
 ```
 
 ### Multilateral Net Settlement Model:
-Multilateral net settlement involves a centralized entity that determines the net effect of transactions by multiple participants. In this instance, the Hub determines the net effect of all transfers by participants, and effects settlement for the net amount to the relevant participant.
+Multilateral net settlement involves a centralized entity that determines the net effect of transactions by multiple participants. In this instance, the Hub determines the net effect of all transfers by participants, and effects settlement for the net amount to the relevant participant(s).
 
 ```
 If A owes someone who owes C, while C also owes A, then a central entity determines the net effect of settlement between A and C:
