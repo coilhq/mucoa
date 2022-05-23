@@ -59,7 +59,7 @@ There are 6 scenarios or user stories that are covered:
 ## Participant Joins Scheme
 A new participant joins the scheme and the necessary participant and configuration data is provisioned in the system.
 At this time the participant has no liquidity _(a current position of zero and a net debit cap of zero)_. 
-All the necessary KYC requirements will be captured and completed by the DFSP when on-boarding contacts.
+All the necessary KYC requirements will be captured and completed by the DFSP for the onboarding process.
 
 ### Entities
 The following entities are present for a participant joining the Scheme: 
@@ -83,28 +83,30 @@ The following entities are present for a participant depositing collateral into 
 * **Deposit** - Account recording the deposit of units
 * **Collateral** - Account recording the collateral deposited by the participant
 * **Liquidity** - Account recording the liquidity available for the participant
-* **Fee** - Account recording fees charged by the scheme
+* **Fee** - Account recording fees charged by the Scheme
 * **Signup Bonus** - Account recording Scheme signup bonuses / credit extension based on initial collateral deposit
 
 ### Events
-A cash deposit is made at a bank that supports loading of assets into the Scheme. The scheme is notified of the payment.
-The necessary accounts are created atomically as a batch.
+A participant DFSP makes a cash deposit at a bank that supports loading assets into the Scheme. 
+The Scheme receives a notification of the payment and the necessary accounts are created atomically, as a batch.
 
 #### Participant A Deposits Collateral (Bank to Scheme, then Scheme to Participant):
-The handing of assets occurs outside the scheme. A notification is sent to the scheme to inform the
-scheme of the deposit (either all the collateral they have, or a maximum of _N units_, in this case
-at most 110 units).
+When the Scheme receives a notification that assets have been deposited at the bank, the Scheme records entries into the deposit and collateral general ledger accounts for Participant A.
+
+<img alt="T-accounts: Participant A deposits collateral" src="diagrams/1-scheme%20deposit.png" width="50%" title="Participant A deposits collateral"/>
+
+The Scheme makes it possible to set the extent to which a participant can access their available collateral.
+So, the Scheme or the participant allocates a maximum of _N units_ to the liquidity account, which is smaller or equal to the collateral. In this example, all `110` units will be available to the participant for liquidity.
 
 ```
-DR Participant A Deposit                        110
-    CR Participant A Collateral                        110
 DR Participant A Collateral                     110
     CR Participant A Liquidity                         110
 ```
-At this point, the Participant A CR liquidity balance is `110` units, with initial financial accounts created.
+
+At this point, the Participant A CR liquidity balance is `110` units, with initial general ledger accounts created.
 
 ### Fees
-The applicable fees are typically determined by the defined Scheme rules. Therefore, fees may be applicable for:
+The applicable fees are typically determined by the Scheme rules. Therefore, fees may be applicable for:
 * Accounts - Once-off or recurring account service charges.
 * Deposits - Applied for the deposit of collateral.
 * Transfers - Charged per transaction, or based on transaction volumes, types etc. 
@@ -112,7 +114,7 @@ The applicable fees are typically determined by the defined Scheme rules. Theref
 #### Scheme Charges Fees on Deposit of Collateral:
 
 For this scenario, fees are applied to the participant `Liquidity` accounts. 
-To illustrate, we charge Deposit fees as a function of the collateral deposit amount (i.e. 110 * 18% = 20) and we charge Transfer fees as a fixed-fee per transaction. 
+To illustrate, we charge deposit fees as a function of the collateral deposit amount (i.e. 110 * 18% = 20) and we charge Transfer fees as a fixed-fee per transaction. 
 
 ```
 DR Participant A Liquidity                       20
@@ -122,8 +124,9 @@ At this point, the Participant A liquidity CR balance is `110 - 20 = 90` units.
 The Scheme Participant Fee account has been credited with `20` units.
 
 #### Scheme Extends Liquidity as Sign-on Bonus:
-The Scheme provides a 9.1% bonus on liquidity for a first time deposit.
-The bonus is based on the participant deposit amount.
+The Scheme provides a 9.1% bonus on liquidity for a first time deposit. In this example, the bonus is a function of the initial collateral deposit amount (i.e. 110 * 9.1% = 10).
+
+The Scheme enforces rules to ensure that participants enjoy the extension of liquidity, as a benefit, without being able to withdraw the bonus as funds from the Scheme.
 
 ```
 DR Participant A Signup Bonus                    10
@@ -145,7 +148,8 @@ The table below depicts the impact on account balances when depositing collatera
 | Participant A Signup Bonus | `0`         | `0`          | `0`      |------> Opening Balance <-------
 | **Deposit 1**              |             |              |          |------> Deposit 1 <-------
 | Participant A Deposit      | `110`       |              | `DR 110` |--> Debit for Scheme
-| Participant A Collateral   | `110`       | `110`        | `0`      |--> Collateral (Recording)
+| Participant A Collateral   |             | `110`        | `CR 110` |--> Collateral from Deposit
+| Participant A Collateral   | `110`       |              | `0`      |--> Liquidity from Collateral
 | Participant A Liquidity    |             | `110`        | `CR 110` |--> Liquidity Available
 | Participant A Liquidity    | `20`        |              | `CR 90`  |--> Fee Charge on A for Deposit
 | Participant A Fees         |             | `20`         | `CR 20`  |--> Fee Recorded for Scheme
