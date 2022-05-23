@@ -167,14 +167,16 @@ The table below depicts the impact on account balances when depositing collatera
 When a payment is made on a real-time payments system, the DFSP who is the custodian of the beneficiary’s account (the creditor DFSP) agrees to credit the beneficiary with the funds immediately.
 The creditor DFSP has not yet received the funds from the DFSP who is the custodian of the debtor’s account. At this stage, the debtor DFSP has incurred an obligation to reimburse the creditor DFSP, and the obligation has been recorded in the Mojaloop Scheme.
 
-This is a series of linked transfers that constitute a transaction that succeeds or fails as a unit:
-* Participant A (Payer) would like to transfer funds to Participant B (Payee). 
-* At this time, Participant A has liquidity of `100` units.
+Participant A (Payer) would like to transfer funds to Participant B (Payee).
+At this time, Participant A has liquidity of `100` units.
+
+The following transfers are created atomically and succeed or fail, as a unit:
+
 * Participant A initiates a transfer of `70` units to Participant B. 
 * Real-time clearing immediately makes liquidity available to Participant B.
 * The Scheme records an outstanding obligation for settlement from DFSP A to B. 
 
-The settlement reservation and commit are processed at a later stage, as actions from A to Scheme, and from Scheme to B.
+The settlement reservation and commit are processed at a later stage, as actions from DFSP A to Scheme, and from Scheme to DFSP B.
 
 ### Entities
 The following entities are present for a participant transferring liquidity to another participant:
@@ -196,21 +198,15 @@ For this context, linked events are applicable to accounts and transfers.
 #### Scheme Charges Fees on Transfer of Liquidity:
 The Scheme charges a `10` unit Fee for the Transfer from A to B. Participant A *(Payer)* is liable for the charges.
 
-```
-DR Participant A Liquidity                       10
-    CR Participant A Fees                               10
-```
+<img alt="T-accounts: Scheme charges transfer fee" src="diagrams/5-fee%20for%20transfer%201%20from%20a%20to%20b.png" width="75%" title="Scheme charges transfer fee"/>
+
 At this point, the Participant A CR liquidity balance is `90` units *(keeping in mind that the charge and transfer are linked)*.
 
 #### Participant A Transfers Units to Participant B (Payer to Payee Direct):
 Scheme allows for direct liquidity to Payee.
 
-```
-DR Participant A Liquidity                       70
-    CR Participant A Clearing (B)                       70
-DR Participant A Clearing (B)                    70
-    CR Participant B Liquidity                          70
-```
+<img alt="T-accounts: Immediate transfer & clearing of liquidity from A to B" src="diagrams/6-transfer%201%20from%20a%20to%20b.png" width="75%" title="Immediate transfer & clearing of liquidity from A to B"/>
+
 At this point, the Participant A CR liquidity balance is `20` units, while Participant B liquidity balance is `170` units as a result of the transfer.
 The clearing and fee are part of a linked transfer that succeeds or fails together.
 An example of a failure may be where a Payer exceeds their liquidity limit when the transfer and fee are taken into account.
@@ -230,8 +226,9 @@ Participant A and B's liquidity CR balances start at `100` units *(Initial depos
 | Participant A Liquidity  | `10`        |              | `CR 90`  |--> Fee Applied to Payer
 | Participant A Fees       |             | `10`         | `CR 30`  |--> Scheme Credited for Transfer
 | Participant A Liquidity  | `70`        |              | `CR 20`  |--> Deduct from A
-| Participant A Clearing B | `70`        | `70`         | `0`      |--> Clearing (Recording)
-| Participant B Liquidity  |             | `70`         | `CR 170` |--> Increase at B
+| Participant A Clearing B |             | `70`         | `CR 70`  |--> From A liquidity to B clearing acount
+| Participant A Clearing B | `70`        |              | `0`      |--> From B clearing account to B liquidity 
+| Participant B Liquidity  |             | `70`         | `CR 170` |--> Funds cleared from A increase liquidity of B
 
 Let's add Participant C into the mix. We will **exclude** any transfer fees for Transfers 2 & 3.
 
