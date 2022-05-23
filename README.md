@@ -10,7 +10,7 @@ This document can be used as a baseline or for reference, with acknowledgement t
 * [Participant Joins Scheme](#participant-joins-scheme)
 * [Participant Deposits Collateral](#participant-deposits-collateral-to-scheme)
 * [Fees](#fees)
-* [Payer Transfer to Payee](#transfer--clearing)
+* [Payer Transfer to Payee](#transfers--clearing)
 * [Settlement](#settlement)
 * [Participant Withdraws Collateral](#participant-withdraw-collateral-from-scheme)
 * [Participant Closes Account](#participant-closes-account)
@@ -93,15 +93,12 @@ The Scheme receives a notification of the payment and the necessary accounts are
 #### Participant A Deposits Collateral (Bank to Scheme, then Scheme to Participant):
 When the Scheme receives a notification that assets have been deposited at the bank, the Scheme records entries into the deposit and collateral general ledger accounts for Participant A.
 
-<img alt="T-accounts: Participant A deposits collateral" src="diagrams/1-scheme%20deposit.png" width="50%" title="Participant A deposits collateral"/>
+<img alt="T-accounts: Participant A deposits collateral" src="diagrams/1-scheme%20deposit.png" width="75%" title="Participant A deposits collateral"/>
 
 The Scheme makes it possible to set the extent to which a participant can access their available collateral.
 So, the Scheme or the participant allocates a maximum of _N units_ to the liquidity account, which is smaller or equal to the collateral. In this example, all `110` units will be available to the participant for liquidity.
 
-```
-DR Participant A Collateral                     110
-    CR Participant A Liquidity                         110
-```
+<img alt="T-accounts: Allocate collateral backed liquidity to Participant A" src="diagrams/2-collateral%20to%20liquidity.png" width="75%" title="Allocate collateral backed liquidity to Participant A"/>
 
 At this point, the Participant A CR liquidity balance is `110` units, with initial general ledger accounts created.
 
@@ -116,10 +113,8 @@ The applicable fees are typically determined by the Scheme rules. Therefore, fee
 For this scenario, fees are applied to the participant `Liquidity` accounts. 
 To illustrate, we charge deposit fees as a function of the collateral deposit amount (i.e. 110 * 18% = 20) and we charge Transfer fees as a fixed-fee per transaction. 
 
-```
-DR Participant A Liquidity                       20
-    CR Participant A Fees                               20
-```
+<img alt="T-accounts: Scheme charges fees on deposit" src="diagrams/3-deposit%20fee.png" width="75%" title="Scheme charges fees on deposit"/>
+
 At this point, the Participant A liquidity CR balance is `110 - 20 = 90` units.
 The Scheme Participant Fee account has been credited with `20` units.
 
@@ -128,10 +123,8 @@ The Scheme provides a 9.1% bonus on liquidity for a first time deposit. In this 
 
 The Scheme enforces rules to ensure that participants enjoy the extension of liquidity, as a benefit, without being able to withdraw the bonus as funds from the Scheme.
 
-```
-DR Participant A Signup Bonus                    10
-    CR Participant A Liquidity                          10
-```
+<img alt="T-accounts: Scheme extends liquidity as sign-up bonus" src="diagrams/4-signup%20bonus.png" width="75%" title="Scheme extends liquidity as sign-up bonus"/>
+
 At this point, the Participant A liquidity CR balance is `90 + 10 = 100` units.
 The Scheme Signup Bonus DR balance is `10` units.
 
