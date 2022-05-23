@@ -234,21 +234,14 @@ Let's add Participant C into the mix. We will **exclude** any transfer fees for 
 
 **Transfer 2**: Participant B pays Participant C `170` units.
 
-```
-DR Participant B Liquidity                      170
-    CR Participant B Clearing (C)                      170
-DR Participant B Clearing (C)                   170
-    CR Participant C Liquidity                         170
-```
+<img alt="T-accounts: Immediate transfer & clearing of liquidity from B to C" src="diagrams/7-transfer%202%20from%20b%20to%20c.png" title="Immediate transfer & clearing of liquidity from B to C"/>
+
 At this point, the Participant B CR liquidity balance is `0` units, while Participant C liquidity balance is `270` units.
 
 **Transfer 3**: Participant C decides to pay Participant A `60` units.
-```
-DR Participant C Liquidity                       60
-    CR Participant C Clearing (A)                       60
-DR Participant C Clearing (A)                    60
-    CR Participant A Liquidity                          60
-```
+
+<img alt="T-accounts: Immediate transfer & clearing of liquidity from C to A" src="diagrams/8-transfer%203%20from%20c%20to%20a.png" title="Immediate transfer & clearing of liquidity from C to A"/>
+
 At this point, the Participant A CR liquidity balance is `80` units, 
 Participant B CR liquidity balance is `0` units, while Participant C liquidity balance is `210` units.
 
@@ -267,16 +260,18 @@ Transfer 3 is for `60` units from Participant C to Participant A.
 | Participant C Clearing A  | `0`         | `0`          | `0`      |------> Opening Balance <-------
 | **Transfer 2**            |             |              |          |------> Transer 2 <-------
 | Participant B Liquidity   | `170`       |              | `0`      |--> Deduct from B
-| Participant B Clearing C  | `170`       | `170`        | `0`      |--> Clearing (Recording)
-| Participant C Liquidity   |             | `170`        | `CR 270` |--> Increase at C
+| Participant B Clearing C  |             | `170`        | `CR 170` |--> From B liquidity to C clearing acount
+| Participant B Clearing C  | `170`       |              | `0`      |--> From C clearing account to C liquidity
+| Participant C Liquidity   |             | `170`        | `CR 270` |--> Funds cleared from B increase liquidity of C
 | **Transfer 3**            |             |              |          |------> Transer 3 <-------
 | Participant C Liquidity   | `60`        |              | `CR 210` |--> Deduct from C
-| Participant C Clearing A  | `60`        | `60`         | `0`      |--> Clearing (Recording)
-| Participant A Liquidity   |             | `60`         | `CR 80`  |--> Increase at A
+| Participant C Clearing A  |             | `60`         | `CR 60`  |--> From C liquidity to A clearing acount
+| Participant C Clearing A  | `60`        |              | `0`      |--> From A clearing account to A liquidity
+| Participant A Liquidity   |             | `60`         | `CR 80`  |--> Funds cleared from C increase liquidity of A
 
 
 ### Summary
-<img alt="Transfer Summary" src="solution_design/transfer-t.png" width="55%" title="Transfer Summary - A to B and C to A"/>
+<img alt="Transfer Summary" src="diagrams/transfer-t-summary.png" width="55%" title="Transfer Summary - A to B and C to A"/>
 
 * A's Liquidity has a CR balance of  `100 - 10 - 70 + 60 = 80`
   * Opening balance of `100` units 
