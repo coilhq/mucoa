@@ -166,7 +166,7 @@ The table below depicts the impact on account balances when depositing collatera
 * A's Bonus has a DR balance of `0 - 10 = -10`
   * `10` additional units for first time deposit on liquidity
 
-## Transfer & Clearing
+## Transfers & Clearing
 When a payment is made on a real-time payments system, the DFSP who is the custodian of the beneficiary’s account (the creditor DFSP) agrees to credit the beneficiary with the funds immediately.
 The creditor DFSP has not yet received the funds from the DFSP who is the custodian of the debtor’s account. At this stage, the debtor DFSP has incurred an obligation to reimburse the creditor DFSP, and the obligation has been recorded in the Mojaloop Scheme.
 
@@ -388,7 +388,7 @@ The transfer of funds are:
 - Liquidity to Collateral, and then;
 - Collateral to Deposit 
 
-#### 1. Transfer The Participant Liquidity To The Scheme Deposit Account:
+#### Transfer The Participant Liquidity To The Scheme Deposit Account:
 ```
 DR Participant A Liquidity                      110
     CR Participant A Collateral                        110
