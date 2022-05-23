@@ -282,6 +282,8 @@ Transfer 3 is for `60` units from Participant C to Participant A.
 
 
 ### Summary
+<img alt="Transfer Summary" src="solution_design/transfer-t.png" width="55%" title="Transfer Summary - A to B and C to A"/>
+
 * A's Liquidity has a CR balance of  `100 - 10 - 70 + 60 = 80`
   * Opening balance of `100` units 
   * `10` units fee charge

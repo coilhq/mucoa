@@ -17,9 +17,9 @@
 7.2. [Transfers](#72-transfers)
 8. [Canonical Model](#8-canonical-model)  
 8.1. [TigerBeetle](#81-tigerbeetle)  
-8.2. [Central-Ledger](#82-central-ledger)
-8.3. [TigerBeetle and Central-Ledger Mapping](#83-tigerbeetle-and-central-ledger-mapping)
-[References](#references)
+8.2. [Central-Ledger](#82-central-ledger)  
+8.3. [TigerBeetle and Central-Ledger Mapping](#83-tigerbeetle-and-central-ledger-mapping)  
+[References](#references)  
 
 ## Glossary
 | Definition  | Description                                                                                                                                                                                                                                                               |
