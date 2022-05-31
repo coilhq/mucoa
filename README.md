@@ -56,6 +56,11 @@ There are 6 scenarios or user stories that are covered:
 | 5      | A participant withdraws collateral from the Mojaloop Scheme.             |
 | 6      | A participant exits the Mojaloop Scheme.                                 |
 
+### Assumptions
+* Transactions are cleared in real-time and settlement is deferred.
+* A transfer fully succeeds as a 2-phase commit transaction, or it fails. This makes it possible to show a simplified view of the general ledger entries for transfers, without an intermediate fund reservation entry.
+* The system of record for accounts and balances is the authority on timeouts. This eliminates duplicate or inaccurate  transaction timeout processing.
+
 ## Participant Joins Scheme
 A new participant joins the scheme and the necessary participant and configuration data is provisioned in the system.
 At this time the participant has no liquidity _(a current position of zero and a net debit cap of zero)_.
@@ -93,12 +98,12 @@ The Scheme receives a notification of the payment and the necessary accounts are
 #### Participant A Deposits Collateral (Bank to Scheme, then Scheme to Participant):
 When the Scheme receives a notification that assets have been deposited at the bank, the Scheme records entries into the deposit and collateral general ledger accounts for Participant A.
 
-![Participant A deposits collateral](./diagrams/1-scheme_deposit.png)
+<img alt="Participant A deposits collateral" src="./diagrams/1-scheme%20deposit.png" title="Deposit collateral"/>
 
 The Scheme makes it possible to set the extent to which a participant can access their available collateral.
 So, the Scheme or the participant allocates a maximum of _N units_ to the liquidity account, which is smaller or equal to the collateral. In this example, all `110` units will be available to the participant for liquidity.
 
-![Allocate collateral backed liquidity to Participant A](./diagrams/2-collateral_to_liquidity.png)
+<img alt="Allocate collateral backed liquidity to Participant A" src="./diagrams/2-collateral%20to%20liquidity.png" title="Collateral to liquidity"/>
 
 At this point, the Participant A CR liquidity balance is `110` units, with initial general ledger accounts created.
 
@@ -113,7 +118,7 @@ The applicable fees are typically determined by the Scheme rules. Therefore, fee
 For this scenario, fees are applied to the participant `Liquidity` accounts.
 To illustrate, we charge deposit fees as a function of the collateral deposit amount (i.e. 110 * 18% = 20) and we charge Transfer fees as a fixed-fee per transaction.
 
-![Scheme charges fees on deposit](./diagrams/3-deposit_fee.png)
+<img alt="Scheme charges fees on deposit" src="./diagrams/3-deposit%20fee.png" title="Deposit fees"/>
 
 At this point, the Participant A liquidity CR balance is `110 - 20 = 90` units.
 The Scheme Participant Fee account has been credited with `20` units.
@@ -123,7 +128,7 @@ The Scheme provides a 9.1% bonus on liquidity for a first time deposit. In this 
 
 The Scheme enforces rules to ensure that participants enjoy the extension of liquidity, as a benefit, without being able to withdraw the bonus as funds from the Scheme.
 
-![Scheme extends liquidity as sign-up bonus](./diagrams/4-signup_bonus.png)
+<img alt="Scheme extends liquidity as sign-up bonus" src="./diagrams/4-signup%20bonus.png" title="Sign-on bonus"/>
 
 At this point, the Participant A liquidity CR balance is `90 + 10 = 100` units.
 The Scheme Signup Bonus DR balance is `10` units.
@@ -176,8 +181,6 @@ The following transfers are created atomically and succeed or fail, as a unit:
 * Real-time clearing immediately makes liquidity available to Participant B.
 * The Scheme records an outstanding obligation for settlement from DFSP A to B.
 
-The settlement reservation and commit are processed at a later stage, as actions from DFSP A to Scheme, and from Scheme to DFSP B.
-
 ### Entities
 The following entities are present for a participant transferring liquidity to another participant:
 * **Liquidity** - Account recording the liquidity available for the participant
@@ -198,14 +201,14 @@ For this context, linked events are applicable to accounts and transfers.
 #### Scheme Charges Fees on Transfer of Liquidity:
 The Scheme charges a `10` unit Fee for the Transfer from A to B. Participant A *(Payer)* is liable for the charges.
 
-![Scheme charges transfer fee](./diagrams/5-fee_for_transfer_1_from_a_to_b.png)
+<img alt="Scheme charges transfer fee" src="./diagrams/5-fee%20for%20transfer%201%20from%20a%20to%20b.png" title="Transfer fee"/>
 
 At this point, the Participant A CR liquidity balance is `90` units *(keeping in mind that the charge and transfer are linked)*.
 
 #### Participant A Transfers Units to Participant B (Payer to Payee Direct):
 Scheme allows for direct liquidity to Payee.
 
-![Immediate transfer & clearing of liquidity from A to B](./diagrams/6-transfer_1_from_a_to_b.png)
+<img alt="Immediate transfer &amp; clearing of liquidity from A to B" src="./diagrams/6-transfer%201%20from%20a%20to%20b.png" title="Transfer &amp; clearing - A to B"/>
 
 At this point, the Participant A CR liquidity balance is `20` units, while Participant B liquidity balance is `170` units as a result of the transfer.
 The clearing and fee are part of a linked transfer that succeeds or fails together.
@@ -234,13 +237,13 @@ Let's add Participant C into the mix. We will **exclude** any transfer fees for 
 
 **Transfer 2**: Participant B pays Participant C `170` units.
 
-![Immediate transfer & clearing of liquidity from B to C](./diagrams/7-transfer_2_from_b_to_c.png)
+<img alt="Immediate transfer &amp; clearing of liquidity from B to C" src="./diagrams/7-transfer%202%20from%20b%20to%20c.png" title="Transfer &amp; clearing - B to C"/>
 
 At this point, the Participant B CR liquidity balance is `0` units, while Participant C liquidity balance is `270` units.
 
 **Transfer 3**: Participant C decides to pay Participant A `60` units.
 
-![Immediate transfer & clearing of liquidity from C to A](./diagrams/8-transfer_3_from_c_to_a.png)
+<img alt="Immediate transfer &amp; clearing of liquidity from C to A" src="./diagrams/8-transfer%203%20from%20c%20to%20a.png" title="Transfer &amp; clearing - C to A"/>
 
 At this point, the Participant A CR liquidity balance is `80` units,
 Participant B CR liquidity balance is `0` units, while Participant C liquidity balance is `210` units.
@@ -369,11 +372,11 @@ An existing participant A would like to withdraw the units that it had deposited
 
 ### Entities
 The following entities are present when a participant withdraws from the Scheme:
-* Bank (External) - The bank account of the Scheme operator is external to the Hub
-* Collateral - The collateral that had been deposited by the exiting participant
-* Deposit - The deposit account of the exiting participant
-* Liquidity - The exiting participant's liquidity on the Scheme
-* Signup Bonus - The Scheme ensures that Participants cannot withdraw the sign-on bonus from their liquidity balance
+* **Bank (External)** - The bank account of the Scheme operator is external to the Hub
+* **Collateral** - The collateral that had been deposited by the exiting participant
+* **Deposit** - The deposit account of the exiting participant
+* **Liquidity** - The exiting participant's liquidity on the Scheme
+* **Signup Bonus** - The Scheme ensures that Participants cannot withdraw the sign-on bonus from their liquidity balance
 
 ### Events
 Participant A would like to withdraw all collateral from the Scheme.
@@ -388,13 +391,13 @@ The Scheme ensures that the sign-on bonus, which had been granted to Participant
 ![Scheme deducts sign-on bonus from liquidity of Participant A](./diagrams/9-1-withdraw_signup_bonus.png)
 
 #### Transfer The Participant Liquidity To The Scheme Deposit Account:
-At this point, the Participant A CR liquidity balance is `100` units, and it can be withdrawn from the Scheme.
+At this point, the Participant A CR liquidity balance is `100` units, and it can be withdrawn.
 ![Transfer from Participant A Liquidity to Collateral](./diagrams/9-2-withdraw_a_liquidity_to_collateral.png)
-The Participant A liquidity and collateral balances are now `0` units.
-
-Participant A is able to withdraw the remaining `100` units of collateral at a bank that supports withdrawal from the Scheme.
+The Participant A liquidity balance is now `0` units, and the Participant A CR collateral balance is `100` units.
+Participant A withdraws the remaining `100` units of collateral from a bank that supports withdrawal from the Scheme.
 
 ![Transfer from Participant A Collateral to Deposit](./diagrams/9-3-withdraw_a_collateral_to_deposit.png)
+The Participant A liquidity and collateral balances are now `0` units.
 
 
 ### Account Balances Statement
@@ -406,21 +409,29 @@ The Participant A Deposit account has a DR balance of `110` units, due to the CR
 | Participant A Liquidity    | `0`         | `0`          | `CR 110` |------> Opening Balance <-------
 | Participant A Collateral   | `0`         | `0`          | `0`      |------> Opening Balance <-------
 | Participant A Deposit      | `0`         | `0`          | `DR 110` |------> Opening Balance <-------
-| **Settlement 2 & 3**       |             |              |          |------> Settlement 2 & 3 <-------
-| Participant A Liquidity    | `110`       |              | `0`      |--> A Settlement to B
-| Participant A Collateral   | `110`       | `110`        | `0`      |--> Recording Collateral withdraw
-| Participant A Deposit      |             | `110`        | `0`      |--> Deposit is recovered
+| Participant A Signup Bonus | `0`         | `0`          | `DR 10`  |------> Opening Balance <-------
+| **Deduct Sign-on Bonus**   |             |              |          |------> Remove liquidity extension <-------
+| Participant A Liquidity    | `10`        |              | `CR 100` |------> Remove the sign-on bonus <-------
+| Participant A Signup Bonus |             | `10`         | `0`      |------> Reduce liquidity by the sign-on bonus <-------
+| **Transfer Liquidity**     |             |              |          |------> Transfer liquidity <-------
+| Participant A Liquidity    | `100`       |              | `0`      |------> Move the liquidity balance to collateral 
+| Participant A Collateral   |             | `100`        | `CR 100` |------> The collateral available for withdrawal
+| **Withdraw Collateral**    |             |              |          |------> Withdraw the collateral <-------
+| Participant A Collateral   | `100`       |              | `0`      |------> Deduct from collateral <-------
+| Participant A Deposit      |             | `100`        | `DR 10`  |------> Deposit is recovered <-------
 
 ### Summary
-* A's Liquidity has a net CR balance of  `110 - 110 = 0`
-  * `110` units debited to the bank where A will receive 'cash'
-* A's Collateral has a net CR balance of  `0 + 110 - 110 = 0`
-  * `110` units from A, then `110` units to bank
+* A's Signup Bonus has a net balance of  `10 - 10 = 0`
+  * `10` units credited by the Scheme, to recover the sign-on bonus
+* A's Liquidity has a net balance of  `110 - 10 - 100 = 0`
+  * `10` units debited to deduct the sign-on bonus
+  * `100` units debited to the bank where A will receive 'cash'
+* A's Collateral has a net balance of  `0 + 100 - 100 = 0`
+  * `100` units from A's liquidity, then `100` units to bank
 * Bank settles with Participant A outside of the Scheme
 
 ## Participant Closes Account
-An account may only be closed when the DR/CR Liquidity and Collateral balance for a participant is `0` units.
-The positive Participant Deposit CR balance indicates the collateral is now out of the scheme.
+An account may only be closed when the DR/CR Liquidity and Collateral balances for a participant are `0` units.
 
 ### Entities
 The following entities are present when a participant closes their account (inactive):
@@ -441,4 +452,3 @@ Participant account is now closed. Account deposit is required to re-open accoun
 | Business Onboarding of DFSP                                               | `https://docs.mojaloop.io/mojaloop-business-docs/HubOperations/Onboarding/business-onboarding.html`    |
 | vNext Reference Architecture - Accounts & Balances                        | `https://mojaloop.github.io/reference-architecture-doc/boundedContexts/accountsAndBalances/`           | 
 | vNext Miro Board                                                          | `https://miro.com/app/board/o9J_lJyA1TA=/`                                                             |
- 
