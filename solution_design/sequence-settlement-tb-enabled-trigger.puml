@@ -41,7 +41,7 @@ end box
 
 autonumber
 group Trigger Settlement Event - //createSettlementEvent//
-    dfsp -> cl_api : //JSON// \n**(transfer data)**
+    dfsp -> cl_api : //JSON// \n**(settlement data)**
     cl_api -> cs_handler : ///settlements/createSettlementEvent// \nHandler invoked
     cs_handler -> cs_domain : Service layer invoked\n//settlementEventTrigger//
     cs_domain -> cs_facade : Domain to facade\n//triggerSettlementEvent//
@@ -54,7 +54,7 @@ group Trigger Settlement Event - //createSettlementEvent//
     cs_facade --> cs_domain : Return result
     cs_domain --> cs_handler : Return result
     cs_handler --> cl_api : Return result
-    cl_api --> dfsp : Return result with //**transferId**//
+    cl_api --> dfsp : Return result with //**settlementData**//
 end
 
 @enduml

@@ -1,0 +1,72 @@
+@startuml
+
+participant "Mojaloop Adapter" as dfsp #B0D5FF
+note over dfsp
+    * Participant Bank A
+    * Participant Bank B
+end note
+
+box Central-Settlement #FFFFF9
+    participant "**API**" as cl_api
+    participant "__api__ / Handler" as cs_handler
+    participant "__domain__ / Service" as cs_domain
+    participant "__models__ / Facade" as cs_facade
+
+note over cl_api
+        NodeJS interface
+        invokes REST API
+    end note
+
+    note over cs_handler
+        JSON request decoded & sent
+        for processing via a handler
+    end note
+
+    note over cs_domain
+        Domain folder where the service
+        functions are exposed.
+    end note
+
+    note over cs_facade
+        Facade for storing/retrieving data from
+        MySQL and TigerBeetle
+    end note
+end box
+
+box Storage #F9FFF9
+	participant "TigerBeetle Client" as tb_client #D5E8D4
+	collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
+	database "MySQL" as cl_db #DAE8FC
+end box
+
+autonumber
+group Trigger Settlement Event - //updateSettlementById//
+    dfsp -> cl_api : //JSON// \n**(settlement data)**
+    cl_api -> cs_handler : ///settlements/updateSettlementById// \nHandler invoked
+    cs_handler -> cs_domain : Service layer invoked\n//updateSettlementById//
+    cs_domain -> cs_facade : Domain to facade\n//putById//
+    cs_facade -> cl_db : Lookup base settlement data.
+    cs_facade -> tb_client : Lookup accounts associated with setlement via CS-TB interface:\n*//**tbLookupAccountsForSettlement**// - Based on settlementId.
+    cs_facade -> cs_facade : Determine state and counters for settlement accounts.
+    cs_facade -> cl_db : Perform the following inserts against the database:\n*//settlement//\n*//settlementSettlementWindow// for each settlement window.\n*--//settlementParticipantCurrency//-- Built in TB. \n*--//settlementWindowContent//-- Built in TB. \n*--//settlementWindowContentStateChange//-- Built in TB. \n*--//settlementParticipantCurrencyStateChange//-- Built in TB.\n*--//settlementWindowStateChange//-- Built in TB.\n*--//settlementStateChange//-- Built in TB.
+    cs_facade -> cl_db : Update states for: \n*--//settlementParticipantCurrencyStateChange//-- Built in TB.\n*--//settlementParticipantCurrency//-- Built in TB.
+    cs_facade -> cs_facade : Process for source state based on the below:
+    == Settlement State Progress based on Current State START ==
+    autonumber stop
+        cs_facade -> cs_facade : **PENDING_SETTLEMENT** -> settlementTransfersPrepare - //TB 1-Phase transfer.//
+        cs_facade -> cs_facade : **PS_TRANSFERS_RECORDED** -> settlementTransfersReserve - //TB 2-Phase transfer reserve.//
+        cs_facade -> cs_facade : **PS_TRANSFERS_RESERVED** -> settlementTransfersCommit - //TB 2-Phase transfer commit.//
+    autonumber resume
+        cs_facade -> tb_client : Create relevant transfers based on above state.
+        tb_client -> tb_nodes : //transfer's// Distributed to nodes\n via the state machine.
+        tb_nodes -> tb_nodes : **[ASYNC]**\nReplication via VSR.
+        tb_client --> cs_facade : //transfer// create error **(none)**\n//(Replicated to 2 nodes)//
+    == Settlement State Progress based on Current State STOP ==
+    cs_facade -> cl_db : Perform the following inserts/updates against the database:\n*//settlement//\n*--//settlementContentAggregation//-- Built in TB. \n*--//settlementWindowContentStateChange//-- Built in TB.\n*--//settlementWindowContent//-- Built in TB.\n*--//settlementWindowStateChange//-- Built in TB.\n*//settlementStateChange// (**Final state is settled**).
+    cs_facade --> cs_domain : Return result
+    cs_domain --> cs_handler : Return result
+    cs_handler --> cl_api : Return result
+    cl_api --> dfsp : Return result with //**settlementData**//
+end
+
+@enduml

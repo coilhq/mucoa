@@ -17,10 +17,7 @@
 7.2. [Transfers](#72-transfers)
 8. [Detailed Design - Central-Settlement](#8-detailed-design---tigerbeetle-in-central-settlement)  
 8.1. [Settlement Event Trigger](#81-settlement-trigger-event-settlementeventtrigger)  
-8.2. [Settlement - Record Transfers](#82-settlement-event---pending_settlement---ps_transfers_recorded)  
-8.3. [Settlement - Reserve](#83-settlement-event---ps_transfers_recorded---ps_transfers_reserved)  
-8.4. [Settlement - Commit](#84-settlement-event---ps_transfers_reserved---ps_transfers_committed)  
-8.5. [Settlement - Settled](#85-settlement-event---ps_transfers_committed---settled)  
+8.2. [Settlement Update by ID](#82-settlement-update-by-id-updatesettlementbyid)   
 9. [Canonical Model](#8-canonical-model)  
 9.1. [TigerBeetle](#81-tigerbeetle)  
 9.2. [Central-Ledger](#82-central-ledger)  
@@ -446,11 +443,14 @@ The detail design process primarily involves the conversion of the loft from the
 ![Settlement Trigger](solution_design/sequence-settlement-tb-enabled-trigger.svg)
 
 1. Hub operator initiates the settlement via the `createSettlementEvent` event.
-2. 
+2. TODO @jason, complete step details above... 
 
 Initiate the settlement for all applicable settlement models via function `settlementEventTrigger`. 
 Settlement models will remain in MySQL, but each of the settlement accounts will be created in TigerBeetle.
 > TODO `Hub account` and recon account per settlement on each currency type.
+
+### 8.2. Settlement Update By Id (`updateSettlementById`)
+![Settlement Update by ID](solution_design/sequence-settlement-tb-enabled-update-by-id.svg)
 
 The `updateSettlementById` endpoint is used repeatedly to manage the settlement process.
 The current settlement state drive what type of processing should occur next.
@@ -468,7 +468,8 @@ The below settlement progression events will take place for each settlement upda
 | `SETTLING`               | `SETTLED`                            |
 
 
-### 8.2. Settlement Event - `PENDING_SETTLEMENT -> PS_TRANSFERS_RECORDED`
+
+#### 8.2.1. Settlement Event - `PENDING_SETTLEMENT -> PS_TRANSFERS_RECORDED`
 Process the settlement for payee.
 The initial `autoPositionReset` settlement event is triggered via `updateSettlementById`,
 the settlement will be in a state of `PENDING_SETTLEMENT` as created by `settlementEventTrigger`.
@@ -476,7 +477,7 @@ Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersPre
 (due to existing `PENDING_SETTLEMENT` state).
 
 
-### 8.3. Settlement Event - `PS_TRANSFERS_RECORDED -> PS_TRANSFERS_RESERVED`
+#### 8.2.2. Settlement Event - `PS_TRANSFERS_RECORDED -> PS_TRANSFERS_RESERVED`
 Process the settlement reservation for payer.
 The second `autoPositionReset` settlement event is triggered via `updateSettlementById`,
 the settlement will be in a state of `PS_TRANSFERS_RECORDED` as created by the initial `updateSettlementById`.
@@ -486,7 +487,7 @@ Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersRes
 Retrieve list of `PS_TRANSFERS_RESERVED`, but not `RESERVED`:
 > TODO 
 
-### 8.4. Settlement Event - `PS_TRANSFERS_RESERVED -> PS_TRANSFERS_COMMITTED`
+#### 8.2.3. Settlement Event - `PS_TRANSFERS_RESERVED -> PS_TRANSFERS_COMMITTED`
 Process the settlement commit for payer.
 The third and final `autoPositionReset` settlement event is triggered via `updateSettlementById`,
 the settlement will be in a state of `PS_TRANSFERS_RESERVED` as created by the second `updateSettlementById` invocation.
@@ -497,7 +498,7 @@ Retrieve list of `PS_TRANSFERS_COMMITTED`, but not `COMMITTED`:
 > TODO
 
 
-### 8.5. Settlement Event - `PS_TRANSFERS_COMMITTED -> SETTLED`
+#### 8.2.4 Settlement Event - `PS_TRANSFERS_COMMITTED -> SETTLED`
 > TODO
 
 ## 9. Canonical Model
