@@ -12,13 +12,19 @@
 4.2. [Non-Functional Requirements](#42-non-functional-requirements)
 5. [Assumptions, Dependencies & Considerations](#5-dependencies--considerations)
 6. [Scope Exclusions](#6-scope-exclusions)
-7. [Detailed Design](#7-detailed-design---tigerbeetle-in-central-ledger)  
+7. [Detailed Design - Central-Ledger](#7-detailed-design---tigerbeetle-in-central-ledger)  
 7.1. [Participants](#71-participants)  
 7.2. [Transfers](#72-transfers)
-8. [Canonical Model](#8-canonical-model)  
-8.1. [TigerBeetle](#81-tigerbeetle)  
-8.2. [Central-Ledger](#82-central-ledger)  
-8.3. [TigerBeetle and Central-Ledger Mapping](#83-tigerbeetle-and-central-ledger-mapping)  
+8. [Detailed Design - Central-Settlement](#8-detailed-design---tigerbeetle-in-central-settlement)
+8.1. [Settlement Event Trigger](#81-settlement-trigger-event-settlementeventtrigger)  
+8.2. [Settlement - Record Transfers](#82-settlement-event---pending_settlement---ps_transfers_recorded)
+8.3. [Settlement - Reserve](#83-settlement-event---ps_transfers_recorded---ps_transfers_reserved)
+8.4. [Settlement - Commit](#84-settlement-event---ps_transfers_reserved---ps_transfers_committed)
+8.5. [Settlement - Settled](#85-settlement-event---ps_transfers_committed---settled)
+9[Canonical Model](#8-canonical-model)  
+9.1. [TigerBeetle](#81-tigerbeetle)  
+9.2. [Central-Ledger](#82-central-ledger)  
+9.3. [TigerBeetle and Central-Ledger Mapping](#83-tigerbeetle-and-central-ledger-mapping)  
 [References](#references)  
 
 ## Glossary
@@ -100,6 +106,10 @@ In the table below, the Mojaloop hub use-cases and transaction scenarios are map
 | Account management (participants & customers)                      | X        |           |         |
 | Fraud Checks and blacklists (enforce account statuses)             |          |           | X       |
 | Tiered risk management (enforce account statuses & balance limits) |          |           | X       |
+| Trigger settlement event against model                             | X        |           |         |
+| Record transfers for a Settlement                                  |          | X         | X       |
+| Reserve Settlement                                                 |          | X         | X       |
+| Commit Settlement                                                  |          | X         | X       |
  
 * TigerBeetle NodeJS integrated into Central-Ledger
   * Make use of existing configuration `default.json` configuration file for client
@@ -422,13 +432,74 @@ Transfer{
 11. Result returned.
 12. HTTP `JSON` response with transfer related information.
 
-## 8. Canonical Model
+## 8. Detailed Design - TigerBeetle in Central-Settlement
+The detail design process primarily involves the conversion of the loft from the preliminary design into something that can be built and ultimately flown for `central-settlement`.
+
+### 8.1. Settlement Trigger Event (`settlementEventTrigger`)
+![Settlement Trigger](solution_design/sequence-settlement-tb-enabled-trigger.svg)
+
+1. Hub operator initiates the settlement via the `createSettlementEvent` event.
+2. 
+
+Initiate the settlement for all applicable settlement models via function `settlementEventTrigger`. 
+Settlement models will remain in MySQL, but each of the settlement accounts will be created in TigerBeetle.
+> TODO `Hub account` and recon account per settlement on each currency type.
+
+The `updateSettlementById` endpoint is used repeatedly to manage the settlement process.
+The current settlement state drive what type of processing should occur next.
+Example: if the current state is `PENDING_SETTLEMENT`, the next processing event to take place would be `settlementTransfersPrepare` and
+if all are successful, the state for the settlement will be updated to `PS_TRANSFERS_RECORDED`.
+
+The below settlement progression events will take place for each settlement update `updateSettlementById`:
+
+| Existing State           | State After Successful Processing    |
+|--------------------------|--------------------------------------|
+| `PENDING_SETTLEMENT`     | `PS_TRANSFERS_RECORDED`              |
+| `PS_TRANSFERS_RECORDED`  | `PS_TRANSFERS_RESERVED`              |
+| `PS_TRANSFERS_RESERVED`  | `PS_TRANSFERS_COMMITTED`             |
+| `PS_TRANSFERS_COMMITTED` | `SETTLING`                           |
+| `SETTLING`               | `SETTLED`                            |
+
+
+### 8.2. Settlement Event - `PENDING_SETTLEMENT -> PS_TRANSFERS_RECORDED`
+Process the settlement for payee.
+The initial `autoPositionReset` settlement event is triggered via `updateSettlementById`,
+the settlement will be in a state of `PENDING_SETTLEMENT` as created by `settlementEventTrigger`.
+Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersPrepare` function will be consumed
+(due to existing `PENDING_SETTLEMENT` state).
+
+
+### 8.3. Settlement Event - `PS_TRANSFERS_RECORDED -> PS_TRANSFERS_RESERVED`
+Process the settlement reservation for payer.
+The second `autoPositionReset` settlement event is triggered via `updateSettlementById`,
+the settlement will be in a state of `PS_TRANSFERS_RECORDED` as created by the initial `updateSettlementById`.
+Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersReserve` function will be consumed
+(due to existing `PS_TRANSFERS_RECORDED` state).
+
+Retrieve list of `PS_TRANSFERS_RESERVED`, but not `RESERVED`:
+> TODO 
+
+### 8.4. Settlement Event - `PS_TRANSFERS_RESERVED -> PS_TRANSFERS_COMMITTED`
+Process the settlement commit for payer.
+The third and final `autoPositionReset` settlement event is triggered via `updateSettlementById`,
+the settlement will be in a state of `PS_TRANSFERS_RESERVED` as created by the second `updateSettlementById` invocation.
+Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersCommit` function will be consumed
+(due to existing `PS_TRANSFERS_RESERVED` state).
+
+Retrieve list of `PS_TRANSFERS_COMMITTED`, but not `COMMITTED`:
+> TODO
+
+
+### 8.5. Settlement Event - `PS_TRANSFERS_COMMITTED -> SETTLED`
+> TODO
+
+## 9. Canonical Model
 The following Central-Ledger and TigerBeetle Canonical Data Model presents data entities and relationships in the simplest possible form.
 
-### 8.1 TigerBeetle
+### 9.1 TigerBeetle
 TigerBeetle supports only `Account` and `Transfer` data types.
 
-#### 8.1.1 Account
+#### 9.1.1 Account
 Mutable data set for account related data.
 
 | Field           | Type             | Description                                                                                                                      |
@@ -445,7 +516,7 @@ Mutable data set for account related data.
 | credits_posted  | `u64`            | Balance for accepted credits.                                                                                                    |
 | timestamp       | `u64`            | The current state machine timestamp of the account for state tracking.                                                           |
 
-#### 8.1.2 AccountFlags - `[packed struct]`
+#### 9.1.2 AccountFlags - `[packed struct]`
 
 | Field                            | Type              | Description                                  |
 |----------------------------------|-------------------|----------------------------------------------|
@@ -454,7 +525,7 @@ Mutable data set for account related data.
 | credits_must_not_exceed_debits   | `bool`            | Total credit transfer may not exceed debits. |
 | padding                          | `u29`             | Data to be used for padding.                 |
 
-#### 8.1.3 Transfer
+#### 9.1.3 Transfer
 Transfers for TigerBeetle are immutable.
 
 | Field             | Type              | Description                                                                                                                       |
@@ -470,7 +541,7 @@ Transfers for TigerBeetle are immutable.
 | amount            | `u64`             | Transfer amount in units.                                                                                                         |
 | timestamp         | `u64`             | The current state machine timestamp of the transfer for state tracking.                                                           |
 
-#### 8.1.4 TransferFlags - `[packed struct]`
+#### 9.1.4 TransferFlags - `[packed struct]`
 Transfer flags are properties associated with a Transfer to enable additional Transfer functionality, such as:
 * 2-Phase transfers
 * Linked Transfer
@@ -484,10 +555,10 @@ Transfer flags are properties associated with a Transfer to enable additional Tr
 | condition   | `bool`            | Does the transfer support transfer conditions. |
 | padding     | `u29`             | Data to be used for padding.                   |
 
-### 8.2 Central-Ledger
+### 9.2 Central-Ledger
 Central-Ledger hosts a wide range of tables in which to store Participant, Account and Transfer related data.
 
-#### 8.2.1 Data Relationships
+#### 9.2.1 Data Relationships
 The following diagrams are used to illustration the relationships between data in Central-Ledger.
 
 ##### Central-Ledger Schema with Relationships
@@ -500,7 +571,7 @@ The following diagrams are used to illustration the relationships between data i
 ![SQL Relationships - Transfers](solution_design/central-ledger-data-transfer.svg)
 
 
-#### 8.2.2 Participant (`participant`)
+#### 9.2.2 Participant (`participant`)
 | Field         | Type           | Description                                        |
 |---------------|----------------|----------------------------------------------------|
 | participantId | `int unsigned` | Unique participant identifier.                     |
@@ -510,7 +581,7 @@ The following diagrams are used to illustration the relationships between data i
 | createdDate   | `datetime`     | Timestamp of when the participant was created.     |
 | createdBy     | `datetime`     | The DFSP responsible for creating the participant. |
 
-#### 8.2.3 Participant Currency (`participantCurrency`)
+#### 9.2.3 Participant Currency (`participantCurrency`)
 | Field                 | Type           | Description                                                |
 |-----------------------|----------------|------------------------------------------------------------|
 | participantCurrencyId | `int unsigned` | Unique participantCurrency identifier.                     |
@@ -521,7 +592,7 @@ The following diagrams are used to illustration the relationships between data i
 | createdDate           | `datetime`     | Timestamp of when the participantCurrency was created.     |
 | createdBy             | `datetime`     | The DFSP responsible for creating the participantCurrency. |
 
-#### 8.2.4 Participant Contact (`participantContact`)
+#### 9.2.4 Participant Contact (`participantContact`)
 | Field                 | Type           | Description                                                  |
 |-----------------------|----------------|--------------------------------------------------------------|
 | participantContactId  | `int unsigned` | Unique participantContact identifier.                        |
@@ -534,7 +605,7 @@ The following diagrams are used to illustration the relationships between data i
 | createdBy             | `datetime`     | The DFSP responsible for creating the participantContact.    |
 
 
-#### 8.2.5 Transfer (`transfer`)
+#### 9.2.5 Transfer (`transfer`)
 | Field          | Type            | Description                                                                    |
 |----------------|-----------------|--------------------------------------------------------------------------------|
 | transferId     | `varchar(36)`   | Unique transfer identifier.                                                    |
@@ -544,7 +615,7 @@ The following diagrams are used to illustration the relationships between data i
 | expirationDate | `datetime`      | The timestamp for when the 2-phase transfer expires in the event of no commit. |
 | createdDate    | `datetime`      | The timestamp for when the transfer was created.                               |
 
-#### 8.2.6 Transfer Participant (`transferParticipant`)
+#### 9.2.6 Transfer Participant (`transferParticipant`)
 | Field                         | Type              | Description                                                 |
 |-------------------------------|-------------------|-------------------------------------------------------------|
 | transferParticipantId         | `bigint unsigned` | Unique transferParticipant identifier.                      |
@@ -555,14 +626,14 @@ The following diagrams are used to illustration the relationships between data i
 | amount                        | `decimal(18,4)`   | The amount of the transfer.                                 |
 | createdDate                   | `datetime`        | The timestamp for when the transferParticipant was created. |
 
-#### 8.2.7 ILP Packet (`ilpPacket`)
+#### 9.2.7 ILP Packet (`ilpPacket`)
 | Field        | Type          | Description                                       |
 |--------------|---------------|---------------------------------------------------|
 | transferId   | `varchar(36)` | Foreign key for the transfer.                     |
 | value        | `text`        | Complete ilpPacket.                               |
 | createdDate  | `datetime`    | The timestamp for when the ilpPacket was created. |
 
-#### 8.2.8 Transfer State Change (`transferStateChange`)
+#### 9.2.8 Transfer State Change (`transferStateChange`)
 | Field                 | Type              | Description                                                 |
 |-----------------------|-------------------|-------------------------------------------------------------|
 | transferStateChangeId | `bigint`          | Unique transferStateChange identifier.                      |
@@ -571,7 +642,7 @@ The following diagrams are used to illustration the relationships between data i
 | reason                | `varchar(512)`    | Reason for state change.                                    |
 | createdDate           | `datetime`        | The timestamp for when the transferStateChange was created. |
 
-#### 8.2.9 Participant Position (`participantPosition`)
+#### 9.2.9 Participant Position (`participantPosition`)
 | Field                 | Type              | Description                                                      |
 |-----------------------|-------------------|------------------------------------------------------------------|
 | participantPositionId | `bigint unsigned` | Unique participantPosition identifier.                           |
@@ -580,7 +651,7 @@ The following diagrams are used to illustration the relationships between data i
 | reservedValue         | `decimal(18,4)`   | Current participant reserved position.                           |
 | changedDate           | `datetime`        | The timestamp for when the participantPosition was last updated. |
 
-#### 8.2.10 Participant Position Change (`participantPositionChange`)
+#### 9.2.10 Participant Position Change (`participantPositionChange`)
 | Field                       | Type                 | Description                                                    |
 |-----------------------------|----------------------|----------------------------------------------------------------|
 | participantPositionChangeId | `bigint unsigned`    | Unique participantPositionChangeId identifier.                 |
@@ -590,7 +661,7 @@ The following diagrams are used to illustration the relationships between data i
 | reservedValue               | `decimal(18,4)`      | The participant reserved position at time of state change.     |
 | createdDate                 | `datetime`           | The timestamp for when the participantPositionChange occurred. |
 
-#### 8.2.11 Participant Limit (`participantLimit`)
+#### 9.2.11 Participant Limit (`participantLimit`)
 | Field                                 | Type              | Description                                              |
 |---------------------------------------|-------------------|----------------------------------------------------------|
 | participantLimitId                    | `bigint unsigned` | Unique participantLimit identifier.                      |
@@ -603,17 +674,17 @@ The following diagrams are used to illustration the relationships between data i
 | createdDate                           | `datetime`        | Timestamp of when the participantLimit was created.      |
 | createdBy                             | `datetime`        | The DFSP responsible for creating the participantLimit.  |
 
-#### 8.2.12 Transfer Duplicate Check (`transferDuplicateCheck`)
+#### 9.2.12 Transfer Duplicate Check (`transferDuplicateCheck`)
 | Field        | Type           | Description                                                  |
 |--------------|----------------|--------------------------------------------------------------|
 | transferId   | `varchar(32)`  | Unique transfer identifier (UUID).                           |
 | hash         | `varchar(256)` | Unique hash for the transfer JSON request.                   |
 | createdDate  | `datetime`     | The timestamp for when the transferDuplicateCheck occurred.  |
 
-### 8.3 TigerBeetle and Central-Ledger Mapping
+### 9.3 TigerBeetle and Central-Ledger Mapping
 The following tables illustrate the data mappings between Central-Ledger and TigerBeetle.
 
-#### 8.3.1 Account
+#### 9.3.1 Account
 The mapping between TigerBeetle accounts and Central-Ledger participant and surrounding mappings (participant, participantCurrency, participantPosition etc.).
 
 | TigerBeetle Field   | Central-Ledger Mapping                    | Description                                                                                                             |
@@ -630,7 +701,7 @@ The mapping between TigerBeetle accounts and Central-Ledger participant and surr
 | `credits_posted`    | `participantPosition`                     | Credit balance for fulfilled transfers.                                                                                 |
 | `timestamp`         | Not applicable.                           | TigerBeetle specific functionality.                                                                                     |
 
-#### 8.3.2 Transfer
+#### 9.3.2 Transfer
 The mapping between TigerBeetle transfers and Central-Ledger transfer and surrounding mappings (transfer, transferParticipant, expiringTransfer etc.).
 
 TigerBeetle financial domain makes use of double-entry ![T](solution_design/t.svg)-accounts.

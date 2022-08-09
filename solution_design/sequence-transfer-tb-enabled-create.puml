@@ -36,7 +36,7 @@ end box
 box Storage #F9FFF9
 	participant "TigerBeetle Client" as tb_client #D5E8D4
 	collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
-	database "SQL / PostgreSQL" as cl_db #DAE8FC
+	database "MySQL" as cl_db #DAE8FC
 	database "Redis" as redis_cache #E1D5E7
 end box
 
@@ -54,17 +54,17 @@ group Create Transfer (2-Phase)
     autonumber resume
     cl_facade -> tb_client : Pending //Transfer// requested via the CL-TB interface.
     tb_client -> tb_nodes : //transfer// Distributed to nodes\n via the state machine.
-    tb_nodes -> tb_nodes : Replication via VSR.
-    tb_client --> cl_facade : //transfer// create error **(none)**
+    tb_nodes -> tb_nodes : **[ASYNC]**\nReplication via VSR.
+    tb_client --> cl_facade : //transfer// create error **(none)**\n//(Replicated to 2 nodes)//
     cl_facade --> cl_domain : Return result
     cl_domain --> cl_handler : Return result
     cl_handler --> cl_api : Return result
     cl_api --> dfsp : Return result with //**transferId**//
-    == Asynchronous Database Activities START ==
-    cl_facade -> cl_db : **[ASYNC 1.1]**\n*//transferDuplicateCheck// DB record created.
-    cl_facade -> cl_db : **[ASYNC 1.2]**\n*//transfer//, \n*//transferParticipant//, \n*//ilpPacket// \n*//transferStateChange// \n*//transferExtension//\nDatabase records created.
-    cl_db <--> cl_facade : **[ASYNC 1.3]**\n Database transaction committed.
-    == Asynchronous Database Activities STOP ==
+    == TB and MySQL Database Activities START ==
+    cl_facade -> cl_db : *--//transferDuplicateCheck//-- --DB record created--. Built in TB.
+    cl_facade -> cl_db : *--//transfer//,--Built in TB. \n*--//transferParticipant//-- Built in TB. \n*//ilpPacket// \n*--//transferStateChange//--Built in TB. \n*//transferExtension//\nDatabase records created.
+    cl_db <--> cl_facade : Database transaction committed.
+    == TB and MySQL Database Activities STOP ==
 
 ||70||
 
@@ -77,9 +77,9 @@ group Create Transfer (2-Phase)
     cl_facade -> cl_db : Obtain //**settlementWindowId**// for window where state is **OPEN**.
     cl_facade -> tb_client : //Transfer// posting requested via the CL-TB interface.
     tb_client -> tb_nodes : //transfer// Distributed to nodes\n via the state machine.
-    tb_nodes -> tb_nodes : Replication via VSR.
-    tb_client --> cl_facade : //transfer// posting create error **(none)**.
-    cl_facade -> cl_db : Create \n*//transferFulfilment// \n*//transferStateChange// \nDatabase records.
+    tb_nodes -> tb_nodes : **[ASYNC]**\nReplication via VSR.
+    tb_client --> cl_facade : //transfer// posting create error **(none)**\n//(Replicated to 2 nodes)//.
+    cl_facade -> cl_db : Create \n*--//transferFulfilment//-- Built in TB. \n*--//transferStateChange//-- Built in TB. \nDatabase records.
     cl_facade -> cl_db : Database transaction committed.
     cl_facade --> cl_domain : Return result.
     cl_domain --> cl_handler : Return result.

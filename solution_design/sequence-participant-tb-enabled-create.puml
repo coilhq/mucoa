@@ -36,7 +36,7 @@ end box
 box Storage #F9FFF9
 	Participant "TigerBeetle Client" as tb_client #D5E8D4
 	collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
-	database "SQL / PostgreSQL" as cl_db #DAE8FC
+	database "MySQL" as cl_db #DAE8FC
 	database "Redis" as redis_cache #E1D5E7
 end box
 
@@ -46,12 +46,12 @@ group Create Participant
     cl_api -> cl_handler : ///jmeter/participants/create// \nHandler invoked
     cl_handler -> cl_domain : Service layer invoked
     cl_domain -> cl_facade : Domain to facade
-    cl_facade -> cl_db : **[ASYNC]**\n*//participant//, \n*//participantCurrency//, \n*//participantPosition// \n DB records created
+    cl_facade -> cl_db : *//participant//, \n*//participantCurrency//, \n*//participantPosition// \n DB records created
     cl_facade -> tb_client : //account// create requested via the CL-TB interface
     tb_client -> tb_nodes : //account// distributed to nodes\n via the state machine
-    tb_nodes -> tb_nodes : replication across \ncluster via VSR
-    tb_client --> cl_facade : //account// create error **(none)**
-    cl_db <--> cl_facade : **[ASYNC]**\n Database transaction committed
+    tb_nodes -> tb_nodes : **[ASYNC]**\nreplication across \ncluster via VSR
+    tb_client --> cl_facade : //account// create error **(none)**\n//(Replicated to 2 nodes)//
+    cl_db <--> cl_facade : Database transaction committed
     cl_facade --> cl_domain : Return result
     cl_domain --> cl_handler : Return result
     cl_handler --> cl_api : Return result
