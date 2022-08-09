@@ -21,11 +21,11 @@
 8.3. [Settlement - Reserve](#83-settlement-event---ps_transfers_recorded---ps_transfers_reserved)  
 8.4. [Settlement - Commit](#84-settlement-event---ps_transfers_reserved---ps_transfers_committed)  
 8.5. [Settlement - Settled](#85-settlement-event---ps_transfers_committed---settled)  
-9[Canonical Model](#8-canonical-model)  
+9. [Canonical Model](#8-canonical-model)  
 9.1. [TigerBeetle](#81-tigerbeetle)  
 9.2. [Central-Ledger](#82-central-ledger)  
 9.3. [TigerBeetle and Central-Ledger Mapping](#83-tigerbeetle-and-central-ledger-mapping)  
-[References](#references)  
+10. [References](#10-references)  
 
 ## Glossary
 | Definition  | Description                                                                                                                                                                                                                                                               |
@@ -722,7 +722,7 @@ TigerBeetle financial domain makes use of double-entry ![T](solution_design/t.sv
 | `timestamp`         | Not applicable.                              | The current state machine timestamp of the transfer for state tracking.                      |
 
 
-## References
+## 10. References
 | Title                            | Link                                                                        |
 |----------------------------------|-----------------------------------------------------------------------------|
 | TigetBeetle                      | https://www.tigerbeetle.com/                                                |
