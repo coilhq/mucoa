@@ -1,0 +1,30 @@
+@startuml
+
+box Central-Settlement #FFFFF9
+    participant "__models__ / Facade" as cs_facade
+
+    note over cs_facade
+        Facade for storing/retrieving data from
+        MySQL and TigerBeetle
+    end note
+end box
+
+box Storage #F9FFF9
+	participant "TigerBeetle Client" as tb_client #D5E8D4
+	collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
+	database "MySQL" as cl_db #DAE8FC
+end box
+
+autonumber
+group Settlement Event - //""PS_TRANSFERS_RECORDED"" -> ""PS_TRANSFERS_RESERVED""// (putById)
+    cs_facade -> cs_facade : Current state is **""PS_TRANSFERS_RECORDED""**, invoke ""settlementTransfersReserve"".
+    cs_facade -> cl_db : Lookup base settlement data.
+    cs_facade -> tb_client : Retrieve list of ""PS_TRANSFERS_RESERVED"", but not ""RESERVED""\n*//**tbLookupRecorded**// - Based on ""settlementId"".
+    cs_facade --> cl_db : Perform the following inserts/updates against the database:\n*--//transferStateChange//-- Built in TB.\n*--//participantPosition//-- Built in TB.\n*--//participantPositionChange//-- Built in TB.
+    cs_facade -> tb_client : Lookup accounts associated with settlement via CS-TB interface:\n*//**tbLookupAccountsForSettlement**// - Based on ""settlementId"".
+    cs_facade -> tb_client : Create 2-phase transfer via CS-TB interface:\n*//**tbSettlementTransferReserve**//\n\n1x - __""SETTLEMENT""__:\n**//settlementId//** as ""user_data"", \n**//settlementId, settlementTransferId, qualifier(1)//** as ""id"".\n\n1x - __""HUB_MULTILATERAL_SETTLEMENT""__:\n**//orgTransferId//** as ""user_data""\n**//settlementId, settlementTransferId, qualifier(2)//** as ""id"".
+    cs_facade -> cs_facade : Determine state and counters for settlement accounts.
+    cs_facade -> cs_facade : Continue the settlement process.
+end
+
+@enduml

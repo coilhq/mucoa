@@ -333,7 +333,7 @@ Sequence related to a transfer with relation to Central-Ledger and TigerBeetle.
 }
 ```
 2. Handler invoked from `/jmeter/transfers/prepare` `POST` endpoint.
-3. Service layer invoked
+3. Service layer invoked.
 4. Domain / Service to Facade layer.
 5. The following validations are performed prior to the transfer:
    1. `validateFspiopSourceMatchesPayer` -> Asserts headers['fspiop-source'] matches payload.payerFsp
@@ -443,7 +443,69 @@ The detail design process primarily involves the conversion of the loft from the
 ![Settlement Trigger](solution_design/sequence-settlement-tb-enabled-trigger.svg)
 
 1. Hub operator initiates the settlement via the `createSettlementEvent` event.
-2. TODO @jason, complete step details above... 
+```json
+{
+  "settlementModel" : "DEFERREDNET",
+  "reason" : "This is settlement for today.",
+  "settlementWindows" : [{"id" : 1}, {"id" : 2}]
+}
+```
+Example of a settlement model configuration:
+```json
+{
+  "name": "DEFERREDNET",
+  "settlementGranularity": "NET",
+  "settlementInterchange": "MULTILATERAL",
+  "settlementDelay": "DEFERRED",
+  "requireLiquidityCheck": true,
+  "ledgerAccountType": "POSITION",
+  "autoPositionReset": true,
+  "currency": "USD",
+  "settlementAccountType": "SETTLEMENT"
+}
+```
+2. Handler invoked from `settlements/createSettlementEvent` `POST` endpoint.
+3. Service layer invoked.
+4. Domain / Service to Facade layer.
+5. Perform the following inserts against the database:
+   1. `settlement` a single record for the settlement.
+   2. `settlementSettlementWindow` for each of the settlement windows.
+   3. `settlementStateChange` for each of the settlement windows.
+   4. ~~`settlementParticipantCurrency`~~ disabled when running TB only mode.
+   5. ~~`settlementWindowContent`~~ disabled when running TB only mode.
+   6. ~~`settlementWindowContentStateChange`~~ disabled when running TB only mode.
+   7. ~~`settlementParticipantCurrencyStateChange`~~ disabled when running TB only mode.
+   8. ~~`settlementWindowStateChange`~~ disabled when running TB only mode.
+6. The `lookupForSettlementWindowId` is invoked to retrieve all fulfilled transfers for the `settlementWindowId`
+7. Create the settlement accounts for each of the participant accounts:
+   7.1. Account for participant: 
+```json
+{
+  "id" : "tbSettlementAccountIdFrom(participantCurrencyId, settlementId)",
+  "user_data" : "settlementId",
+  "ledger" : "obtainLedgerFromCurrency(currencyTxt)",
+  "code" : "enums.ledgerAccountTypes.SETTLEMENT"
+}
+```
+   7.2. Account for Hub reconciliation, account per currency for recon:
+```json
+{
+  "id" : "tbAccountIdFrom(participantId, currencyU16, accountType)",
+  "user_data" : "participantId / Config.HUB_ID.id",
+  "ledger" : "obtainLedgerFromCurrency(currencyTxt)",
+  "code" : "enums.ledgerAccountTypes.HUB_RECONCILIATION"
+}
+```
+   7.3. Account for Hub multilateral settlement:
+```json
+{
+  "id" : "tbAccountIdFrom(participantId, currencyU16, accountType)",
+  "user_data" : "participantId / Config.HUB_ID.id",
+  "ledger" : "obtainLedgerFromCurrency(currencyTxt)",
+  "code" : "enums.ledgerAccountTypes.HUB_MULTILATERAL_SETTLEMENT"
+}
+```
+8. TigerBeetle VSR distributes the account creation.
 
 Initiate the settlement for all applicable settlement models via function `settlementEventTrigger`. 
 Settlement models will remain in MySQL, but each of the settlement accounts will be created in TigerBeetle.
@@ -451,6 +513,38 @@ Settlement models will remain in MySQL, but each of the settlement accounts will
 
 ### 8.2. Settlement Update By Id (`updateSettlementById`)
 ![Settlement Update by ID](solution_design/sequence-settlement-tb-enabled-update-by-id.svg)
+
+1. Hub participants (payer/payee) `updateSettlementById` event multiple times to update settlement state.
+```json
+{
+  "participants" : [
+    {
+      "id" : "1 / participantId",
+      "accounts" : [
+        {
+          "id" : "1 / participantCurrencyId",
+          "state" : "accountPayload.state",
+          "reason": "accountPayload.reason",
+          "externalReference": "accountPayload.externalReference",
+          "createdDate": "transactionTimestamp",
+          "netSettlementAmount": "allAccounts[accountPayload.id].netSettlementAmount"
+        },
+        {
+          "id" : "2 / participantCurrencyId",
+          "state" : "accountPayload.state",
+          "reason": "accountPayload.reason",
+          "externalReference": "accountPayload.externalReference",
+          "createdDate": "transactionTimestamp",
+          "netSettlementAmount": "allAccounts[accountPayload.id].netSettlementAmount"
+        }
+      ]
+    }
+  ]
+}
+```
+2. Handler invoked from `settlements/updateSettlementById?id=?` `PUT` endpoint with settlement id.
+3. Service layer invoked.
+4. Domain / Service to Facade layer.
 
 The `updateSettlementById` endpoint is used repeatedly to manage the settlement process.
 The current settlement state drive what type of processing should occur next.
@@ -468,38 +562,35 @@ The below settlement progression events will take place for each settlement upda
 | `SETTLING`               | `SETTLED`                            |
 
 
-
 #### 8.2.1. Settlement Event - `PENDING_SETTLEMENT -> PS_TRANSFERS_RECORDED`
+![Record Settlement Transfers](solution_design/sequence-settlement-tb-enabled-update-by-id-01.svg)
+
 Process the settlement for payee.
 The initial `autoPositionReset` settlement event is triggered via `updateSettlementById`,
 the settlement will be in a state of `PENDING_SETTLEMENT` as created by `settlementEventTrigger`.
 Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersPrepare` function will be consumed
 (due to existing `PENDING_SETTLEMENT` state).
 
-
 #### 8.2.2. Settlement Event - `PS_TRANSFERS_RECORDED -> PS_TRANSFERS_RESERVED`
+![Reserve Settlement Transfers](solution_design/sequence-settlement-tb-enabled-update-by-id-02.svg)
+
 Process the settlement reservation for payer.
 The second `autoPositionReset` settlement event is triggered via `updateSettlementById`,
 the settlement will be in a state of `PS_TRANSFERS_RECORDED` as created by the initial `updateSettlementById`.
 Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersReserve` function will be consumed
 (due to existing `PS_TRANSFERS_RECORDED` state).
 
-Retrieve list of `PS_TRANSFERS_RESERVED`, but not `RESERVED`:
-> TODO 
-
 #### 8.2.3. Settlement Event - `PS_TRANSFERS_RESERVED -> PS_TRANSFERS_COMMITTED`
+![Commit Settlement Transfers](solution_design/sequence-settlement-tb-enabled-update-by-id-03.svg)
+
 Process the settlement commit for payer.
 The third and final `autoPositionReset` settlement event is triggered via `updateSettlementById`,
 the settlement will be in a state of `PS_TRANSFERS_RESERVED` as created by the second `updateSettlementById` invocation.
 Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersCommit` function will be consumed
 (due to existing `PS_TRANSFERS_RESERVED` state).
 
-Retrieve list of `PS_TRANSFERS_COMMITTED`, but not `COMMITTED`:
-> TODO
-
-
 #### 8.2.4 Settlement Event - `PS_TRANSFERS_COMMITTED -> SETTLED`
-> TODO
+Once all accounts has been settled, the settlement itself will be updated to a `SETTLED` status.
 
 ## 9. Canonical Model
 The following Central-Ledger and TigerBeetle Canonical Data Model presents data entities and relationships in the simplest possible form.

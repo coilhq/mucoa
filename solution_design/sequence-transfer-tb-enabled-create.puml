@@ -75,7 +75,7 @@ group Create Transfer (2-Phase)
     cl_domain -> cl_facade : Domain to facade \n//savePayeeTransferResponse//
     cl_facade -> cl_db : New Database transaction for fulfillment.
     cl_facade -> cl_db : Obtain //**settlementWindowId**// for window where state is **OPEN**.
-    cl_facade -> tb_client : //Transfer// posting requested via the CL-TB interface.
+    cl_facade -> tb_client : //Transfer// posting requested via the CL-TB interface.\n1x - ""POSITION"" - //transfer// pending posted with **//settlementWindowId//** as ""user_data"".
     tb_client -> tb_nodes : //transfer// Distributed to nodes\n via the state machine.
     tb_nodes -> tb_nodes : **[ASYNC]**\nReplication via VSR.
     tb_client --> cl_facade : //transfer// posting create error **(none)**\n//(Replicated to 2 nodes)//.

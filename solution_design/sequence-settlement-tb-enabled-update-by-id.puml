@@ -53,9 +53,9 @@ group Trigger Settlement Event - //updateSettlementById//
     cs_facade -> cs_facade : Process for source state based on the below:
     == Settlement State Progress based on Current State START ==
     autonumber stop
-        cs_facade -> cs_facade : **PENDING_SETTLEMENT** -> settlementTransfersPrepare - //TB 1-Phase transfer.//
-        cs_facade -> cs_facade : **PS_TRANSFERS_RECORDED** -> settlementTransfersReserve - //TB 2-Phase transfer reserve.//
-        cs_facade -> cs_facade : **PS_TRANSFERS_RESERVED** -> settlementTransfersCommit - //TB 2-Phase transfer commit.//
+        cs_facade -> cs_facade : **PENDING_SETTLEMENT** -> settlementTransfersPrepare - //TB 1-Phase transfer.// \n__See **""PENDING_SETTLEMENT"" **flow.__
+        cs_facade -> cs_facade : **PS_TRANSFERS_RECORDED** -> settlementTransfersReserve - //TB 2-Phase transfer reserve.// \n__See **""PS_TRANSFERS_RECORDED"" **flow.__
+        cs_facade -> cs_facade : **PS_TRANSFERS_RESERVED** -> settlementTransfersCommit - //TB 2-Phase transfer commit.// \n__See **""PS_TRANSFERS_RESERVED"" **flow.__
     autonumber resume
         cs_facade -> tb_client : Create relevant transfers based on above state.
         tb_client -> tb_nodes : //transfer's// Distributed to nodes\n via the state machine.
