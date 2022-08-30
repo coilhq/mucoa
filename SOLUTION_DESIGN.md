@@ -969,14 +969,15 @@ TigerBeetle financial domain makes use of double-entry ![T](solution_design/t.sv
 
 
 ## 10. References
-| Title                            | Link                                                                        |
-|----------------------------------|-----------------------------------------------------------------------------|
-| TigetBeetle                      | https://www.tigerbeetle.com/                                                |
-| TigetBeetle on GitHub            | https://github.com/coilhq/tigerbeetle                                       |
-| Central-Ledger on GitHub         | https://github.com/mojaloop/central-ledger                                  |
-| Mojaloop Technical Overview      | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/                |
-| Central-Ledger Process Design    | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/central-ledger/ |
-| Central-Ledger API Specification | https://docs.mojaloop.io/legacy/api/#central-ledger-api                     |
+| Title                               | Link                                                                        |
+|-------------------------------------|-----------------------------------------------------------------------------|
+| TigetBeetle                         | https://www.tigerbeetle.com/                                                |
+| TigetBeetle on GitHub               | https://github.com/coilhq/tigerbeetle                                       |
+| TigerBeetle Accounts and Transfers  | https://github.com/coilhq/tigerbeetle/wiki/Accounts-and-Transfers           |
+| Central-Ledger on GitHub            | https://github.com/mojaloop/central-ledger                                  |
+| Mojaloop Technical Overview         | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/                |
+| Central-Ledger Process Design       | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/central-ledger/ |
+| Central-Ledger API Specification    | https://docs.mojaloop.io/legacy/api/#central-ledger-api                     |
 
 
 ## Notes
