@@ -348,17 +348,17 @@ Sequence related to a transfer with relation to Central-Ledger and TigerBeetle.
    1. If participant data is not available in Redis, a database lookup is performed, followed by the participant data being cached in Redis
 7. TigerBeetle pending `pending = true` //Transfer// created via TigerBeetle NodeJS client.
 ```zig
-Transfer{
-    .id = 1002,
-    .debit_account_id = 1,
-    .credit_account_id = 2,
-    .user_data = 0,
+Transfer {
+    .id = 1002, // [transferId] converted to u128 
+    .debit_account_id = 1, // Derived from payer [participantCurrencyId] 
+    .credit_account_id = 2, // Derived from payee [participantCurrencyId]
+    .user_data = 0, // [transferId]
     .reserved = [_]u8{0} ** 32,
     .timeout = std.time.ns_per_hour,
-    .code = 0,
+    .code = 1, // LIQUIDITY ACCOUNT
     .flags = .{
         .pending = true, // Set this transfer to be two-phase.
-        .linked = true, // Link this transfer with the next transfer 1003.
+        .linked = false, // Do not link this transfer with the next transfer.
     },
     .amount = 1,
 }
@@ -397,10 +397,11 @@ Transfer{
 24. The TigerBeetle client is invoked with a //Transfer// `post_pending_transfer = true` property
 ```zig
 Transfer{
-    .id = 1001,
-    .debit_account_id = 1,
-    .credit_account_id = 2,
-    .user_data = 0,
+    .id = 1003, // uuid()
+    .pending_id = 1002, // Original txn id
+    .debit_account_id = 0, // Obtained from lookup
+    .credit_account_id = 0, // Obtained from lookup
+    .user_data = 0, // Set this to the [settlementWindowId]
     .reserved = [_]u8{0} ** 32,
     .timeout = 0,
     .code = 0,
@@ -414,7 +415,7 @@ Transfer{
 28. Insert //Transfer// fulfilment data into the following database tables:
     1. `transferFulfilment`
     2. `transferStateChange`
-29. Database transaction is commmitted.
+29. Database transaction is committed.
 30. Return result to service layer.
 31. Return result to the handler layer.
 32. Prepare the result in JSON format.
@@ -440,6 +441,9 @@ Transfer{
 The detail design process primarily involves the conversion of the loft from the preliminary design into something that can be built and ultimately flown for `central-settlement`.
 
 ### 8.1. Settlement Trigger Event (`settlementEventTrigger`)
+Initiate the settlement for all applicable settlement models via function `settlementEventTrigger`.
+Settlement models will remain in MySQL, but each of the settlement accounts will be created in TigerBeetle.
+
 ![Settlement Trigger](solution_design/sequence-settlement-tb-enabled-trigger.svg)
 
 1. Hub operator initiates the settlement via the `createSettlementEvent` event.
@@ -476,9 +480,12 @@ Example of a settlement model configuration:
    6. ~~`settlementWindowContentStateChange`~~ disabled when running TB only mode.
    7. ~~`settlementParticipantCurrencyStateChange`~~ disabled when running TB only mode.
    8. ~~`settlementWindowStateChange`~~ disabled when running TB only mode.
-6. The `lookupForSettlementWindowId` is invoked to retrieve all fulfilled transfers for the `settlementWindowId`
+6. The `lookupForSettlementWindowId` is invoked to retrieve all fulfilled transfers for the `settlementWindowId`.
 7. Create the settlement accounts for each of the participant accounts:
-   7.1. Account for participant: 
+
+7.1. Account for participant:
+
+`Participant settlement account` per settlement for each payer/payee.
 ```json
 {
   "id" : "tbSettlementAccountIdFrom(participantCurrencyId, settlementId)",
@@ -487,7 +494,10 @@ Example of a settlement model configuration:
   "code" : "enums.ledgerAccountTypes.SETTLEMENT"
 }
 ```
-   7.2. Account for Hub reconciliation, account per currency for recon:
+7.2. Account for Hub reconciliation, account per currency for recon:
+
+`Hub reconciliation account` per currency type.
+
 ```json
 {
   "id" : "tbAccountIdFrom(participantId, currencyU16, accountType)",
@@ -496,7 +506,9 @@ Example of a settlement model configuration:
   "code" : "enums.ledgerAccountTypes.HUB_RECONCILIATION"
 }
 ```
-   7.3. Account for Hub multilateral settlement:
+7.3. Account for Hub multilateral settlement:
+
+`Multilateral settlement account` per currency for each payer/payee.
 ```json
 {
   "id" : "tbAccountIdFrom(participantId, currencyU16, accountType)",
@@ -505,11 +517,13 @@ Example of a settlement model configuration:
   "code" : "enums.ledgerAccountTypes.HUB_MULTILATERAL_SETTLEMENT"
 }
 ```
-8. TigerBeetle VSR distributes the account creation.
-
-Initiate the settlement for all applicable settlement models via function `settlementEventTrigger`. 
-Settlement models will remain in MySQL, but each of the settlement accounts will be created in TigerBeetle.
-> TODO `Hub account` and recon account per settlement on each currency type.
+8. TigerBeetle VSR distributes the account creation _(at least 2x replicates on the cluster)_.
+9. TigerBeetle will asynchronously distribute the account data to all replicas in the cluster.
+10. Account create result errors are returned from the `tigerbeetle-node` client (**none** - no errors)
+11. Return result to service layer.
+12. Return result to the handler layer.
+13. Prepare the result in JSON format.
+14. Result is returned to the DFSP via the REST API.
 
 ### 8.2. Settlement Update By Id (`updateSettlementById`)
 ![Settlement Update by ID](solution_design/sequence-settlement-tb-enabled-update-by-id.svg)
@@ -544,7 +558,27 @@ Settlement models will remain in MySQL, but each of the settlement accounts will
 ```
 2. Handler invoked from `settlements/updateSettlementById?id=?` `PUT` endpoint with settlement id.
 3. Service layer invoked.
-4. Domain / Service to Facade layer.
+4. Domain / Service to Facade layer _(function `putById`)_.
+5. Existing settlement data is retrieved based on the `settlementId`. Data include; `settlement`, `settlementModel`~~, `settlementStateChange`~~
+6. Perform a lookup on all transfers (posted/committed) for the settlement window based on `settlementWindowId` in TigerBeetle.
+Previously `settlementParticipantCurrency`, `settlementParticipantCurrencyStateChange`, `participantCurrency` based on `settlementId`.
+7. Extract account and transfer data from transfers using `settlementWindowId` as lookup.
+8. State of transfers from `settlementWindowId` lookup is compared to transfers for `settlementId` to determine current status.
+9. State updates are not required anymore, this is due to step 8.
+10. Transfers are inserted based on existing state and JSON payload data from step 9. The following flows apply based on current state: 
+- [8.2.1. PENDING_SETTLEMENT -> PS_TRANSFERS_RECORDED](#821-settlement-event---pending_settlement---ps_transfers_recorded)  
+- [8.2.2. PS_TRANSFERS_RECORDED -> PS_TRANSFERS_RESERVED](#822-settlement-event---ps_transfers_recorded---ps_transfers_reserved)  
+- [8.2.3. PS_TRANSFERS_RESERVED -> PS_TRANSFERS_COMMITTED](#823-settlement-event---ps_transfers_reserved---ps_transfers_committed)  
+- [8.2.4. PS_TRANSFERS_COMMITTED -> SETTLED](#824-settlement-event---ps_transfers_committed---settled)
+11. Transfers are created as linked transfers in a batch to ensure all the transfers fail or succeed together. See TigerBeetle `linked = true` flag.
+12. All transfers are distributed to all replicas in the TigerBeetle cluster.
+13. Asynchronously the data is replicated to all replicas.
+14. Result is returned to the `tigerbeetle-node` client _(**none** - errors)_.
+15. The state of the `settlement` is updated in the MySQL database.
+16. Return result to service layer.
+17. Return result to the handler layer.
+18. Prepare the result in JSON format.
+19. Result is returned to the DFSP via the REST API.
 
 The `updateSettlementById` endpoint is used repeatedly to manage the settlement process.
 The current settlement state drive what type of processing should occur next.
@@ -564,24 +598,137 @@ The below settlement progression events will take place for each settlement upda
 
 #### 8.2.1. Settlement Event - `PENDING_SETTLEMENT -> PS_TRANSFERS_RECORDED`
 ![Record Settlement Transfers](solution_design/sequence-settlement-tb-enabled-update-by-id-01.svg)
+1. Current state has been established as `PENDING_SETTLEMENT` from [Settlement Update By Id - Step 10](#82-settlement-update-by-id-updatesettlementbyid).
+2. Base settlement data via MySQL (`settlement` / `settlementWindow`) data lookup on `settlementId`.
+3. TigerBeetle transfer data is obtained via `tbLookupTransfersForWindow`.
+4. The following inserts are not performed due to TigerBeetle `transferDuplicateCheck`, `transfer`, `transferParticipant` and `transferStateChage`.
+5. TigerBeetle account data is obtained via `tbLookupAccountsForSettlement` on `settlementId`.
+6. Create 1-phase transfers to be settled based on each of the transfers for the `settlementWindow`
+```zig
+//{ POSITION: 1, SETTLEMENT: 2, HUB_RECONCILIATION: 3, HUB_MULTILATERAL_SETTLEMENT: 4, HUB_FEE: 5 }
+//HUB_MULTILATERAL_SETTLEMENT:
+Transfer {
+    .id = 1005, // [uuid()] converted to u128 
+    .debit_account_id = 1, // drParticipantCurrencyIdHubRecon [participantCurrencyId] 
+    .credit_account_id = 2, // crDrParticipantCurrencyIdHubMultilateral [participantCurrencyId]
+    .user_data = 0, // [settlementTransferId] - This along with [code] tells us there has been a settlement triggered.
+    .reserved = [_]u8{0} ** 32,
+    .timeout = std.time.ns_per_hour,
+    .code = 4, // enums.ledgerAccountTypes.HUB_MULTILATERAL_SETTLEMENT
+    .flags = .{
+        .pending = false, // Not 2 phase.
+        .linked = true, // Link this transfer with the next transfer.
+    },
+    .amount = 1,
+},
+//SETTLEMENT:
+Transfer {
+    .id = 1006, // [settlementTransferId] converted to u128
+    .debit_account_id = 1, // [participantCurrencyId] for payer 
+    .credit_account_id = 2, // participantId / Config.HUB_ID.id (for currency)
+    .user_data = 0, // [transferId] - This along with [code] tells us there is bilateral settlement
+    .reserved = [_]u8{0} ** 32,
+    .timeout = std.time.ns_per_hour,
+    .code = 2, // enums.ledgerAccountTypes.SETTLEMENT
+    .flags = .{
+        .pending = false, // Not 2 phase.
+        .linked = false, // Stop the linking.
+    },
+    .amount = 1,
+}
+```
+7. Calculate updated status for `settlement` and state.
+8. [Settlement Update By Id Continue - Step 11](#82-settlement-update-by-id-updatesettlementbyid).
 
-Process the settlement for payee.
-The initial `autoPositionReset` settlement event is triggered via `updateSettlementById`,
+Process the settlement for payee. The initial `autoPositionReset` settlement event is triggered via `updateSettlementById`, 
 the settlement will be in a state of `PENDING_SETTLEMENT` as created by `settlementEventTrigger`.
-Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersPrepare` function will be consumed
-(due to existing `PENDING_SETTLEMENT` state).
+Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersPrepare` function will be consumed _(due to existing `PENDING_SETTLEMENT` state)_.
 
 #### 8.2.2. Settlement Event - `PS_TRANSFERS_RECORDED -> PS_TRANSFERS_RESERVED`
 ![Reserve Settlement Transfers](solution_design/sequence-settlement-tb-enabled-update-by-id-02.svg)
+1. Current state has been established as `PS_TRANSFERS_RECORDED` from [Settlement Update By Id - Step 10](#82-settlement-update-by-id-updatesettlementbyid).
+2. Base settlement data via MySQL (`settlement` / `settlementWindow`) data lookup on `settlementId`.
+3. TigerBeetle recorded transfer data is obtained via `tbLookupRecorded`.
+4. The following inserts are not performed due to TigerBeetle `transferStateChange`, `participantPosition` and `participantPositionChange`.
+5. TigerBeetle account data is obtained via `tbLookupAccountsForSettlement` on `settlementId`.
+6. Create 2-phase transfers to be settled based on each of the transfers for the `settlementWindow`
+```zig
+//SETTLEMENT:
+Transfer {
+    .id = 1007, // [uuid()] converted to u128
+    .debit_account_id = 1,  // participantId / Config.HUB_ID.id (for currency)
+    .credit_account_id = 2, // [participantCurrencyId] for payer
+    .user_data = 0, // [transferId] - This along with [code and pending balance] tells us there is payee commit outstaning
+    .reserved = [_]u8{0} ** 32,
+    .timeout = std.time.ns_per_hour,
+    .code = 2, // enums.ledgerAccountTypes.SETTLEMENT
+    .flags = .{
+        .pending = true, // 2 phase.
+        .linked = true, // Link this transfer with the next transfer. 
+    },
+    .amount = 1,
+},
+//HUB_MULTILATERAL_SETTLEMENT:
+Transfer {
+    .id = 1008, // [uuid()] converted to u128 
+    .debit_account_id = 1,  // crDrParticipantCurrencyIdHubMultilateral [participantCurrencyId]
+    .credit_account_id = 2, // drParticipantCurrencyIdHubRecon [participantCurrencyId]
+    .user_data = 0, // [transferId] - This along with [code and pending balance] tells us there are outstanding settlements.
+    .reserved = [_]u8{0} ** 32,
+    .timeout = std.time.ns_per_hour,
+    .code = 3, // enums.ledgerAccountTypes.HUB_RECONCILIATION
+    .flags = .{
+        .pending = true, // 2 phase.
+        .linked = false, // Stop the linking.
+    },
+    .amount = 1,
+}
+```
+7. Calculate updated status for `settlement` and state.
+8. [Settlement Update By Id Continue - Step 11](#82-settlement-update-by-id-updatesettlementbyid).
 
-Process the settlement reservation for payer.
-The second `autoPositionReset` settlement event is triggered via `updateSettlementById`,
+Process the settlement reservation for payer. The second `autoPositionReset` settlement event is triggered via `updateSettlementById`,
 the settlement will be in a state of `PS_TRANSFERS_RECORDED` as created by the initial `updateSettlementById`.
-Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersReserve` function will be consumed
-(due to existing `PS_TRANSFERS_RECORDED` state).
+Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersReserve` function will be consumed _(due to existing `PS_TRANSFERS_RECORDED` state)_.
 
 #### 8.2.3. Settlement Event - `PS_TRANSFERS_RESERVED -> PS_TRANSFERS_COMMITTED`
 ![Commit Settlement Transfers](solution_design/sequence-settlement-tb-enabled-update-by-id-03.svg)
+1. Current state has been established as `PS_TRANSFERS_RESERVED` from [Settlement Update By Id - Step 10](#82-settlement-update-by-id-updatesettlementbyid).
+2. Base settlement data via MySQL (`settlement` / `settlementWindow`) data lookup on `settlementId`.
+3. TigerBeetle reserved transfer data is obtained via `tbLookupReserved`.
+4. The following inserts are not performed due to TigerBeetle `transferFulfilmentDuplicateCheck`, `transferFulfillment`, `transferStateChange` and `participantPosition`.
+5. TigerBeetle account data is obtained via `tbLookupAccountsForSettlement` on `settlementId`.
+6. Commit the reserved 2-phase transfers based on each of the pending transfers for the `settlementWindow`
+```zig
+//SETTLEMENT:
+Transfer {
+    .id = 1009, // [sha256() of settlementTransferId] converted to u128
+    .pending_id = 1007,// id from reservation.
+    .user_data = 0, // fetch from pending.
+    .code = 2, // enums.ledgerAccountTypes.SETTLEMENT
+    .flags = .{
+        .post_pending = true, // 2 phase commit.
+        .linked = true, // Link this transfer with the next transfer. 
+    },
+    .amount = 1,
+},
+//HUB_MULTILATERAL_SETTLEMENT:
+Transfer {
+    .id = 1010, // [uuid()] converted to u128
+    .pending_id = 1008,// id from reservation. 
+    .user_data = 0, // fetch from pending.
+    .reserved = [_]u8{0} ** 32,
+    .timeout = std.time.ns_per_hour,
+    .code = 3, // enums.ledgerAccountTypes.HUB_RECONCILIATION
+    .flags = .{
+        .post_pending = true, // 2 phase commit.
+        .linked = false, // Stop the linking.
+    },
+    .amount = 1,
+}
+```
+7. Calculate updated status for `settlement` and state.
+8. [Settlement Update By Id Continue - Step 11](#82-settlement-update-by-id-updatesettlementbyid).
 
 Process the settlement commit for payer.
 The third and final `autoPositionReset` settlement event is triggered via `updateSettlementById`,
@@ -822,14 +969,15 @@ TigerBeetle financial domain makes use of double-entry ![T](solution_design/t.sv
 
 
 ## 10. References
-| Title                                 | Link                                                                        |
-|---------------------------------------|-----------------------------------------------------------------------------|
-| TigerBeetle                           | https://www.tigerbeetle.com/                                                |
-| TigerBeetle code repository on GitHub | https://github.com/coilhq/tigerbeetle                                       |
-| Central-Ledger on GitHub              | https://github.com/mojaloop/central-ledger                                  |
-| Mojaloop Technical Overview           | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/                |
-| Central-Ledger Process Design         | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/central-ledger/ |
-| Central-Ledger API Specification      | https://docs.mojaloop.io/legacy/api/#central-ledger-api                     |
+| Title                               | Link                                                                        |
+|-------------------------------------|-----------------------------------------------------------------------------|
+| TigetBeetle                         | https://www.tigerbeetle.com/                                                |
+| TigetBeetle on GitHub               | https://github.com/coilhq/tigerbeetle                                       |
+| TigerBeetle Accounts and Transfers  | https://github.com/coilhq/tigerbeetle/wiki/Accounts-and-Transfers           |
+| Central-Ledger on GitHub            | https://github.com/mojaloop/central-ledger                                  |
+| Mojaloop Technical Overview         | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/                |
+| Central-Ledger Process Design       | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/central-ledger/ |
+| Central-Ledger API Specification    | https://docs.mojaloop.io/legacy/api/#central-ledger-api                     |
 
 
 ## Notes

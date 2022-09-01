@@ -19,10 +19,10 @@ autonumber
 group Settlement Event - //""PENDING_SETTLEMENT"" -> ""PS_TRANSFERS_RECORDED""// (putById)
     cs_facade -> cs_facade : Current state is **""PENDING_SETTLEMENT""**, invoke ""settlementTransfersPrepare"".
     cs_facade -> cl_db : Lookup base settlement data.
-    cs_facade -> tb_client : Retrieve list of ""PS_TRANSFERS_RECORDED"", but not ""RECEIVED_PREPARE"".PENDING_SETTLEMENT \n*//**tbLookupTransferForWindow**// - Based on ""settlementWindowId"".
+    cs_facade -> tb_client : Retrieve list of ""PS_TRANSFERS_RECORDED"", but not ""RECEIVED_PREPARE"".PENDING_SETTLEMENT \n*//**tbLookupTransfersForWindow**// - Based on ""settlementWindowId"".
     cs_facade --> cl_db : Perform the following inserts against the database:\n*--//transferDuplicateCheck//-- Built in TB.\n*--//transfer//-- Built in TB.\n*--//transferParticipant//-- Built in TB.\n*--//transferStateChange//-- Built in TB.
     cs_facade -> tb_client : Lookup accounts associated with settlement via CS-TB interface:\n*//**tbLookupAccountsForSettlement**// - Based on ""settlementId"".
-    cs_facade -> tb_client : Create 1-phase transfer via CS-TB interface:\n*//**tbSettlementPreparationTransfer**//\n\n1x - __""HUB_MULTILATERAL_SETTLEMENT""__:\n**//settlementId//** as ""user_data"", \n**//transferId//** as ""id"".\n\n1x - __""SETTLEMENT""__:\n**//orgTransferId//** as ""user_data""\n**//uuid()//** as ""id"".
+    cs_facade -> tb_client : Create 1-phase transfer via CS-TB interface:\n*//**tbSettlementPreparationTransfer**//\n\n1x - __""HUB_MULTILATERAL_SETTLEMENT""__:\n**//uuid()//** as ""id"",\n**//settlementTransferId//** as ""user_data"".\n\n1x - __""SETTLEMENT""__:\n**//settlementTransferId//** as ""id""\n**//orgTransferId//** as ""user_data"".
     cs_facade -> cs_facade : Determine state and counters for settlement accounts.
     cs_facade -> cs_facade : Continue the settlement process.
 end

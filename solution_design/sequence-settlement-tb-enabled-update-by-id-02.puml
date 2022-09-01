@@ -22,7 +22,7 @@ group Settlement Event - //""PS_TRANSFERS_RECORDED"" -> ""PS_TRANSFERS_RESERVED"
     cs_facade -> tb_client : Retrieve list of ""PS_TRANSFERS_RESERVED"", but not ""RESERVED""\n*//**tbLookupRecorded**// - Based on ""settlementId"".
     cs_facade --> cl_db : Perform the following inserts/updates against the database:\n*--//transferStateChange//-- Built in TB.\n*--//participantPosition//-- Built in TB.\n*--//participantPositionChange//-- Built in TB.
     cs_facade -> tb_client : Lookup accounts associated with settlement via CS-TB interface:\n*//**tbLookupAccountsForSettlement**// - Based on ""settlementId"".
-    cs_facade -> tb_client : Create 2-phase transfer via CS-TB interface:\n*//**tbSettlementTransferReserve**//\n\n1x - __""SETTLEMENT""__:\n**//settlementId//** as ""user_data"", \n**//settlementId, settlementTransferId, qualifier(1)//** as ""id"".\n\n1x - __""HUB_MULTILATERAL_SETTLEMENT""__:\n**//orgTransferId//** as ""user_data""\n**//settlementId, settlementTransferId, qualifier(2)//** as ""id"".
+    cs_facade -> tb_client : Create 2-phase transfer via CS-TB interface:\n*//**tbSettlementTransferReserve**//\n\n1x - __""SETTLEMENT""__:\n**//uuid()//** as ""id"",\n**//orgTransferId//** as ""user_data"".\n\n1x - __""HUB_MULTILATERAL_SETTLEMENT""__:\n**//uuid()//** as ""id""\n**//orgTransferId//** as ""user_data"".
     cs_facade -> cs_facade : Determine state and counters for settlement accounts.
     cs_facade -> cs_facade : Continue the settlement process.
 end
