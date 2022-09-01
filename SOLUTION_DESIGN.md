@@ -18,10 +18,10 @@
 8. [Detailed Design - Central-Settlement](#8-detailed-design---tigerbeetle-in-central-settlement)  
 8.1. [Settlement Event Trigger](#81-settlement-trigger-event-settlementeventtrigger)  
 8.2. [Settlement Update by ID](#82-settlement-update-by-id-updatesettlementbyid)   
-9. [Canonical Model](#8-canonical-model)  
-9.1. [TigerBeetle](#81-tigerbeetle)  
-9.2. [Central-Ledger](#82-central-ledger)  
-9.3. [TigerBeetle and Central-Ledger Mapping](#83-tigerbeetle-and-central-ledger-mapping)  
+9. [Canonical Model](#9-canonical-model)  
+9.1. [TigerBeetle](#91-tigerbeetle)  
+9.2. [Central-Ledger](#92-central-ledger)  
+9.3. [TigerBeetle and Central-Ledger Mapping](#93-tigerbeetle-and-central-ledger-mapping)  
 10. [References](#10-references)  
 
 ## Glossary
@@ -658,7 +658,7 @@ Transfer flags are properties associated with a Transfer to enable additional Tr
 Central-Ledger hosts a wide range of tables in which to store Participant, Account and Transfer related data.
 
 #### 9.2.1 Data Relationships
-The following diagrams are used to illustration the relationships between data in Central-Ledger.
+The diagrams below show the relationships between data in Central-Ledger.
 
 ##### Central-Ledger Schema with Relationships
 ![Data-Central-Ledger](solution_design/central-ledger-schema.png)
@@ -822,14 +822,14 @@ TigerBeetle financial domain makes use of double-entry ![T](solution_design/t.sv
 
 
 ## 10. References
-| Title                            | Link                                                                        |
-|----------------------------------|-----------------------------------------------------------------------------|
-| TigetBeetle                      | https://www.tigerbeetle.com/                                                |
-| TigetBeetle on GitHub            | https://github.com/coilhq/tigerbeetle                                       |
-| Central-Ledger on GitHub         | https://github.com/mojaloop/central-ledger                                  |
-| Mojaloop Technical Overview      | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/                |
-| Central-Ledger Process Design    | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/central-ledger/ |
-| Central-Ledger API Specification | https://docs.mojaloop.io/legacy/api/#central-ledger-api                     |
+| Title                                 | Link                                                                        |
+|---------------------------------------|-----------------------------------------------------------------------------|
+| TigerBeetle                           | https://www.tigerbeetle.com/                                                |
+| TigerBeetle code repository on GitHub | https://github.com/coilhq/tigerbeetle                                       |
+| Central-Ledger on GitHub              | https://github.com/mojaloop/central-ledger                                  |
+| Mojaloop Technical Overview           | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/                |
+| Central-Ledger Process Design         | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/central-ledger/ |
+| Central-Ledger API Specification      | https://docs.mojaloop.io/legacy/api/#central-ledger-api                     |
 
 
 ## Notes
