@@ -2,35 +2,29 @@
 
 participant "Mojaloop Adapter" as dfsp #B0D5FF
 note over dfsp
-    * Participant Bank A
-    * Participant Bank B
+    Participant
+    DFSP interactions
 end note
 
 box Central-Ledger #FFFFF9
-    participant "**API**" as cl_api
-    participant "__api__ / Handler" as cl_handler
-    participant "__domain__ / Service" as cl_domain
-    participant "__models__ / Facade" as cl_facade
+    participant "Kafka\nConsumer" as cl_consume_kafka
+        participant "__api__ / Handler" as cl_handler
+        participant "Application Layer\n(domain / service / facade)" as cl_domain
 
-    note over cl_api
-        NodeJS interface
-        invokes REST API
-    end note
-
-    note over cl_handler
-        JSON request decoded &
-        sent for processing via a handler
-    end note
-
-    note over cl_domain
-        Domain folder exposing
-        service functions
-    end note
-
-    note over cl_facade
-        Facade stores & retrieves
-        data to & from databases
-    end note
+        note over cl_consume_kafka
+            Consume JSON
+            requests from Kafka topic
+        end note
+    
+        note over cl_handler
+            JSON request decoded &
+            processed via handler
+        end note
+    
+        note over cl_domain
+            Expose service functions &
+            handle database interactions
+        end note
 end box
 
 box Storage #F9FFF9
@@ -42,20 +36,16 @@ end box
 
 autonumber
 group Create Participant
-    dfsp -> cl_api : //JSON// \n**(participant data)**
-    cl_api -> cl_handler : ///jmeter/participants/create// \nHandler invoked
-    cl_handler -> cl_domain : Service layer invoked
-    cl_domain -> cl_facade : Domain to facade
-    cl_facade -> cl_db : *//participant//, \n*//participantCurrency//, \n*//participantPosition// \n DB records created
-    cl_facade -> tb_client : //account// create requested via the CL-TB interface
-    tb_client -> tb_nodes : //account// distributed to nodes\n via the state machine
-    tb_nodes -> tb_nodes : **[ASYNC]**\nreplication across \ncluster via VSR
-    tb_client --> cl_facade : //account// create error **(none)**\n//(Replicated to 2 nodes)//
-    cl_db <--> cl_facade : Database transaction committed
-    cl_facade --> cl_domain : Return result
+    dfsp -> cl_consume_kafka : //JSON// \n**(participant data)**
+    cl_consume_kafka -> cl_handler : Invoke handler
+    cl_handler -> cl_domain : Invoke service
+    cl_domain <--> cl_db : Create Participant & return \nresult (this excludes the //account//)
+    cl_domain -> tb_client : Create Participant //account//
+    tb_client <--> tb_nodes : Create //account// \n& return result
+    tb_client --> cl_domain : Return //account// create result
     cl_domain --> cl_handler : Return result
-    cl_handler --> cl_api : Return result
-    cl_api --> dfsp : Return result
+    cl_handler --> cl_consume_kafka : Return result
+    cl_consume_kafka --> dfsp : Return result
 end
 
 @enduml

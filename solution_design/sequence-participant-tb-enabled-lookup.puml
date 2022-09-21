@@ -1,62 +1,55 @@
 @startuml
 
-entity "Mojaloop Adapter" as dfsp
+participant "Mojaloop Adapter" as dfsp #B0D5FF
 note over dfsp
-    * Participant Bank A
-    * Participant Bank B
+    Participant
+    DFSP interactions
 end note
 
 box Central-Ledger #FFFFF9
-    participant "**API**" as cl_api
-    participant "__api__ / Handler" as cl_handler
-    participant "__domain__ / Service" as cl_domain
-    participant "__models__ / Facade" as cl_facade
+    participant "Kafka\nConsumer" as cl_consume_kafka
+        participant "__api__ / Handler" as cl_handler
+        participant "Application Layer\n(domain / service / facade)" as cl_domain
 
-    note over cl_api
-        REST API deployed in NodeJS
-    end note
-
-    note over cl_handler
-        JSON request decoded and
-        sent for processing via a handler
-    end note
-
-    note over cl_domain
-        Domain folder where the service
-        functions are exposed.
-    end note
-
-    note over cl_facade
-        Facade for storing/retrieving data from
-        MySQL and TigerBeetle
-    end note
+        note over cl_consume_kafka
+            Consume JSON
+            requests from Kafka topic
+        end note
+    
+        note over cl_handler
+            JSON request decoded &
+            processed via handler
+        end note
+    
+        note over cl_domain
+            Expose service functions &
+            handle database interactions
+        end note
 end box
 
 box Storage #F9FFF9
-    control "TigerBeetle Client" as tb_client
-    collections "TigerBeetle Cluster" as tb_nodes
-    database "central-ledger" as cl_db
-    database "Redis" as redis_cache
+	Participant "TigerBeetle Client" as tb_client #D5E8D4
+    collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
+	database "MySQL" as cl_db #DAE8FC
+	database "Redis" as redis_cache #E1D5E7
 end box
 
 autonumber
 group Lookup Participant by Name
-    dfsp -> cl_api : //JSON// \n**(name)**
-    cl_api -> cl_handler : ///jmeter/participants/**{name}**// \nHandler invoked
-    cl_handler -> cl_domain : Service invoked
-    cl_domain -> cl_facade : Facade invoked
-    cl_facade <-> redis_cache : Account id for participant is obtained via Redis lookup.
+    dfsp -> cl_consume_kafka : //JSON// \n**(name)**
+    cl_consume_kafka -> cl_handler : Invoke handler
+    cl_handler -> cl_domain : Invoke service
+    cl_domain <--> redis_cache : Lookup Participant data from cache
     autonumber stop
-    cl_facade <--> cl_db : If the participant data is not available in Redis, \na database lookup is performed followed by storing the participant\ndata in Redis cache.
+    cl_domain <-- cl_db : If Participant data not cached, then \nretrieve from SQL (this excludes //account// data)
+    cl_domain -> redis_cache : If not previously cached, \nthen cache Participant data
     autonumber resume
-    cl_facade -> tb_client : Account lookup using id via the CL-TB interface.
-    tb_client <-> tb_nodes : TigerBeetle //account//\n fetched.
-    tb_client --> cl_facade : //account// data returned.
-    cl_facade <-> cl_db : Additional meta-data is fetched from the CentralLedger database.\n**//OPTIONAL//**
-    cl_facade --> cl_domain : Return result
+    cl_domain -> tb_client : Lookup //account// using Participant ID
+    tb_client <-- tb_nodes : Retrieve Participant //account//
+    tb_client --> cl_domain : Return Participant //account//
     cl_domain --> cl_handler : Return result
-    cl_handler --> cl_api : Return result
-    cl_api --> dfsp : Return result
+    cl_handler --> cl_consume_kafka : Return result
+    cl_consume_kafka --> dfsp : Return result
 end
 
 @enduml

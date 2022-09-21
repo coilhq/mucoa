@@ -1,90 +1,73 @@
 @startuml
 
-participant "Mojaloop Adapter" as dfsp #B0D5FF
+participant "Mojaloop\nAdapter" as dfsp #B0D5FF
 note over dfsp
-    * Participant Bank A
-    * Participant Bank B
+    Participant
+    DFSP interactions
 end note
 
 box Central-Ledger #FFFFF9
-    participant "**API**" as cl_api
+    participant "Kafka\nConsumer" as cl_consume_kafka
     participant "__api__ / Handler" as cl_handler
-    participant "__domain__ / Service" as cl_domain
-    participant "__models__ / Facade" as cl_facade
+    participant "Application Layer\n(domain / service / facade)" as cl_domain
 
-note over cl_api
-        NodeJS interface
-        invokes REST API
-    end note
+        note over cl_consume_kafka
+            Consume JSON
+            requests from Kafka topic
+        end note
 
-    note over cl_handler
-        JSON request decoded & sent
-        for processing via a handler
-    end note
+        note over cl_handler
+            JSON request decoded &
+            processed via handler
+        end note
 
-    note over cl_domain
-        Domain folder where the service
-        functions are exposed.
-    end note
-
-    note over cl_facade
-        Facade for storing/retrieving data from
-        MySQL and TigerBeetle
-    end note
+        note over cl_domain
+            Expose service functions &
+            handle database interactions
+        end note
 end box
 
 box Storage #F9FFF9
-	participant "TigerBeetle Client" as tb_client #D5E8D4
-	collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
+	participant "TigerBeetle\nClient" as tb_client #D5E8D4
+	collections "TigerBeetle\nCluster" as tb_nodes #D5E8D4
 	database "MySQL" as cl_db #DAE8FC
 	database "Redis" as redis_cache #E1D5E7
 end box
 
 autonumber
 group Create Transfer (2-Phase)
-    dfsp -> cl_api : //JSON// \n**(transfer data)**
-    cl_api -> cl_handler : ///jmeter/transfers/prepare// \nHandler invoked
-    cl_handler -> cl_domain : Service layer invoked
-    cl_domain -> cl_facade : Domain to facade
-    cl_facade -> cl_db : Perform the following validations against the database:\n*//validateFspiopSourceMatchesPayer//\n*//validateParticipantByName//\n*//validatePositionAccountByNameAndCurrency//\n*//validateParticipantByName//\n*//validateAmount//\n*//validateConditionAndExpiration//\n*//validateDifferentDfsp//
-    cl_facade -> redis_cache : Lookup participant data by \n//name//, //account type// (POSITION) and //currency//.
+    == Prepare Transfer ==
+    dfsp -> cl_consume_kafka : //JSON// \n(**transfer** - //prepare// data)
+    cl_consume_kafka -> cl_handler : Invoke handler
+    cl_handler -> cl_domain : Invoke application layer
+    cl_domain -> cl_db : Validate pending transfer data elements
+    cl_domain <--> redis_cache : Lookup Participant data from cache
     autonumber stop
-    cl_facade --> cl_db : If the participant data is not available in Redis, a database lookup is performed
-    cl_facade --> redis_cache : Data looked up is now stored in Redis.
+
+    cl_domain <--> cl_db : If Participant data not cached, \nthen retrieve from SQL database
+    cl_domain -> redis_cache : If not previously cached, \nthen cache Participant data
+
     autonumber resume
-    cl_facade -> tb_client : Pending //Transfer// requested via the CL-TB interface.
-    tb_client -> tb_nodes : //transfer// Distributed to nodes\n via the state machine.
-    tb_nodes -> tb_nodes : **[ASYNC]**\nReplication via VSR.
-    tb_client --> cl_facade : //transfer// create error **(none)**\n//(Replicated to 2 nodes)//
-    cl_facade --> cl_domain : Return result
+
+    cl_domain -> tb_client : Request pending //transfer//
+    tb_client <--> tb_nodes : Check duplicates & create \n//transfer// prepare account
+    tb_client --> cl_domain : Return //transfer// create result
+    cl_domain <--> cl_db : Create //transfer// prepare & return result \n(store //ilpPacket// & //transferExtension// data only)
     cl_domain --> cl_handler : Return result
-    cl_handler --> cl_api : Return result
-    cl_api --> dfsp : Return result with //**transferId**//
-    == TB and MySQL Database Activities START ==
-    cl_facade -> cl_db : *--//transferDuplicateCheck//-- --DB record created--. Built in TB.
-    cl_facade -> cl_db : *--//transfer//,--Built in TB. \n*--//transferParticipant//-- Built in TB. \n*//ilpPacket// \n*--//transferStateChange//--Built in TB. \n*//transferExtension//\nDatabase records created.
-    cl_db <--> cl_facade : Database transaction committed.
-    == TB and MySQL Database Activities STOP ==
+    cl_handler --> cl_consume_kafka : Return result
+    cl_consume_kafka --> dfsp : Return //**transferId**//
 
-||70||
-
-    == Transfer Fulfilment ==
-    dfsp -> cl_api : //JSON// \n(fulfil transfer data with //**transferId**//)
-    cl_api -> cl_handler : ///jmeter/transfers/fulfil// \nHandler invoked.
-    cl_handler -> cl_domain : Service layer invoked \n//handlePayeeResponse//
-    cl_domain -> cl_facade : Domain to facade \n//savePayeeTransferResponse//
-    cl_facade -> cl_db : New Database transaction for fulfillment.
-    cl_facade -> cl_db : Obtain //**settlementWindowId**// for window where state is **OPEN**.
-    cl_facade -> tb_client : //Transfer// posting requested via the CL-TB interface.\n1x - ""POSITION"" - //transfer// pending posted with **//settlementWindowId//** as ""user_data"".
-    tb_client -> tb_nodes : //transfer// Distributed to nodes\n via the state machine.
-    tb_nodes -> tb_nodes : **[ASYNC]**\nReplication via VSR.
-    tb_client --> cl_facade : //transfer// posting create error **(none)**\n//(Replicated to 2 nodes)//.
-    cl_facade -> cl_db : Create \n*--//transferFulfilment//-- Built in TB. \n*--//transferStateChange//-- Built in TB. \nDatabase records.
-    cl_facade -> cl_db : Database transaction committed.
-    cl_facade --> cl_domain : Return result.
-    cl_domain --> cl_handler : Return result.
-    cl_handler --> cl_api : Return result.
-    cl_api --> dfsp : Return result.
+    == Fulfil Transfer ==
+    dfsp -> cl_consume_kafka : //JSON// \n(**transfer** - fulfil data)
+    cl_consume_kafka -> cl_handler : Invoke handler
+    cl_handler -> cl_domain : Invoke application layer
+    cl_domain <--> cl_db : Create //transfer// fulfillment & \nobtain open settlement window
+    cl_domain -> tb_client : Post the pending //transfer//
+    tb_client -> tb_nodes : Fulfil pending //transfer// \n(update status to posted)
+    tb_client --> cl_domain : Return //transfer// fulfilment result
+    cl_domain --> cl_handler : Return result
+    cl_handler --> cl_consume_kafka : Return result
+    cl_consume_kafka --> dfsp : Return transfer \nfulfilment result
 end
 
 @enduml
