@@ -128,7 +128,7 @@ Performance gains in TigerBeetle are enabled by:
 #### 4.2.2. Safety, Integrity and Availability
 Fault tolerance, high availability, and self-healing are at the core of TigerBeetle. These are enabled by: 
 * Using hash-chained cryptographic checksums to **detect and repair** disk corruption and misdirected disk writes.
-* **TODO - need to reword so that it's clear what the value & impact is ->** Using **direct disk I/O** to side step cache coherency bugs in the kernel page cache after an EIO fsync error.
+* **TODO - need to reword so that it's clear what the value & impact is ->** Using **direct disk I/O** to side step cache coherency bugs in the kernel page cache after an EIO fsync error. This reduces a lot of internal system transfer and process time.
 * The distributed architecture that exceeds single-disk write durability, and mitigates the risk of single-server failure.  
 * Providing strict serializability through a replicated state machine for consistent transaction ordering across replicas.
 * Low-latency automated leader election to mitigate the risk of data integrity issues across replicas.
@@ -152,8 +152,9 @@ Testing coverage includes:
 
 #### 4.3.1. Test Suite & Tools
 The test suite comprises jUnit test cases, and a jMeter test package that includes endpoints and test data:
-- jUnit - **TODO** - add a short description
-- jMeter endpoints for creating or retrieving Participants and Transfers. jMeter test configuration makes it possible to generate the desired test data for functional or performance test execution.  
+- **Jest** - a delightful JavaScript Testing Framework with a focus on simplicity.
+- **jUnit** - testing framework for the Java programming language.
+- **jMeter** - endpoints for creating or retrieving Participants and Transfers. jMeter test configuration makes it possible to generate the desired test data for functional or performance test execution.  
 
 #### 4.3.2. Test cases
 The following test transaction scenarios are central to the test suite:
@@ -245,9 +246,9 @@ Sequence related to a transfer with relation to Central-Ledger and TigerBeetle.
 4. Perform SQL database validations for the Transfer:
    1. `validateFspiopSourceMatchesPayer` -> Validate the headers of the source and payer DFSPs
    2. `validateParticipantByName` -> Validate the existence of the payer participant by doing a lookup by name
-   3. `validatePositionAccountByNameAndCurrency` -> Validate that the account exists using its name and currency
+   3. `validatePositionAccountByNameAndCurrency` -> Validate that the account exists using its name and currency for payer
    4. `validateParticipantByName` -> Validate that the payee participant exists using a name lookup
-   5. `validatePositionAccountByNameAndCurrency` -> Validate that the account exists using the name and currency
+   5. `validatePositionAccountByNameAndCurrency` -> Validate that the account exists using the name and currency for payee
    6. `validateAmount` -> Validates the allowed transfer amount scale of decimal places and precision
    7. `validateConditionAndExpiration` -> Validate the condition and expiration
    8. `validateDifferentDfsp` -> Validate that the payer and payee DFSPs are different
@@ -308,6 +309,9 @@ Settlement models will remain in MySQL, but each of the settlement accounts will
 ![Settlement Trigger](solution_design/sequence-settlement-tb-enabled-trigger.svg)
 
 1. Hub operator initiates the settlement via the `createSettlementEvent` event.
+
+* **TODO - Remove the coding snippets, this needs to be in a table format.
+
 ```json
 {
   "settlementModel" : "DEFERREDNET",
@@ -461,6 +465,9 @@ The below settlement progression events will take place for each settlement upda
 4. The following inserts are not performed due to TigerBeetle `transferDuplicateCheck`, `transfer`, `transferParticipant` and `transferStateChage`.
 5. TigerBeetle account data is obtained via `tbLookupAccountsForSettlement` on `settlementId`.
 6. Create 1-phase transfers to be settled based on each of the transfers for the `settlementWindow`
+
+* **TODO - Remove the coding snippets, this needs to be in a table format.
+
 ```zig
 //{ POSITION: 1, SETTLEMENT: 2, HUB_RECONCILIATION: 3, HUB_MULTILATERAL_SETTLEMENT: 4, HUB_FEE: 5 }
 //HUB_MULTILATERAL_SETTLEMENT:
