@@ -19,7 +19,7 @@
 8. [Canonical Model](#8-canonical-model)  
 8.1. [TigerBeetle](#81-tigerbeetle)  
 8.2. [Central-Ledger](#82-central-ledger)  
-8.3. [TigerBeetle and Central-Ledger Mapping](#83-tigerbeetle-and-central-ledger-mapping)
+8.3. [TigerBeetle and Central-Ledger Mapping](#83-mapping-tigerbeetle-and-central-ledger-tables)
 9. [References](#9-references)  
 
 ## Glossary
@@ -128,7 +128,7 @@ Performance gains in TigerBeetle are enabled by:
 #### 4.2.2. Safety, Integrity and Availability
 Fault tolerance, high availability, and self-healing are at the core of TigerBeetle. These are enabled by: 
 * Using hash-chained cryptographic checksums to **detect and repair** disk corruption and misdirected disk writes.
-* **TODO - need to reword so that it's clear what the value & impact is ->** Using **direct disk I/O** to side step cache coherency bugs in the kernel page cache after an EIO fsync error.
+* **TODO - need to reword so that it's clear what the value & impact is ->** Using **direct disk I/O** to side step cache coherency bugs in the kernel page cache after an EIO fsync error. This reduces a lot of internal system transfer and process time.
 * The distributed architecture that exceeds single-disk write durability, and mitigates the risk of single-server failure.  
 * Providing strict serializability through a replicated state machine for consistent transaction ordering across replicas.
 * Low-latency automated leader election to mitigate the risk of data integrity issues across replicas.
@@ -152,8 +152,9 @@ Testing coverage includes:
 
 #### 4.3.1. Test Suite & Tools
 The test suite comprises jUnit test cases, and a jMeter test package that includes endpoints and test data:
-- jUnit - **TODO** - add a short description
-- jMeter endpoints for creating or retrieving Participants and Transfers. jMeter test configuration makes it possible to generate the desired test data for functional or performance test execution.  
+- **Jest** - a delightful JavaScript Testing Framework with a focus on simplicity.
+- **jUnit** - testing framework for the Java programming language.
+- **jMeter** - endpoints for creating or retrieving Participants and Transfers. jMeter test configuration makes it possible to generate the desired test data for functional or performance test execution.  
 
 #### 4.3.2. Test cases
 The following test transaction scenarios are central to the test suite:
@@ -340,7 +341,6 @@ As part of the settlement process, the `updateSettlementById` endpoint uses the 
 | `PS_TRANSFERS_RECORDED`   | settlementTransfersReserve                                          | `PS_TRANSFERS_RESERVED`  |
 | `PS_TRANSFERS_RESERVED`   | settlementTransfersCommit                                           | `PS_TRANSFERS_COMMITTED` |
 | `PS_TRANSFERS_COMMITTED`  | validate ALL transfers committed and ALL settlement windows closed  | `SETTLED`                |
-
 
 ##### 7.2.2.1 Settlement Event - Prepare
 This initiates the settlement process and sets the settlement state to `PENDING_SETTLEMENT` for all _Transfers_ that are cleared.  
