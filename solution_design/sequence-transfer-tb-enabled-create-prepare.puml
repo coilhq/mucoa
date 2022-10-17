@@ -1,0 +1,62 @@
+@startuml
+
+participant "Mojaloop\nAdapter" as dfsp #B0D5FF
+note over dfsp
+    Participant
+    DFSP interactions
+end note
+
+box Central-Ledger #FFFFF9
+    participant "Kafka\nConsumer" as cl_consume_kafka
+    participant "__api__ / Handler" as cl_handler
+    participant "Application Layer\n(domain / service / facade)" as cl_domain
+
+        note over cl_consume_kafka
+            Consume JSON
+            requests from Kafka topic
+        end note
+
+        note over cl_handler
+            JSON request decoded &
+            processed via handler
+        end note
+
+        note over cl_domain
+            Expose service functions &
+            handle database interactions
+        end note
+end box
+
+box Storage #F9FFF9
+	participant "TigerBeetle\nClient" as tb_client #D5E8D4
+	collections "TigerBeetle\nCluster" as tb_nodes #D5E8D4
+	database "MySQL" as cl_db #DAE8FC
+	database "Redis" as redis_cache #E1D5E7
+end box
+
+autonumber
+group Create Transfer (2-Phase)
+    == Prepare Transfer ==
+    dfsp -> cl_consume_kafka : //JSON// \n(**transfer** - //prepare// data)
+    cl_consume_kafka -> cl_handler : Invoke handler
+    cl_handler -> cl_domain : Invoke application layer
+    cl_domain -> cl_db : Validate pending //transfer// data elements
+    cl_domain <--> redis_cache : Lookup Participant data from cache
+    autonumber stop
+
+    cl_domain <--> cl_db : If Participant data not cached, \nthen retrieve from SQL database
+    cl_domain -> redis_cache : If not previously cached, \nthen cache Participant data
+
+    autonumber resume
+
+    cl_domain -> tb_client : Request pending //transfer//
+    tb_client <--> tb_nodes : Check duplicates & create \n//transfer// prepare account
+    tb_client --> cl_domain : Return //transfer// create result
+    cl_domain <--> cl_db : Create //transfer// prepare & return result \n(store //ilpPacket// & //transferExtension// data only)
+    cl_domain --> cl_handler : Return result
+    cl_handler --> cl_consume_kafka : Return result
+    cl_consume_kafka --> dfsp : Return //**transferId**//
+
+end
+
+@enduml

@@ -1,30 +1,32 @@
 @startuml
 
 box Central-Settlement #FFFFF9
-    participant "__models__ / Facade" as cs_facade
+    participant "Application Layer\n(domain / service / facade)" as cs_domain
 
-    note over cs_facade
-        Facade for storing/retrieving data from
-        MySQL and TigerBeetle
+    note over cs_domain
+        Expose service functions &
+        handle database interactions
     end note
 end box
 
 box Storage #F9FFF9
 	participant "TigerBeetle Client" as tb_client #D5E8D4
 	collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
-	database "MySQL" as cl_db #DAE8FC
+	database "MySQL" as cs_db #DAE8FC
 end box
 
 autonumber
-group Settlement Event - //""PENDING_SETTLEMENT"" -> ""PS_TRANSFERS_RECORDED""// (putById)
-    cs_facade -> cs_facade : Current state is **""PENDING_SETTLEMENT""**, invoke ""settlementTransfersPrepare"".
-    cs_facade -> cl_db : Lookup base settlement data.
-    cs_facade -> tb_client : Retrieve list of ""PS_TRANSFERS_RECORDED"", but not ""RECEIVED_PREPARE"".PENDING_SETTLEMENT \n*//**tbLookupTransfersForWindow**// - Based on ""settlementWindowId"".
-    cs_facade --> cl_db : Perform the following inserts against the database:\n*--//transferDuplicateCheck//-- Built in TB.\n*--//transfer//-- Built in TB.\n*--//transferParticipant//-- Built in TB.\n*--//transferStateChange//-- Built in TB.
-    cs_facade -> tb_client : Lookup accounts associated with settlement via CS-TB interface:\n*//**tbLookupAccountsForSettlement**// - Based on ""settlementId"".
-    cs_facade -> tb_client : Create 1-phase transfer via CS-TB interface:\n*//**tbSettlementPreparationTransfer**//\n\n1x - __""HUB_MULTILATERAL_SETTLEMENT""__:\n**//uuid()//** as ""id"",\n**//settlementTransferId//** as ""user_data"".\n\n1x - __""SETTLEMENT""__:\n**//settlementTransferId//** as ""id""\n**//orgTransferId//** as ""user_data"".
-    cs_facade -> cs_facade : Determine state and counters for settlement accounts.
-    cs_facade -> cs_facade : Continue the settlement process.
+group Settlement Event - Prepare
+'group settlementTransfersPrepare Event
+    cs_domain <-- tb_client : Retrieve //Transfers// with \n""PENDING_SETTLEMENT"" state
+    'cs_domain -> tb_client : Retrieve list of ""PS_TRANSFERS_RECORDED"", but not ""RECEIVED_PREPARE"".PENDING_SETTLEMENT \n*//**tbLookupTransfersForWindow**// - Based on ""settlementWindowId"".
+    cs_domain <-- tb_client : Retrieve the settlement accounts
+    cs_domain -> tb_client : Create 1-phase //Transfers//:\n- ""HUB_MULTILATERAL_SETTLEMENT""\n- ""SETTLEMENT""
+    cs_domain -> cs_db : Update settlement state to \n""PS_TRANSFERS_RECORDED""
+    'cs_domain -> tb_client : Create 1-phase transfer via CS-TB interface:\n*//**tbSettlementPreparationTransfer**//\n\n1x - __""HUB_MULTILATERAL_SETTLEMENT""__:\n**//uuid()//** as ""id"",\n**//settlementTransferId//** as ""user_data"".\n\n1x - __""SETTLEMENT""__:\n**//settlementTransferId//** as ""id""\n**//orgTransferId//** as ""user_data"".
+    'cs_domain -> cs_domain : Update settlement state to \n""PS_TRANSFERS_RECORDED""
+    'cs_domain -> cs_domain : Determine state and counters for settlement accounts.
+    'cs_domain -> cs_domain : Continue the settlement process.
 end
 
 @enduml

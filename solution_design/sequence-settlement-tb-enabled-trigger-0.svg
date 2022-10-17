@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="864px" preserveAspectRatio="none" style="width:975px;height:864px;background:#FFFFFF;" version="1.1" viewBox="0 0 975 864" width="975px" zoomAndPan="magnify"><defs/><g><rect fill="#FFFFF9" height="845.7109" style="stroke:#181818;stroke-width:0.5;" width="403" x="211.5" y="6"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="119" x="351.5" y="19.4951">Central-Settlement</text><rect fill="#F9FFF9" height="845.7109" style="stroke:#181818;stroke-width:0.5;" width="347" x="616.5" y="6"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="50" x="763" y="19.4951">Storage</text><rect height="450.3281" style="stroke:#000000;stroke-width:1.5;fill:none;" width="959.5" x="10" y="317.7734"/><line style="stroke:#181818;stroke-width:0.5;fill:none;stroke-dasharray:5.0,5.0;" x1="82" x2="82" y1="89.9609" y2="785.1016"/><line style="stroke:#181818;stroke-width:0.5;fill:none;stroke-dasharray:5.0,5.0;" x1="233.5" x2="233.5" y1="89.9609" y2="785.1016"/><line style="stroke:#181818;stroke-width:0.5;fill:none;stroke-dasharray:5.0,5.0;" x1="350.5" x2="350.5" y1="89.9609" y2="785.1016"/><line style="stroke:#181818;stroke-width:0.5;fill:none;stroke-dasharray:5.0,5.0;" x1="519.5" x2="519.5" y1="89.9609" y2="785.1016"/><line style="stroke:#181818;stroke-width:0.5;fill:none;stroke-dasharray:5.0,5.0;" x1="683.5" x2="683.5" y1="89.9609" y2="785.1016"/><line style="stroke:#181818;stroke-width:0.5;fill:none;stroke-dasharray:5.0,5.0;" x1="827.5" x2="827.5" y1="89.9609" y2="785.1016"/><line style="stroke:#181818;stroke-width:0.5;fill:none;stroke-dasharray:5.0,5.0;" x1="933.5" x2="933.5" y1="89.9609" y2="785.1016"/><rect fill="#B0D5FF" height="31.6094" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="125" x="20" y="57.3516"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="111" x="27" y="78.8848">Mojaloop Adapter</text><rect fill="#B0D5FF" height="31.6094" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="125" x="20" y="784.1016"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="111" x="27" y="805.6348">Mojaloop Adapter</text><rect fill="#E2E2F0" height="31.6094" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="36" x="215.5" y="57.3516"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="22" x="222.5" y="78.8848">API</text><rect fill="#E2E2F0" height="31.6094" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="36" x="215.5" y="784.1016"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="22" x="222.5" y="805.6348">API</text><rect fill="#E2E2F0" height="31.6094" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="94" x="303.5" y="57.3516"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" text-decoration="underline" textLength="19" x="310.5" y="78.8848">api</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57" x="333.5" y="78.8848">/ Handler</text><rect fill="#E2E2F0" height="31.6094" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="94" x="303.5" y="784.1016"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" text-decoration="underline" textLength="19" x="310.5" y="805.6348">api</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57" x="333.5" y="805.6348">/ Handler</text><rect fill="#E2E2F0" height="49.2188" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="182" x="428.5" y="39.7422"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="109" x="465" y="61.2754">Application Layer</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="168" x="435.5" y="78.8848">(domain / service / facade)</text><rect fill="#E2E2F0" height="49.2188" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="182" x="428.5" y="784.1016"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="109" x="465" y="805.6348">Application Layer</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="168" x="435.5" y="823.2441">(domain / service / facade)</text><rect fill="#D5E8D4" height="31.6094" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="127" x="620.5" y="57.3516"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="113" x="627.5" y="78.8848">TigerBeetle Client</text><rect fill="#D5E8D4" height="31.6094" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="127" x="620.5" y="784.1016"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="113" x="627.5" y="805.6348">TigerBeetle Client</text><rect fill="#D5E8D4" height="31.6094" style="stroke:#181818;stroke-width:0.5;" width="136" x="761.5" y="53.3516"/><rect fill="#D5E8D4" height="31.6094" style="stroke:#181818;stroke-width:0.5;" width="136" x="757.5" y="57.3516"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="122" x="764.5" y="78.8848">TigerBeetle Cluster</text><rect fill="#D5E8D4" height="31.6094" style="stroke:#181818;stroke-width:0.5;" width="136" x="761.5" y="784.1016"/><rect fill="#D5E8D4" height="31.6094" style="stroke:#181818;stroke-width:0.5;" width="136" x="757.5" y="788.1016"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="122" x="764.5" y="809.6348">TigerBeetle Cluster</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="46" x="907.5" y="86.8848">MySQL</text><path d="M915.5,36.3516 C915.5,26.3516 933.5,26.3516 933.5,26.3516 C933.5,26.3516 951.5,26.3516 951.5,36.3516 L951.5,62.3516 C951.5,72.3516 933.5,72.3516 933.5,72.3516 C933.5,72.3516 915.5,72.3516 915.5,62.3516 L915.5,36.3516 " fill="#DAE8FC" style="stroke:#181818;stroke-width:1.5;"/><path d="M915.5,36.3516 C915.5,46.3516 933.5,46.3516 933.5,46.3516 C933.5,46.3516 951.5,46.3516 951.5,36.3516 " fill="none" style="stroke:#181818;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="46" x="907.5" y="798.6348">MySQL</text><path d="M915.5,811.7109 C915.5,801.7109 933.5,801.7109 933.5,801.7109 C933.5,801.7109 951.5,801.7109 951.5,811.7109 L951.5,837.7109 C951.5,847.7109 933.5,847.7109 933.5,847.7109 C933.5,847.7109 915.5,847.7109 915.5,837.7109 L915.5,811.7109 " fill="#DAE8FC" style="stroke:#181818;stroke-width:1.5;"/><path d="M915.5,811.7109 C915.5,821.7109 933.5,821.7109 933.5,821.7109 C933.5,821.7109 951.5,821.7109 951.5,811.7109 " fill="none" style="stroke:#181818;stroke-width:1.5;"/><path d="M19,104.9609 L19,146.9609 L146,146.9609 L146,114.9609 L136,104.9609 L19,104.9609 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M136,104.9609 L136,114.9609 L146,114.9609 L136,104.9609 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="62" x="25" y="123.4561">Participant</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="106" x="25" y="139.8076">DFSP interactions</text><path d="M170,157.6641 L170,199.6641 L297,199.6641 L297,167.6641 L287,157.6641 L170,157.6641 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M287,157.6641 L287,167.6641 L297,167.6641 L287,157.6641 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="98" x="176" y="176.1592">NodeJS interface</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="106" x="176" y="192.5107">invokes REST API</text><path d="M252,210.3672 L252,252.3672 L449,252.3672 L449,220.3672 L439,210.3672 L252,210.3672 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M439,210.3672 L439,220.3672 L449,220.3672 L439,210.3672 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="176" x="258" y="228.8623">JSON request decoded &amp; sent</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="157" x="258" y="245.2139">for processing via a handler</text><path d="M426,263.0703 L426,305.0703 L613,305.0703 L613,273.0703 L603,263.0703 L426,263.0703 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M603,263.0703 L603,273.0703 L613,273.0703 L603,263.0703 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="157" x="432" y="281.5654">Expose service functions &amp;</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="166" x="432" y="297.917">handle database interactions</text><path d="M10,317.7734 L174,317.7734 L174,326.125 L164,336.125 L10,336.125 L10,317.7734 " fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;"/><rect fill="none" height="450.3281" style="stroke:#000000;stroke-width:1.5;" width="959.5" x="10" y="317.7734"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="119" x="25" y="332.2686">Trigger Settlement</text><polygon fill="#181818" points="221.5,370.8281,231.5,374.8281,221.5,378.8281,225.5,374.8281" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="82.5" x2="227.5" y1="374.8281" y2="374.8281"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="7" x="89.5" y="361.7959">1</text><text fill="#000000" font-family="sans-serif" font-size="13" font-style="italic" lengthAdjust="spacing" textLength="35" x="100.5" y="353.6201">JSON</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4" x="135.5" y="353.6201"> </text><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="106" x="100.5" y="369.9717">(settlement data)</text><polygon fill="#181818" points="338.5,401.1797,348.5,405.1797,338.5,409.1797,342.5,405.1797" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="233.5" x2="344.5" y1="405.1797" y2="405.1797"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="7" x="240.5" y="400.3232">2</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="82" x="251.5" y="400.3232">Invoke handler</text><polygon fill="#181818" points="507.5,431.5313,517.5,435.5313,507.5,439.5313,511.5,435.5313" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="350.5" x2="513.5" y1="435.5313" y2="435.5313"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="7" x="357.5" y="430.6748">3</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="134" x="368.5" y="430.6748">Invoke application layer</text><polygon fill="#181818" points="921.5,478.2344,931.5,482.2344,921.5,486.2344,925.5,482.2344" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="519.5" x2="927.5" y1="482.2344" y2="482.2344"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="7" x="526.5" y="469.2021">4</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="126" x="537.5" y="461.0264">Insert settlement data</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="120" x="537.5" y="477.3779">(excluding accounts)</text><polygon fill="#181818" points="530.5,524.9375,520.5,528.9375,530.5,532.9375,526.5,528.9375" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="672,524.9375,682,528.9375,672,532.9375,676,528.9375" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="524.5" x2="678" y1="528.9375" y2="528.9375"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="7" x="536.5" y="515.9053">5</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="111" x="547.5" y="507.7295">Retrieve settlement</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="117" x="547.5" y="524.0811">window transactions</text><polygon fill="#181818" points="672,571.6406,682,575.6406,672,579.6406,676,575.6406" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="519.5" x2="678" y1="575.6406" y2="575.6406"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="7" x="526.5" y="562.6084">6</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="101" x="537.5" y="554.4326">Invoke settlement</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="96" x="537.5" y="570.7842">account creation</text><polygon fill="#181818" points="695,618.3438,685,622.3438,695,626.3438,691,622.3438" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="815.5,618.3438,825.5,622.3438,815.5,626.3438,819.5,622.3438" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="689" x2="821.5" y1="622.3438" y2="622.3438"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="7" x="701" y="609.3115">7</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="103" x="712" y="601.1357">Create settlement</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="53" x="712" y="617.4873">accounts</text><polygon fill="#181818" points="530.5,648.6953,520.5,652.6953,530.5,656.6953,526.5,652.6953" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="524.5" x2="683" y1="652.6953" y2="652.6953"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="7" x="536.5" y="647.8389">8</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="74" x="547.5" y="647.8389">Return result</text><polygon fill="#181818" points="361.5,679.0469,351.5,683.0469,361.5,687.0469,357.5,683.0469" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="355.5" x2="518.5" y1="683.0469" y2="683.0469"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="7" x="367.5" y="678.1904">9</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="74" x="378.5" y="678.1904">Return result</text><polygon fill="#181818" points="244.5,709.3984,234.5,713.3984,244.5,717.3984,240.5,713.3984" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="238.5" x2="349.5" y1="713.3984" y2="713.3984"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="14" x="250.5" y="708.542">10</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="74" x="268.5" y="708.542">Return result</text><polygon fill="#181818" points="93.5,756.1016,83.5,760.1016,93.5,764.1016,89.5,760.1016" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="87.5" x2="232.5" y1="760.1016" y2="760.1016"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="14" x="99.5" y="747.0693">11</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="38" x="117.5" y="738.8936">Return</text><text fill="#000000" font-family="sans-serif" font-size="13" font-style="italic" font-weight="bold" lengthAdjust="spacing" textLength="63" x="159.5" y="738.8936">settlement</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4" x="222.5" y="738.8936"> </text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="32" x="117.5" y="755.2451">result</text><!--MD5=[c84b738347fee93c2c17d4f3391df515]
+@startuml
+
+participant "Mojaloop Adapter" as dfsp #B0D5FF
+note over dfsp
+    Participant
+    DFSP interactions
+end note
+
+box Central-Settlement #FFFFF9
+    participant "**API**" as cs_api
+    participant "__api__ / Handler" as cs_handler
+    participant "Application Layer\n(domain / service / facade)" as cs_domain
+    'participant "__models__ / Facade" as cs_facade
+
+note over cs_api
+        NodeJS interface
+        invokes REST API
+    end note
+
+    note over cs_handler
+        JSON request decoded & sent
+        for processing via a handler
+    end note
+
+    note over cs_domain
+        Expose service functions &
+        handle database interactions
+    end note
+
+end box
+
+box Storage #F9FFF9
+	participant "TigerBeetle Client" as tb_client #D5E8D4
+	collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
+	database "MySQL" as cl_db #DAE8FC
+end box
+
+autonumber
+group Trigger Settlement
+    dfsp -> cs_api : //JSON// \n**(settlement data)**
+    cs_api -> cs_handler : Invoke handler
+    cs_handler -> cs_domain : Invoke application layer
+    cs_domain -> cl_db : Insert settlement data \n(excluding accounts)
+    cs_domain <- -> tb_client : Retrieve settlement \nwindow transactions
+    cs_domain -> tb_client : Invoke settlement \naccount creation
+    tb_client <- -> tb_nodes : Create settlement \naccounts
+    tb_client - -> cs_domain : Return result
+    cs_domain - -> cs_handler : Return result
+    cs_handler - -> cs_api : Return result
+    cs_api - -> dfsp : Return //**settlement**// \nresult
+end
+
+@enduml
+
+@startuml
+
+participant "Mojaloop Adapter" as dfsp #B0D5FF
+note over dfsp
+    Participant
+    DFSP interactions
+end note
+
+box Central-Settlement #FFFFF9
+    participant "**API**" as cs_api
+    participant "__api__ / Handler" as cs_handler
+    participant "Application Layer\n(domain / service / facade)" as cs_domain
+
+note over cs_api
+        NodeJS interface
+        invokes REST API
+    end note
+
+    note over cs_handler
+        JSON request decoded & sent
+        for processing via a handler
+    end note
+
+    note over cs_domain
+        Expose service functions &
+        handle database interactions
+    end note
+
+end box
+
+box Storage #F9FFF9
+	participant "TigerBeetle Client" as tb_client #D5E8D4
+	collections "TigerBeetle Cluster" as tb_nodes #D5E8D4
+	database "MySQL" as cl_db #DAE8FC
+end box
+
+autonumber
+group Trigger Settlement
+    dfsp -> cs_api : //JSON// \n**(settlement data)**
+    cs_api -> cs_handler : Invoke handler
+    cs_handler -> cs_domain : Invoke application layer
+    cs_domain -> cl_db : Insert settlement data \n(excluding accounts)
+    cs_domain <- -> tb_client : Retrieve settlement \nwindow transactions
+    cs_domain -> tb_client : Invoke settlement \naccount creation
+    tb_client <- -> tb_nodes : Create settlement \naccounts
+    tb_client - -> cs_domain : Return result
+    cs_domain - -> cs_handler : Return result
+    cs_handler - -> cs_api : Return result
+    cs_api - -> dfsp : Return //**settlement**// \nresult
+end
+
+@enduml
+
+PlantUML version 1.2022.4(Sat Apr 09 15:29:17 CAT 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: Cp1252
+Language: en
+Country: ZA
+--></g></svg>

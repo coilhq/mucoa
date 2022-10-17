@@ -29,22 +29,24 @@ end box
 
 box Storage #F9FFF9
 	participant "TigerBeetle\nClient" as tb_client #D5E8D4
-    collections "TigerBeetle\nCluster" as tb_nodes #D5E8D4
-    database "MySQL" as cl_db #DAE8FC
+	collections "TigerBeetle\nCluster" as tb_nodes #D5E8D4
+	database "MySQL" as cl_db #DAE8FC
+	database "Redis" as redis_cache #E1D5E7
 end box
 
 autonumber
-group Lookup Transfer by ID
-    dfsp -> cl_consume_kafka : //JSON// \n**(id)** and **(participantName)**
+group Create Transfer (2-Phase)
+    == Fulfil Transfer ==
+    dfsp -> cl_consume_kafka : //JSON// \n(**transfer** - fulfil data)
     cl_consume_kafka -> cl_handler : Invoke handler
-    cl_handler -> cl_domain : Invoke service
-    cl_domain -> tb_client : Invoke //transfer// lookup
-    tb_client <-> tb_nodes : Retrieve //transfer// \naccount data
-    tb_client --> cl_domain : Return //transfer// \naccount data (or result)
-    cl_domain <--> cl_db : Retrieve remaining //transfer// data from SQL\n**//(OPTIONAL)//**
-    cl_domain --> cl_handler : Return //transfer// data \n(or result)
-    cl_handler --> cl_consume_kafka : Return //transfer// data \n(or result)
-    cl_consume_kafka --> dfsp : Return //transfer// data \n(or result)
+    cl_handler -> cl_domain : Invoke application layer
+    cl_domain <--> cl_db : Create //transfer// fulfillment & \nobtain open settlement window
+    cl_domain -> tb_client : Post the pending //transfer//
+    tb_client -> tb_nodes : Fulfil pending //transfer// \n(update status to posted)
+    tb_client --> cl_domain : Return //transfer// fulfilment result
+    cl_domain --> cl_handler : Return result
+    cl_handler --> cl_consume_kafka : Return result
+    cl_consume_kafka --> dfsp : Return transfer \nfulfilment result
 end
 
 @enduml

@@ -5,7 +5,8 @@
 2. [Introduction](#2-introduction)
 3. [Solution Architecture](#3-solution-architecture)  
 3.1. [Current Mojaloop Architecture](#31-current-mojaloop-architecture)  
-3.2. [Central-Ledger Architecture](#32-mojaloop-central-ledger-architecture)
+3.2. [As-Is Central Services Architecture](#32-as-is-central-services-architecture)  
+3.3. [To-Be Central Services Architecture](#33-to-be-central-services-architecture)
 4. [Requirements](#4-requirements)  
 4.1. [Functional Requirements](#41-functional-requirements)  
 4.2. [Non-Functional Requirements](#42-non-functional-requirements)   
@@ -24,8 +25,8 @@
 ## Glossary
 | Definition             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 |------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| AEAD                   | .                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| AEGIS                  | .                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| AEAD                   | Authenticated Encryption with Associated Data is an encryption method that aims to provide data integrity, confidentiality and authentication, where ciphertext gets authenticated and its integrity or context gets validated through the use of additional or associated data.                                                                                                                                                                                |
+| AEGIS                  | An Advanced Encryption Standard (AES) based authenticated encryption algorithm designed for high-performance applications, using a 256-bit encryption key, and a 256-bit nonce, amongst other things, used to protect associated data.                                                                                                                                                                                                                          |
 | Clearing               | The process of transmitting, reconciling, and, in some cases, confirming transactions prior to settlement, potentially including the netting of transactions and the establishment of final positions for settlement. Sometimes this term is also used (imprecisely) to cover settlement. For the clearing of futures and options, this term also refers to the daily balancing of profits and losses and the daily calculation of collateral requirements.     |
 | Clearing House         | A central location or central processing mechanism through which financial institutions agree to exchange payment instructions or other financial obligations (for example, securities). The institutions settle for items exchanged at a designated time based on the rules and procedures of the clearinghouse. In some cases, the clearinghouse may assume significant counterparty, financial, or risk management responsibilities for the clearing system. |
 | DFSP                   | Digital Financial Service Provider.                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -80,14 +81,13 @@ The Mojaloop Hub is the primary container and reference that is used to describe
 <br><br>
 ![System Context Diagram](solution_design/Arch-mojaloop-central-ledger.svg)
 
-### 3.2. Mojaloop Central-Ledger Architecture
-#### 3.2.1. As Is Central-Ledger Architecture
-The **current** architecture of Central Services, with the Central-Ledger using SQL, PostgreSQL and Redis.<br><br>
-![System Context Diagram As](solution_design/solution-central-ledger-sql-as-is-v2.svg)
+### 3.2. As-Is Central Services Architecture
+In the **current** architecture of Central Services, the Central-Ledger and Central Settlement use SQL, PostgreSQL or MySQL and Redis to store and cache data.<br><br>
+![System Context Diagram As](solution_design/central-services-diagram-as_is-v1.0.svg)
 
-#### 3.2.2. To Be Central-Ledger Architecture
-The proposed architecture of Central Services, with the Central-Ledger using TigerBeetle for account, balance and settlement data, together with SQL and Redis databases storing all other transaction, participant, and operational data.<br><br>
-![System Context Diagram](solution_design/solution-central-ledger-tigerbeetle-to-be-v3.svg)
+### 3.3. To-Be Central Services Architecture
+This diagram illustrates the Central Services architecture where Central-Ledger and Central Settlement use TigerBeetle to store the financial accounting data for Transfers and Settlement (i.e. the accounts and balances), while the SQL and Redis databases store all other transaction, participant, and operational data.<br><br>
+![System Context Diagram](solution_design/central-services-diagram-to_be-v1.0.svg)
 
 ## 4. Requirements
 ### 4.1. Functional Requirements
@@ -186,9 +186,8 @@ A TigerBeetle release is a single binary that supports the following operating s
 
 ## 6. Scope Exclusions
 The following functionality is out of scope for the solution:
-* Transfer and settlement data encryption at rest (refer to section ABC for detail)
-* Built-in support for mutual TLS authentication between a TigerBeetle client and the database cluster
-* TODO
+* Transfer and settlement data encryption at rest (refer to section ABC for detail).
+* Built-in support for mTLS authentication between a TigerBeetle client and the database cluster.
 
 ## 7. Detailed Design 
 ### 7.1 TigerBeetle in Central-Ledger 
@@ -215,7 +214,7 @@ of a Mojaloop Hub DFSP Participant.
 7. Return the Participant account creation result. In this scenario, there were no errors.
 8. Result returned.
 9. Result returned.
-10. `JSON` HTTP `200` response indicates success.
+10. Result is returned to the DFSP via the REST API.
 
 ##### 7.1.1.2 Lookup Participant by Name
 ![Participant Sequence](solution_design/sequence-participant-tb-enabled-lookup.svg)
@@ -223,381 +222,160 @@ of a Mojaloop Hub DFSP Participant.
 1. DFSP/Mojaloop Adapter invokes HTTP request
 2. Handler invoked from endpoint.
 3. Invoke the layer that exposes the service functions & handles database interactions
-4. Participant data is retrieved from cache using the participant `name`.
-   1. If the data is not available in the cache, a lookup in the SQL database is performed, followed by caching the participant data.
-5. Invoke the TigerBeetle client to lookup the participant `account` using the Participant ID.
+4. Retrieve the Participant data from cache using the participant `name`.
+   1. If the data is not available in the cache, then retrieve from the SQL database, followed by caching the participant data.
+5. Invoke the TigerBeetle client to retrieve the participant `account` using the Participant ID.
 6. TigerBeetle client retrieves the Participant account from the cluster.
 7. Account data is returned by the TigerBeetle client.
 8. Result returned.
 9. Result returned.
-10. HTTP `JSON` response with account and balance data.
+10. Result is returned to the DFSP via the REST API, with account and balance data.
 
 #### 7.1.2 Transfers
 Sequence related to a transfer with relation to Central-Ledger and TigerBeetle.
 
 ##### 7.1.2.1 Create Transfer (2-Phase)
-### TODO - left off here - review & update
-![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-create.svg)
+The _prepare_ phase of the 2-Phase Transfer:
+![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-create-prepare.svg)
 
-1. DFSP initiates a transfer, this submits a _prepare_ Transfer JSON payload.
+1. DFSP initiates a transfer, this submits a _Transfer_ prepare request (this is a JSON payload).
 2. Handler invoked from endpoint.
 3. Invoke the layer that exposes the service functions & handles database interactions
-4. Perform SQL database validations for the Transfer:
-   1. `validateFspiopSourceMatchesPayer` -> Validate the headers of the source and payer DFSPs
-   2. `validateParticipantByName` -> Validate the existence of the payer participant by doing a lookup by name
-   3. `validatePositionAccountByNameAndCurrency` -> Validate that the account exists using its name and currency
-   4. `validateParticipantByName` -> Validate that the payee participant exists using a name lookup
-   5. `validatePositionAccountByNameAndCurrency` -> Validate that the account exists using the name and currency
-   6. `validateAmount` -> Validates the allowed transfer amount scale of decimal places and precision
-   7. `validateConditionAndExpiration` -> Validate the condition and expiration
-   8. `validateDifferentDfsp` -> Validate that the payer and payee DFSPs are different
-5. Lookup the payer and payee Participant data.
-   1. If the data is not available in the cache, a lookup in the SQL database is performed, followed by caching the participant data.
-6. Invoke the TigerBeetle client to create a _prepare_ Transfer. TigerBeetle sets the pending flag to `true`.
-7. The TigerBeetle client sends the _prepare_ Transfer request to the cluster.
-8. The TigerBeetle API responds with any errors. In this case, there were no errors.
-9. Result returned.
-10. Result returned.
+#### TODO: note to discuss/confirm the validation descriptions with Jason
+4. Perform SQL database validations for the _Transfer_:  
+   1. `validateFspiopSourceMatchesPayer` -> Validate the headers of the payer and payee DFSPs
+   2. `validateParticipantByName` -> Validate the payer and payee participants by doing a lookup by name
+   3. `validatePositionAccountByNameAndCurrency` -> Validate that the payer and payee accounts exist, using the DFSP participant name and the account currency
+   4. `validateParticipantByName` -> Validate that the payer and payee participants exists, using the participant name for the lookup
+   5. `validateAmount` -> Validates the allowed scale of decimal places and precision for the transfer amount
+   6. `validateConditionAndExpiration` -> Validate all conditions and the expiration of the payer and payee participants
+   7. `validateDifferentDfsp` -> Validate that the payer and payee DFSPs are different
+5. Retrieve the Participant data from cache.
+    1. If the data is not available in the cache, then retrieve from the SQL database, followed by caching the participant data.
+6. Invoke the TigerBeetle client to create an **account** for the prepare _Transfer_. TigerBeetle sets the pending flag to `true`.
+7. The TigerBeetle database performs duplicate checks for the incoming prepare _Transfer_, and then commits to the database.
+8. The TigerBeetle client returns the result after commiting the prepare _Transfer_.
+9. Insert the prepare _Transfer_ data into the SQL database, excluding the _Transfer_ account data stored in TigerBeetle.
+10. Return the SQL database result for storing the prepare _Transfer_ data.
 11. Result returned.
-12. Result is returned to the DFSP via the REST API.
-16. Insert the prepare _Transfer_ data.
-17. Commit the prepare _Transfer_ to the SQL database.
-18. DFSP submits a fulfil _Transfer_ JSON payload.
-19. Handler invoked from `/jmeter/transfers/fulfil` `POST` endpoint.
-20. Invoke the layer that exposes the Service functions.
-22. Domain to Facade layer.
-23. Initiate a new SQL database transaction for the fulfil _Transfer_.
-24. The current open `settlementWindowId` is obtained for the current **OPEN** settlement window.
-    1. The settlement window is based on **OPEN** state and currency.
-25. The TigerBeetle client is invoked with a //Transfer// `post_pending_transfer = true` property
-26. Transfer fulfillment distributed via the TigerBeetle state machine.
-27. The transfer fulfilment is distributed to all 7 TigerBeetle nodes in the cluster.
-28. The TigerBeetle client API responds with errors during the transfer, which is empty (_no errors_).
-29. Insert //Transfer// fulfilment data into the following database tables:
-    1. `transferFulfilment`
-    2. `transferStateChange`
-30. Database transaction is committed.
-31. Return result to service layer.
-32. Return result to the handler layer.
-33. Prepare the result in JSON format.
-34. Result is returned to the DFSP via the REST API
+12. Result is returned to the DFSP, via the REST API.
+
+This diagram illustrates the _commit_ or _fulfil_ phase of the 2-Phase Transfer:
+![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-create-fulfil.svg)
+1. DFSP submits a _Transfer_ fulfil request (this is a JSON payload). 
+2. Handler invoked from endpoint.
+3. Invoke the layer that exposes the service functions & handles database interactions.
+4. Initiate a new SQL database transaction for the fulfil _Transfer_. The current open `settlementWindowId` is obtained for the current **OPEN** settlement window.
+5. To post the _Transfer_, the TigerBeetle client is invoked with a _Transfer_ `post_pending_transfer = true` property.
+6. The _Transfer_ fulfillment gets distributed to the TigerBeetle cluster.
+7. The TigerBeetle client returns the result after committing the fulfil _Transfer_ to the database.
+8. Return result to the handler layer.
+9. Result returned.
+10. Result is returned to the DFSP, via the REST API.
 
 ##### 7.1.2.2 Lookup Transfer by ID
 ![Transfer Sequence](solution_design/sequence-transfer-tb-enabled-lookup.svg)
 
-1. DFSP/Mojaloop Adapter invokes HTTP request
-2. Handler invoked from `/jmeter/participants/{name}/transfers/{id}` `GET` endpoint.
-3. Service layer invoked.
-4. Domain / Service to Facade layer.
-5. The TigerBeetle client is invoked in order to obtain the `account` information.
-6. TigerBeetle client fetches the necessary account information from one of the TigerBeetle nodes.
-7. Transfer data is returned from the TigerBeetle client.
-8. **OPTIONAL** Additional transfer meta-data is fetched based on `transactionId`.
-9. Result returned.
-10. Result returned.
-11. Result returned.
-12. HTTP `JSON` response with transfer related information.
+1. DFSP submits a _Transfer_ lookup request (this is a JSON payload).
+2. Handler invoked from endpoint.
+3. Invoke the layer that exposes the service functions & handles database interactions.
+4. The TigerBeetle client is invoked in order to obtain the `account` information.
+5. TigerBeetle client fetches the necessary account information from one of the TigerBeetle nodes.
+6. Transfer data is returned from the TigerBeetle client.
+7. **OPTIONAL** Additional transfer data is obtained from the SQL database, using the `transactionId`.
+8. Return the Transfer data or the result.
+9. Return the Transfer data or the result.
+10. Return the Transfer data or the result to the DFSP, via the REST API.
 
 ### 7.2 TigerBeetle in Central-Settlement
-The detail design process primarily involves the conversion of the loft from the preliminary design into something that can be built and ultimately flown for `central-settlement`.
-
-#### 7.2.1 Settlement Trigger Event (`settlementEventTrigger`)
-Initiate the settlement for all applicable settlement models via function `settlementEventTrigger`.
-Settlement models will remain in MySQL, but each of the settlement accounts will be created in TigerBeetle.
+#### 7.2.1 Initiate Settlement
+Settlement gets initiated by an event called `settlementEventTrigger` which indicates all of the settlement windows that must be included in the process.  
+Each settlement event is associated with one `settlementId`, and the `updateSettlementById` endpoint manages the entire settlement process.  
 
 ![Settlement Trigger](solution_design/sequence-settlement-tb-enabled-trigger.svg)
 
-1. Hub operator initiates the settlement via the `createSettlementEvent` event.
-```json
-{
-  "settlementModel" : "DEFERREDNET",
-  "reason" : "This is settlement for today.",
-  "settlementWindows" : [{"id" : 1}, {"id" : 2}]
-}
-```
-Example of a settlement model configuration:
-```json
-{
-  "name": "DEFERREDNET",
-  "settlementGranularity": "NET",
-  "settlementInterchange": "MULTILATERAL",
-  "settlementDelay": "DEFERRED",
-  "requireLiquidityCheck": true,
-  "ledgerAccountType": "POSITION",
-  "autoPositionReset": true,
-  "currency": "USD",
-  "settlementAccountType": "SETTLEMENT"
-}
-```
-2. Handler invoked from `settlements/createSettlementEvent` `POST` endpoint.
-3. Service layer invoked.
-4. Domain / Service to Facade layer.
-5. Perform the following inserts against the database:
-   1. `settlement` a single record for the settlement.
-   2. `settlementSettlementWindow` for each of the settlement windows.
-   3. `settlementStateChange` for each of the settlement windows.
-   4. ~~`settlementParticipantCurrency`~~ disabled when running TB only mode.
-   5. ~~`settlementWindowContent`~~ disabled when running TB only mode.
-   6. ~~`settlementWindowContentStateChange`~~ disabled when running TB only mode.
-   7. ~~`settlementParticipantCurrencyStateChange`~~ disabled when running TB only mode.
-   8. ~~`settlementWindowStateChange`~~ disabled when running TB only mode.
-6. The `lookupForSettlementWindowId` is invoked to retrieve all fulfilled transfers for the `settlementWindowId`.
-7. Create the settlement accounts for each of the participant accounts:
+1. The hub operator or a scheduled event triggers the settlement initiation.  
+This sets the settlement granularity, delay, liquidity check configuration, account types, and the settlement currency.
+2. Handler invoked from endpoint.
+3. Invoke the layer that exposes the service functions & handles database interactions.
+4. Insert settlement data into the SQL database:
+   1. `settlement` a single entry for the settlement record.
+   2. `settlementSettlementWindow` for each settlement window.
+   3. `settlementStateChange` for each settlement window.
+5. Retrieve fulfilled transfers for the settlement window.
+6. Request settlement account creation in TigerBeetle.
+7. Create the settlement accounts for each Participant:  
+   1. Account for participant: `Participant settlement account` per settlement for each payer/payee.
+   2. Account for Hub reconciliation, account per currency for recon: `Hub reconciliation account` per currency type.
+   3. Account for Hub multilateral settlement:  `Multilateral settlement account` per currency for each payer/payee.
+8. The TigerBeetle client returns the settlement account creation result.
+9. Return result to the handler layer.
+10. Result returned.
+11. Return the settlement initiation result to the DFSP, via the REST API.
 
-7.1. Account for participant:
-
-`Participant settlement account` per settlement for each payer/payee.
-```json
-{
-  "id" : "tbSettlementAccountIdFrom(participantCurrencyId, settlementId)",
-  "user_data" : "settlementId",
-  "ledger" : "obtainLedgerFromCurrency(currencyTxt)",
-  "code" : "enums.ledgerAccountTypes.SETTLEMENT"
-}
-```
-7.2. Account for Hub reconciliation, account per currency for recon:
-
-`Hub reconciliation account` per currency type.
-
-```json
-{
-  "id" : "tbAccountIdFrom(participantId, currencyU16, accountType)",
-  "user_data" : "participantId / Config.HUB_ID.id",
-  "ledger" : "obtainLedgerFromCurrency(currencyTxt)",
-  "code" : "enums.ledgerAccountTypes.HUB_RECONCILIATION"
-}
-```
-7.3. Account for Hub multilateral settlement:
-
-`Multilateral settlement account` per currency for each payer/payee.
-```json
-{
-  "id" : "tbAccountIdFrom(participantId, currencyU16, accountType)",
-  "user_data" : "participantId / Config.HUB_ID.id",
-  "ledger" : "obtainLedgerFromCurrency(currencyTxt)",
-  "code" : "enums.ledgerAccountTypes.HUB_MULTILATERAL_SETTLEMENT"
-}
-```
-8. TigerBeetle VSR distributes the account creation _(at least 2x replicates on the cluster)_.
-9. TigerBeetle will asynchronously distribute the account data to all replicas in the cluster.
-10. Account create result errors are returned from the `tigerbeetle-node` client (**none** - no errors)
-11. Return result to service layer.
-12. Return result to the handler layer.
-13. Prepare the result in JSON format.
-14. Result is returned to the DFSP via the REST API.
-
-#### 7.2.2 Settlement Update By Id (`updateSettlementById`)
+#### 7.2.2 Update Settlement
+As part of the settlement process, the `updateSettlementById` endpoint uses the `settlementId` of the current settlement event to iteratively associate Transfers to settlement accounts, for each of the settlement windows.
 ![Settlement Update by ID](solution_design/sequence-settlement-tb-enabled-update-by-id.svg)
 
-1. Hub participants (payer/payee) `updateSettlementById` event multiple times to update settlement state.
-```json
-{
-  "participants" : [
-    {
-      "id" : "1 / participantId",
-      "accounts" : [
-        {
-          "id" : "1 / participantCurrencyId",
-          "state" : "accountPayload.state",
-          "reason": "accountPayload.reason",
-          "externalReference": "accountPayload.externalReference",
-          "createdDate": "transactionTimestamp",
-          "netSettlementAmount": "allAccounts[accountPayload.id].netSettlementAmount"
-        },
-        {
-          "id" : "2 / participantCurrencyId",
-          "state" : "accountPayload.state",
-          "reason": "accountPayload.reason",
-          "externalReference": "accountPayload.externalReference",
-          "createdDate": "transactionTimestamp",
-          "netSettlementAmount": "allAccounts[accountPayload.id].netSettlementAmount"
-        }
-      ]
-    }
-  ]
-}
-```
-2. Handler invoked from `settlements/updateSettlementById?id=?` `PUT` endpoint with settlement id.
-3. Service layer invoked.
-4. Domain / Service to Facade layer _(function `putById`)_.
-5. Existing settlement data is retrieved based on the `settlementId`. Data include; `settlement`, `settlementModel`~~, `settlementStateChange`~~
-6. Perform a lookup on all transfers (posted/committed) for the settlement window based on `settlementWindowId` in TigerBeetle.
-Previously `settlementParticipantCurrency`, `settlementParticipantCurrencyStateChange`, `participantCurrency` based on `settlementId`.
-7. Extract account and transfer data from transfers using `settlementWindowId` as lookup.
-8. State of transfers from `settlementWindowId` lookup is compared to transfers for `settlementId` to determine current status.
-9. State updates are not required anymore, this is due to step 8.
-10. Transfers are inserted, then the transfer and settlement states get processed based on current states and the JSON payload data from step 9.
-11. Transfers are created as linked transfers in a batch to ensure all the transfers fail or succeed together. See TigerBeetle `linked = true` flag.
-12. All transfers are distributed to all replicas in the TigerBeetle cluster.
-13. Asynchronously the data is replicated to all replicas.
-14. Result is returned to the `tigerbeetle-node` client _(**none** - errors)_.
-15. The state of the `settlement` is updated in the MySQL database.
-16. Return result to service layer.
-17. Return result to the handler layer.
-18. Prepare the result in JSON format.
-19. Result is returned to the DFSP via the REST API.
+1. A hub operator or DFSP participant initiates updating the settlement state.
+2. The REST API uses the `settlementId` to invoke the handler.
+3. The handler invokes the layer that exposes the service functions and handles database interactions.
+4. The Application layer retrieves settlement data from the SQL database, using the `settlementId` (**note**: this excludes settlement account data).
+5. The Application layer uses the settlement window to retrieve all posted or committed _Transfer_ accounts from TigerBeetle, where settlement is pending.
+6. Validate the _Transfer_ state data, and update the settlement data in SQL. (**TODO**: I need help with improving this description please)
+7. ** Process the settlement states for each _Transfer_ via the `updateSettlementById` endpoint.
+8. Based on the settlement state of each _Transfer_, invoke the creation of settlement accounts, via the TigerBeetle Client.
+9. TigerBeetle creates the linked _Transfer_ accounts for settlement processing (for each of the settlement models and currencies), and returns the settlement processing result. (**TODO**: need help to check whether this description is correct & complete)
+10. Return the TigerBeetle settlement result. 
+11. The Application layer updates the final settlement state in the SQL database, and returns the result.
+12. The Application layer returns the settlement result to the handler.
+13. The handler layer returns the result to the REST API.
+14. The REST API returns the settlement result to the DFSP.
 
-The `updateSettlementById` endpoint is used repeatedly to manage the settlement process.
-The current settlement state drive what type of processing should occur next.
-Example: if the current state is `PENDING_SETTLEMENT`, the next processing event to take place would be `settlementTransfersPrepare` and
-if all are successful, the state for the settlement will be updated to `PS_TRANSFERS_RECORDED`.
+** The table below shows the settlement state progression events for each _Transfer_:
 
-The below settlement progression events will take place for each settlement update `updateSettlementById`:
-
-| Existing State           | State After Successful Processing    |
-|--------------------------|--------------------------------------|
-| `PENDING_SETTLEMENT`     | `PS_TRANSFERS_RECORDED`              |
-| `PS_TRANSFERS_RECORDED`  | `PS_TRANSFERS_RESERVED`              |
-| `PS_TRANSFERS_RESERVED`  | `PS_TRANSFERS_COMMITTED`             |
-| `PS_TRANSFERS_COMMITTED` | `SETTLING`                           |
-| `SETTLING`               | `SETTLED`                            |
+| Starting Settlement State | Settlement Status Check / Event                                     | Post-processing State    |
+|---------------------------|---------------------------------------------------------------------|--------------------------|
+| `PENDING_SETTLEMENT`      | settlementTransfersPrepare                                          | `PS_TRANSFERS_RECORDED`  |
+| `PS_TRANSFERS_RECORDED`   | settlementTransfersReserve                                          | `PS_TRANSFERS_RESERVED`  |
+| `PS_TRANSFERS_RESERVED`   | settlementTransfersCommit                                           | `PS_TRANSFERS_COMMITTED` |
+| `PS_TRANSFERS_COMMITTED`  | validate ALL transfers committed and ALL settlement windows closed  | `SETTLED`                |
 
 
-##### 7.2.2.1 Settlement Event - `PENDING_SETTLEMENT -> PS_TRANSFERS_RECORDED`
+##### 7.2.2.1 Settlement Event - Prepare
+This initiates the settlement process and sets the settlement state to `PENDING_SETTLEMENT` for all _Transfers_ that are cleared.  
+At the successful completion of the event, the settlement state will be set `PS_TRANSFERS_RECORDED`. 
+
 ![Record Settlement Transfers](solution_design/sequence-settlement-tb-enabled-update-by-id-01.svg)
-1. Current state has been established as `PENDING_SETTLEMENT` from [Settlement Update By Id - Step 10](#722-settlement-update-by-id-updatesettlementbyid).
-2. Base settlement data via MySQL (`settlement` / `settlementWindow`) data lookup on `settlementId`.
-3. TigerBeetle transfer data is obtained via `tbLookupTransfersForWindow`.
-4. The following inserts are not performed due to TigerBeetle `transferDuplicateCheck`, `transfer`, `transferParticipant` and `transferStateChage`.
-5. TigerBeetle account data is obtained via `tbLookupAccountsForSettlement` on `settlementId`.
-6. Create 1-phase transfers to be settled based on each of the transfers for the `settlementWindow`
-```zig
-//{ POSITION: 1, SETTLEMENT: 2, HUB_RECONCILIATION: 3, HUB_MULTILATERAL_SETTLEMENT: 4, HUB_FEE: 5 }
-//HUB_MULTILATERAL_SETTLEMENT:
-Transfer {
-    .id = 1005, // [uuid()] converted to u128 
-    .debit_account_id = 1, // drParticipantCurrencyIdHubRecon [participantCurrencyId] 
-    .credit_account_id = 2, // crDrParticipantCurrencyIdHubMultilateral [participantCurrencyId]
-    .user_data = 0, // [settlementTransferId] - This along with [code] tells us there has been a settlement triggered.
-    .reserved = [_]u8{0} ** 32,
-    .timeout = std.time.ns_per_hour,
-    .code = 4, // enums.ledgerAccountTypes.HUB_MULTILATERAL_SETTLEMENT
-    .flags = .{
-        .pending = false, // Not 2 phase.
-        .linked = true, // Link this transfer with the next transfer.
-    },
-    .amount = 1,
-},
-//SETTLEMENT:
-Transfer {
-    .id = 1006, // [settlementTransferId] converted to u128
-    .debit_account_id = 1, // [participantCurrencyId] for payer 
-    .credit_account_id = 2, // participantId / Config.HUB_ID.id (for currency)
-    .user_data = 0, // [transferId] - This along with [code] tells us there is bilateral settlement
-    .reserved = [_]u8{0} ** 32,
-    .timeout = std.time.ns_per_hour,
-    .code = 2, // enums.ledgerAccountTypes.SETTLEMENT
-    .flags = .{
-        .pending = false, // Not 2 phase.
-        .linked = false, // Stop the linking.
-    },
-    .amount = 1,
-}
-```
-7. Calculate updated status for `settlement` and state.
-8. [Settlement Update By Id Continue - Step 11](#722-settlement-update-by-id-updatesettlementbyid).
+1. Use the current `settlementId` to invoke the TigerBeetle Client to retrieve the _Transfers_ where the settlement state is `PENDING_SETTLEMENT`. This is invoked for every settlement window in the current settlement event.
+2. Use the current `settlementId` to invoke the TigerBeetle Client to retrieve the accounts that were created when the settlement event was triggered, where the account type is `SETTLEMENT`. The goal is to link the settlement accounts to the _Transfers_ retrieved in step 1.
+3. Create 1-phase transfers for settlement, based on the `settlementWindow` of each Transfer.
+4. For each _Transfer_, update the settlement state to `PS_TRANSFERS_RECORDED`, and continue with the settlement process.
 
-Process the settlement for payee. The initial `autoPositionReset` settlement event is triggered via `updateSettlementById`, 
-the settlement will be in a state of `PENDING_SETTLEMENT` as created by `settlementEventTrigger`.
-Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersPrepare` function will be consumed _(due to existing `PENDING_SETTLEMENT` state)_.
+##### 7.2.2.2 Settlement Event - Reserve
+This event initiates the settlement reservation that progresses the settlement state of _Transfers_ from `PS_TRANSFERS_RECORDED` to `PS_TRANSFERS_RESERVED`. 
 
-##### 7.2.2.2 Settlement Event - `PS_TRANSFERS_RECORDED -> PS_TRANSFERS_RESERVED`
 ![Reserve Settlement Transfers](solution_design/sequence-settlement-tb-enabled-update-by-id-02.svg)
-1. Current state has been established as `PS_TRANSFERS_RECORDED` from [Settlement Update By Id - Step 10](#722-settlement-update-by-id-updatesettlementbyid).
-2. Base settlement data via MySQL (`settlement` / `settlementWindow`) data lookup on `settlementId`.
-3. TigerBeetle recorded transfer data is obtained via `tbLookupRecorded`.
-4. The following inserts are not performed due to TigerBeetle `transferStateChange`, `participantPosition` and `participantPositionChange`.
-5. TigerBeetle account data is obtained via `tbLookupAccountsForSettlement` on `settlementId`.
-6. Create 2-phase transfers to be settled based on each of the transfers for the `settlementWindow`
-```zig
-//SETTLEMENT:
-Transfer {
-    .id = 1007, // [uuid()] converted to u128
-    .debit_account_id = 1,  // participantId / Config.HUB_ID.id (for currency)
-    .credit_account_id = 2, // [participantCurrencyId] for payer
-    .user_data = 0, // [transferId] - This along with [code and pending balance] tells us there is payee commit outstaning
-    .reserved = [_]u8{0} ** 32,
-    .timeout = std.time.ns_per_hour,
-    .code = 2, // enums.ledgerAccountTypes.SETTLEMENT
-    .flags = .{
-        .pending = true, // 2 phase.
-        .linked = true, // Link this transfer with the next transfer. 
-    },
-    .amount = 1,
-},
-//HUB_MULTILATERAL_SETTLEMENT:
-Transfer {
-    .id = 1008, // [uuid()] converted to u128 
-    .debit_account_id = 1,  // crDrParticipantCurrencyIdHubMultilateral [participantCurrencyId]
-    .credit_account_id = 2, // drParticipantCurrencyIdHubRecon [participantCurrencyId]
-    .user_data = 0, // [transferId] - This along with [code and pending balance] tells us there are outstanding settlements.
-    .reserved = [_]u8{0} ** 32,
-    .timeout = std.time.ns_per_hour,
-    .code = 3, // enums.ledgerAccountTypes.HUB_RECONCILIATION
-    .flags = .{
-        .pending = true, // 2 phase.
-        .linked = false, // Stop the linking.
-    },
-    .amount = 1,
-}
-```
-7. Calculate updated status for `settlement` and state.
-8. [Settlement Update By Id Continue - Step 11](#722-settlement-update-by-id-updatesettlementbyid).
+1. Use the current `settlementId` to invoke the TigerBeetle Client to retrieve the _Transfers_ where the settlement state is `PS_TRANSFERS_RECORDED`. This is invoked for every settlement window in the current settlement event. 
+2. Use the current `settlementId` to invoke the TigerBeetle Client to retrieve the accounts that were created when the settlement event was triggered, where the account type is `SETTLEMENT`. The goal is to link the settlement accounts to the _Transfers_ retrieved in step 1.
+3. Create 2-phase transfers for settlement, based on the `settlementWindow` of each Transfer.
+4. For each _Transfer_, update the settlement state to `PS_TRANSFERS_RESERVED`, and continue with the settlement process.
 
-Process the settlement reservation for payer. The second `autoPositionReset` settlement event is triggered via `updateSettlementById`,
-the settlement will be in a state of `PS_TRANSFERS_RECORDED` as created by the initial `updateSettlementById`.
-Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersReserve` function will be consumed _(due to existing `PS_TRANSFERS_RECORDED` state)_.
+##### 7.2.2.3 Settlement Event - Commit
+This event initiates the final step where settlement gets committed for all _Transfers_ with a settlement state of `PS_TRANSFERS_RESERVED` getting progressed to `PS_TRANSFERS_COMMITTED`.
 
-##### 7.2.2.3 Settlement Event - `PS_TRANSFERS_RESERVED -> PS_TRANSFERS_COMMITTED`
 ![Commit Settlement Transfers](solution_design/sequence-settlement-tb-enabled-update-by-id-03.svg)
-1. Current state has been established as `PS_TRANSFERS_RESERVED` from [Settlement Update By Id - Step 10](#722-settlement-update-by-id-updatesettlementbyid).
-2. Base settlement data via MySQL (`settlement` / `settlementWindow`) data lookup on `settlementId`.
-3. TigerBeetle reserved transfer data is obtained via `tbLookupReserved`.
-4. The following inserts are not performed due to TigerBeetle `transferFulfilmentDuplicateCheck`, `transferFulfillment`, `transferStateChange` and `participantPosition`.
-5. TigerBeetle account data is obtained via `tbLookupAccountsForSettlement` on `settlementId`.
-6. Commit the reserved 2-phase transfers based on each of the pending transfers for the `settlementWindow`
-```zig
-//SETTLEMENT:
-Transfer {
-    .id = 1009, // [sha256() of settlementTransferId] converted to u128
-    .pending_id = 1007,// id from reservation.
-    .user_data = 0, // fetch from pending.
-    .code = 2, // enums.ledgerAccountTypes.SETTLEMENT
-    .flags = .{
-        .post_pending = true, // 2 phase commit.
-        .linked = true, // Link this transfer with the next transfer. 
-    },
-    .amount = 1,
-},
-//HUB_MULTILATERAL_SETTLEMENT:
-Transfer {
-    .id = 1010, // [uuid()] converted to u128
-    .pending_id = 1008,// id from reservation. 
-    .user_data = 0, // fetch from pending.
-    .reserved = [_]u8{0} ** 32,
-    .timeout = std.time.ns_per_hour,
-    .code = 3, // enums.ledgerAccountTypes.HUB_RECONCILIATION
-    .flags = .{
-        .post_pending = true, // 2 phase commit.
-        .linked = false, // Stop the linking.
-    },
-    .amount = 1,
-}
-```
-7. Calculate updated status for `settlement` and state.
-8. [Settlement Update By Id Continue - Step 11](#722-settlement-update-by-id-updatesettlementbyid).
+1. Use the current `settlementId` to invoke the TigerBeetle Client to retrieve the _Transfers_ where the settlement state is `PS_TRANSFERS_RESERVED`. This is invoked for every settlement window in the current settlement event.
+2. Use the current `settlementId` to invoke the TigerBeetle Client to retrieve the accounts that were created when the settlement event was triggered, where the account type is `SETTLEMENT`. The goal is to link the settlement accounts to the _Transfers_ retrieved in step 1.
+3. Commit the reserved 2-phase transfers based on each of the pending transfers for the `settlementWindow`.
+4. For each _Transfer_, update the settlement state to `PS_TRANSFERS_COMMITTED`, and continue with the settlement process.
 
-Process the settlement commit for payer.
-The third and final `autoPositionReset` settlement event is triggered via `updateSettlementById`,
-the settlement will be in a state of `PS_TRANSFERS_RESERVED` as created by the second `updateSettlementById` invocation.
-Once the `updateSettlementById` endpoint is invoked, the `settlementTransfersCommit` function will be consumed
-(due to existing `PS_TRANSFERS_RESERVED` state).
+##### 7.2.2.4 Settlement Completion
 
-##### 7.2.2.4 Settlement Event - `PS_TRANSFERS_COMMITTED -> SETTLED`
-Once all accounts has been settled, the settlement itself will be updated to a `SETTLED` status.
+The settlement state for all _Transfers_ gets updated from `PS_TRANSFERS_COMMITTED` to `SETTLED` once all Transfers have a settlement state of `PS_TRANSFERS_COMMITTED`, and all settlement windows are closed.
 
 ## 8. Canonical Model
-The following Central-Ledger and TigerBeetle Canonical Data Model presents data entities and relationships in the simplest possible form.
+The following Central-Ledger and TigerBeetle Canonical Data Model presents data entities and relationships in their simplest form.
 
 ### 8.1 TigerBeetle
 TigerBeetle supports only `Account` and `Transfer` data types.
@@ -619,7 +397,8 @@ Mutable data set for account related data.
 | credits_posted  | `u64`            | Balance for accepted credits.                                                                                                    |
 | timestamp       | `u64`            | The current state machine timestamp of the account for state tracking.                                                           |
 
-#### 8.1.2 AccountFlags - `[packed struct]`
+##### 8.1.1.1 AccountFlags
+Used to track additional properties of an Account.
 
 | Field                            | Type              | Description                                  |
 |----------------------------------|-------------------|----------------------------------------------|
@@ -628,7 +407,7 @@ Mutable data set for account related data.
 | credits_must_not_exceed_debits   | `bool`            | Total credit transfer may not exceed debits. |
 | padding                          | `u29`             | Data to be used for padding.                 |
 
-#### 8.1.3 Transfer
+#### 8.1.2 Transfer
 Transfers for TigerBeetle are immutable.
 
 | Field             | Type              | Description                                                                                                                       |
@@ -644,12 +423,8 @@ Transfers for TigerBeetle are immutable.
 | amount            | `u64`             | Transfer amount in units.                                                                                                         |
 | timestamp         | `u64`             | The current state machine timestamp of the transfer for state tracking.                                                           |
 
-#### 8.1.4 TransferFlags - `[packed struct]`
-Transfer flags are properties associated with a Transfer to enable additional Transfer functionality, such as:
-* 2-Phase transfers
-* Linked Transfer
-* Reverting a previously created transfer
-* Reverting a previously committed transfer
+##### 8.1.2.1 TransferFlags
+Used to track additional properties of a Transfer.
 
 | Field       | Type              | Description                                    |
 |-------------|-------------------|------------------------------------------------|
@@ -659,133 +434,13 @@ Transfer flags are properties associated with a Transfer to enable additional Tr
 | padding     | `u29`             | Data to be used for padding.                   |
 
 ### 8.2 Central-Ledger
-Central-Ledger hosts a wide range of tables in which to store Participant, Account and Transfer related data.
+The diagram below shows the Central-Ledger database tables and their relationships.
 
-#### 8.2.1 Data Relationships
-The diagrams below show the relationships between data in Central-Ledger.
-
-##### Central-Ledger Schema with Relationships
+**TODO**: LEFT OFF HERE - NEED TO UPDATE DIAGRAM
 ![Data-Central-Ledger](solution_design/central-ledger-schema.png)
 
-##### Participants and Accounts
-![SQL Relationships - Participants](solution_design/central-ledger-data-participant.svg)
-
-##### Transfer
-![SQL Relationships - Transfers](solution_design/central-ledger-data-transfer.svg)
-
-
-#### 8.2.2 Participant (`participant`)
-| Field         | Type           | Description                                        |
-|---------------|----------------|----------------------------------------------------|
-| participantId | `int unsigned` | Unique participant identifier.                     |
-| name          | `varchar(256)` | Unique participant name.                           |
-| description   | `varchar(256)` | Brief description for a participant.               |
-| isActive      | `tinyint`      | Is the participant account active.                 |
-| createdDate   | `datetime`     | Timestamp of when the participant was created.     |
-| createdBy     | `datetime`     | The DFSP responsible for creating the participant. |
-
-#### 8.2.3 Participant Currency (`participantCurrency`)
-| Field                 | Type           | Description                                                |
-|-----------------------|----------------|------------------------------------------------------------|
-| participantCurrencyId | `int unsigned` | Unique participantCurrency identifier.                     |
-| participantId         | `int unsigned` | Foreign key for participant table.                         |
-| currencyId            | `int unsigned` | Foreign key for currency table.                            |
-| ledgerAccountTypeId   | `int unsigned` | Foreign key for ledgerAccountType table.                   |
-| isActive              | `tinyint`      | Is the currency active.                                    |
-| createdDate           | `datetime`     | Timestamp of when the participantCurrency was created.     |
-| createdBy             | `datetime`     | The DFSP responsible for creating the participantCurrency. |
-
-#### 8.2.4 Participant Contact (`participantContact`)
-| Field                 | Type           | Description                                                  |
-|-----------------------|----------------|--------------------------------------------------------------|
-| participantContactId  | `int unsigned` | Unique participantContact identifier.                        |
-| participantId         | `int unsigned` | Foreign key for participant table.                           |
-| contactTypeId         | `int unsigned` | Foreign key for contactType table.                           |
-| value                 | `varchar(256)` | The details for the contact.                                 |
-| priorityPreference    | `int(9)`       | The priority for the contact.                                |
-| isActive              | `tinyint`      | Whether the contact is active.                               |
-| createdDate           | `datetime`     | Timestamp of when the participantContact was created.        |
-| createdBy             | `datetime`     | The DFSP responsible for creating the participantContact.    |
-
-
-#### 8.2.5 Transfer (`transfer`)
-| Field          | Type            | Description                                                                    |
-|----------------|-----------------|--------------------------------------------------------------------------------|
-| transferId     | `varchar(36)`   | Unique transfer identifier.                                                    |
-| amount         | `decimal(18,4)` | The amount of the transfer.                                                    |
-| currencyId     | `varchar(3)`    | Foreign key to the transfer currency.                                          |
-| ilpCondition   | `varchar(256)`  | The condition from the ILP packet.                                             |
-| expirationDate | `datetime`      | The timestamp for when the 2-phase transfer expires in the event of no commit. |
-| createdDate    | `datetime`      | The timestamp for when the transfer was created.                               |
-
-#### 8.2.6 Transfer Participant (`transferParticipant`)
-| Field                         | Type              | Description                                                 |
-|-------------------------------|-------------------|-------------------------------------------------------------|
-| transferParticipantId         | `bigint unsigned` | Unique transferParticipant identifier.                      |
-| transferId                    | `varchar(36)`     | Foreign key for the transfer.                               |
-| participantCurrencyId         | `int unsigned`    | Foreign key for the participantCurrencyId.                  |
-| transferParticipantRoleTypeId | `int unsigned`    | Foreign key for the transferParticipantRoleTypeId.          |
-| ledgerEntryTypeId             | `int unsigned`    | Foreign key for the ledgerEntryTypeId.                      |
-| amount                        | `decimal(18,4)`   | The amount of the transfer.                                 |
-| createdDate                   | `datetime`        | The timestamp for when the transferParticipant was created. |
-
-#### 8.2.7 ILP Packet (`ilpPacket`)
-| Field        | Type          | Description                                       |
-|--------------|---------------|---------------------------------------------------|
-| transferId   | `varchar(36)` | Foreign key for the transfer.                     |
-| value        | `text`        | Complete ilpPacket.                               |
-| createdDate  | `datetime`    | The timestamp for when the ilpPacket was created. |
-
-#### 8.2.8 Transfer State Change (`transferStateChange`)
-| Field                 | Type              | Description                                                 |
-|-----------------------|-------------------|-------------------------------------------------------------|
-| transferStateChangeId | `bigint`          | Unique transferStateChange identifier.                      |
-| transferId            | `varchar(36)`     | Foreign key for the transfer.                               |
-| transferStateId       | `varchar(50)`     | Foreign key for the transferStateId.                        |
-| reason                | `varchar(512)`    | Reason for state change.                                    |
-| createdDate           | `datetime`        | The timestamp for when the transferStateChange was created. |
-
-#### 8.2.9 Participant Position (`participantPosition`)
-| Field                 | Type              | Description                                                      |
-|-----------------------|-------------------|------------------------------------------------------------------|
-| participantPositionId | `bigint unsigned` | Unique participantPosition identifier.                           |
-| participantCurrencyId | `int unsigned`    | Foreign key for the participantCurrency.                         |
-| value                 | `decimal(18,4)`   | Current participant position.                                    |
-| reservedValue         | `decimal(18,4)`   | Current participant reserved position.                           |
-| changedDate           | `datetime`        | The timestamp for when the participantPosition was last updated. |
-
-#### 8.2.10 Participant Position Change (`participantPositionChange`)
-| Field                       | Type                 | Description                                                    |
-|-----------------------------|----------------------|----------------------------------------------------------------|
-| participantPositionChangeId | `bigint unsigned`    | Unique participantPositionChangeId identifier.                 |
-| participantPositionId       | `bigint unsigned`    | Foreign key for the participantPosition.                       |
-| transferStateChangeId       | `bigint unsigned`    | Foreign key for the transferStateChange.                       |
-| value                       | `decimal(18,4)`      | The participant position at time of state change.              |
-| reservedValue               | `decimal(18,4)`      | The participant reserved position at time of state change.     |
-| createdDate                 | `datetime`           | The timestamp for when the participantPositionChange occurred. |
-
-#### 8.2.11 Participant Limit (`participantLimit`)
-| Field                                 | Type              | Description                                              |
-|---------------------------------------|-------------------|----------------------------------------------------------|
-| participantLimitId                    | `bigint unsigned` | Unique participantLimit identifier.                      |
-| participantCurrencyId                 | `bigint unsigned` | Foreign key for the participantCurrency.                 |
-| participantLimitTypeId                | `bigint unsigned` | Foreign key for the participantLimitType.                |
-| startAfterParticipantPositionChangeId | `bigint unsigned` | Foreign key for the participantPositionChange.           |
-| value                                 | `decimal(18,4)`   | Unique participant identifier.                           |
-| thresholdAlarmPercentage              | `decimal(5,2)`    | The allowed threshold of the alarm.                      |
-| isActive                              | `tinyint`         | Whether the participant limit is active.                 |
-| createdDate                           | `datetime`        | Timestamp of when the participantLimit was created.      |
-| createdBy                             | `datetime`        | The DFSP responsible for creating the participantLimit.  |
-
-#### 8.2.12 Transfer Duplicate Check (`transferDuplicateCheck`)
-| Field        | Type           | Description                                                  |
-|--------------|----------------|--------------------------------------------------------------|
-| transferId   | `varchar(32)`  | Unique transfer identifier (UUID).                           |
-| hash         | `varchar(256)` | Unique hash for the transfer JSON request.                   |
-| createdDate  | `datetime`     | The timestamp for when the transferDuplicateCheck occurred.  |
-
-### 8.3 TigerBeetle and Central-Ledger Mapping
-The following tables illustrate the data mappings between Central-Ledger and TigerBeetle.
+### 8.3 Mapping TigerBeetle and Central-Ledger Tables
+The tables below show the data mappings between Central-Ledger and TigerBeetle.
 
 #### 8.3.1 Account
 The mapping between TigerBeetle accounts and Central-Ledger participant and surrounding mappings (participant, participantCurrency, participantPosition etc.).
@@ -835,19 +490,3 @@ TigerBeetle financial domain makes use of double-entry ![T](solution_design/t.sv
 | Mojaloop Technical Overview         | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/                |
 | Central-Ledger Process Design       | https://docs.mojaloop.io/legacy/mojaloop-technical-overview/central-ledger/ |
 | Central-Ledger API Specification    | https://docs.mojaloop.io/legacy/api/#central-ledger-api                     |
-
-
-## Notes
-Please keep the following notes in mind.
-
-- Linking the accounts in TigerBeetle with Mojaloop:
-  - Create accounts with the same `user_data` per Participant, then mark them as linked?
-  - For each account type, we use `code`
-  - For each currency, we use `ledger`
-- Indicating linked flags for linked events in TigerBeetle:
-  - When the .linked flag is specified, it links an event with the next event in the batch, to create a chain of events, of arbitrary length, which all succeed or fail together.
-  - The tail of a chain is denoted by the first event without this flag.
-  - The last event in a batch may therefore never have the `.linked` flag set as this would leave a chain open-ended.
-  - Multiple chains or individual events may coexist within a batch to succeed or fail independently.
-  - Events within a chain are executed within order, or are rolled back on error, so that the effect of each event in the chain is visible to the next, and so that the chain is either visible or invisible as a unit to subsequent events after the chain.
-  - The event that was the first to break the chain will have a unique error result. Other events in the chain will have their error result set to `.linked_event_failed`.

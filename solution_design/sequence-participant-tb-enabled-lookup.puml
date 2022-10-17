@@ -44,7 +44,7 @@ group Lookup Participant by Name
     cl_domain <-- cl_db : If Participant data not cached, then \nretrieve from SQL (this excludes //account// data)
     cl_domain -> redis_cache : If not previously cached, \nthen cache Participant data
     autonumber resume
-    cl_domain -> tb_client : Lookup //account// using Participant ID
+    cl_domain -> tb_client : Invoke //account// lookup using Participant ID
     tb_client <-- tb_nodes : Retrieve Participant //account//
     tb_client --> cl_domain : Return Participant //account//
     cl_domain --> cl_handler : Return result

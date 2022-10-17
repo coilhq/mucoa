@@ -2,35 +2,30 @@
 
 participant "Mojaloop Adapter" as dfsp #B0D5FF
 note over dfsp
-    * Participant Bank A
-    * Participant Bank B
+    Participant
+    DFSP interactions
 end note
 
 box Central-Settlement #FFFFF9
-    participant "**API**" as cl_api
+    participant "**API**" as cs_api
     participant "__api__ / Handler" as cs_handler
-    participant "__domain__ / Service" as cs_domain
-    participant "__models__ / Facade" as cs_facade
+    participant "Application Layer\n(domain / service / facade)" as cs_domain
 
-note over cl_api
+note over cs_api
         NodeJS interface
         invokes REST API
     end note
 
     note over cs_handler
-        JSON request decoded & sent
-        for processing via a handler
+        JSON request decoded &
+        processed via handler
     end note
 
     note over cs_domain
-        Domain folder where the service
-        functions are exposed.
+        Expose service functions &
+        handle database interactions
     end note
 
-    note over cs_facade
-        Facade for storing/retrieving data from
-        MySQL and TigerBeetle
-    end note
 end box
 
 box Storage #F9FFF9
@@ -40,21 +35,18 @@ box Storage #F9FFF9
 end box
 
 autonumber
-group Trigger Settlement Event - //createSettlementEvent//
-    dfsp -> cl_api : //JSON// \n**(settlement data)**
-    cl_api -> cs_handler : ///settlements/createSettlementEvent// \nHandler invoked
-    cs_handler -> cs_domain : Service layer invoked\n//settlementEventTrigger//
-    cs_domain -> cs_facade : Domain to facade\n//triggerSettlementEvent//
-    cs_facade -> cl_db : Perform the following inserts against the database:\n*//settlement//\n*//settlementSettlementWindow// for each settlement window.\n*--//settlementParticipantCurrency//-- Built in TB. \n*--//settlementWindowContent//-- Built in TB. \n*--//settlementWindowContentStateChange//-- Built in TB. \n*--//settlementParticipantCurrencyStateChange//-- Built in TB.\n*--//settlementWindowStateChange//-- Built in TB.\n*--//settlementStateChange//-- Built in TB.
-    cs_facade -> tb_client : Lookup Txn's to be settled via CS-TB interface:\n*//**lookupForSettlementWindowId**// - Based on settlementWindowId.
-    cs_facade -> tb_client : Create the following accounts via CS-TB interface \nfor the settlement cycle:\n*//**HUB_RECONCILIATION**// - Based on \nHUB_ID, HUB_RECONCILIATION and currency.\n*//**HUB_MULTILATERAL_SETTLEMENT**// - Based on \nHUB_ID, HUB_MULTILATERAL_SETTLEMENT and currency.\n*//**SETTLEMENT**// - Based on \nParticipantID, SETTLEMENT and currency.\nSettlement account per participant.
-    tb_client -> tb_nodes : //account's// Distributed to nodes\n via the state machine.
-    tb_nodes -> tb_nodes : **[ASYNC]**\nReplication via VSR.
-    tb_client --> cs_facade : //account// create error **(none)**\n//(Replicated to 2 nodes)//
-    cs_facade --> cs_domain : Return result
+group Initiate Settlement
+    dfsp -> cs_api : //JSON// \n**(settlement data)**
+    cs_api -> cs_handler : Invoke handler
+    cs_handler -> cs_domain : Invoke application layer
+    cs_domain -> cl_db : Insert settlement data \n(excluding accounts)
+    cs_domain <--> tb_client : Retrieve settlement \nwindow transactions
+    cs_domain -> tb_client : Invoke settlement \naccount creation
+    tb_client <--> tb_nodes : Create settlement accounts
+    tb_client --> cs_domain : Return result
     cs_domain --> cs_handler : Return result
-    cs_handler --> cl_api : Return result
-    cl_api --> dfsp : Return result with //**settlementData**//
+    cs_handler --> cs_api : Return result
+    cs_api --> dfsp : Return //**settlement**// \nresult
 end
 
 @enduml
