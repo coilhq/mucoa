@@ -1,0 +1,63 @@
+@startuml
+
+box Central-Ledger #FFFFF9
+    participant "Participant " as cl_participant
+    participant "Prepare" as cl_prepare
+    participant "Fulfill" as cl_fulfill
+end box
+
+box Settlements BC #7FFFE1
+	participant "Settlements BC" as sbc #D5E8D4
+	database "Settlement" as sb_db #DAE8FC
+	note over sb_db
+	    - Settlement Models
+	    - Settlement Batches
+	end note
+end box
+
+box Accounts & Balances BC #F9FFF9
+    participant "Accounts & Balances BC" as abbc #D5E8D4
+	database "TigerBeetle" as tigerbeetle #E1D5E7
+end box
+
+autonumber
+group Create Participant
+    cl_participant -> sbc : A new Participant Currency is created. \nREST endpoint invoked to Settlement BC.
+    sbc -> abbc : gRPC call to create settlement account.
+    abbc <-> tigerbeetle : Necessary accounts created\non TigerBeetle.
+    tigerbeetle -> tigerbeetle: All accounts created\n as a single action (bulk).
+end
+
+|||
+
+autonumber
+group Transfer Prepare
+    cl_prepare -> sbc : Perform net debit cap check. \nREST endpoint invoked to Settlement BC.
+    sbc -> abbc : gRPC call to fetch participant settlement accounts.
+    abbc <-> tigerbeetle : Fetch accounts by id.
+    abbc -> sbc: Return relevant accounts.
+    sbc -> cl_prepare: Return relevant accounts for CL processing.
+    cl_prepare -> cl_prepare: Calculate and verify transaction\nis within net-debit cap limits.
+end
+
+|||
+
+autonumber
+group Transfer Fulfill
+    cl_fulfill -> sbc : Create settlement transfer request. \nREST endpoint invoked to Settlement BC.
+    sbc -> sb_db : Fetch settlement model and settlement batch for transfer.
+    sbc -> abbc : gRPC call to create settlement transfer.
+    abbc <-> tigerbeetle : Create double entry\nsettlement transfer.
+end
+
+|||
+
+== Settlement Processing - Batch New Creation ==
+
+autonumber
+sbc -> sb_db: Fetch batch configurations.
+sbc -> sbc : Create new settlement batch based on config.
+sbc -> sb_db : Close previous batch and record balance.
+sbc -> sb_db : Mark closed batch as settled.
+
+@enduml
